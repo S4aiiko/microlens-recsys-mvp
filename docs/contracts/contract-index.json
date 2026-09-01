@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "contract_version": "0.1.0",
+  "status": "phase_1_draft",
+  "files": {
+    "data_manifest": "data-manifest.schema.json",
+    "model_manifest": "model-manifest.schema.json",
+    "auth_rbac": "auth-rbac.schema.json",
+    "events": "events.schema.json",
+    "operations": "operations.schema.json",
+    "training_job": "training-job.schema.json",
+    "cache": "cache.schema.json",
+    "cursor": "cursor.schema.json",
+    "error": "error.schema.json",
+    "fixture_7b": "fixture-7b.schema.json",
+    "database_er": "db-er.json",
+    "public_openapi": "openapi.json",
+    "internal_openapi": "internal-openapi.json"
+  },
+  "owners": {
+    "data_manifest": "Data Agent",
+    "model_manifest": "Model Agent",
+    "database_and_auth": "Backend Core Agent",
+    "openapi_and_generated_client": "Project Integration Agent",
+    "cache_worker_and_fixture": "Project Integration Agent",
+    "cursor_and_feed": "Recommendation Service Agent"
+  }
+}

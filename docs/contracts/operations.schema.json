@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/operations.schema.json",
+  "title": "Content operations and promotion contract",
+  "type": "object",
+  "required": ["batch_id", "operation_type", "targets", "reason", "effective_window", "semantics"],
+  "properties": {
+    "batch_id": { "type": "string", "format": "uuid" },
+    "operation_type": { "enum": ["promote", "offline", "restore"] },
+    "targets": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true
+    },
+    "scope": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["all", "user", "feed"] },
+        "value": { "type": ["string", "null"] }
+      }
+    },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "priority": { "type": "integer", "minimum": 0 },
+    "target_position": { "type": ["integer", "null"], "minimum": 0 },
+    "effective_window": {
+      "type": "object",
+      "required": ["starts_at_utc", "ends_at_utc", "interval"],
+      "properties": {
+        "starts_at_utc": { "type": "string", "format": "date-time" },
+        "ends_at_utc": { "type": ["string", "null"], "format": "date-time" },
+        "interval": { "const": "[start,end)" }
+      }
+    },
+    "semantics": { "const": "preflight_then_all_or_nothing_transaction" },
+    "authority_order": {
+      "const": ["offline", "natural_filter_and_diversity", "promotion"]
+    },
+    "audit_required": { "const": true }
+  }
+}

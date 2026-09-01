@@ -1,0 +1,66 @@
+# Operating-system and editor state
+.DS_Store
+**/.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node and frontend build state
+node_modules/
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# MicroLens sources and all local dataset material
+MicroLens-master/
+dataset/
+data/raw/
+data/processed/
+data/downloads/
+data/covers/
+
+# Generated models, training exports, reports and runtime state
+artifacts/
+/models/
+/checkpoints/
+/training_exports/
+/logs/
+/cache/
+.cache/
+/tmp/
+/temp/
+*.log
+*.sqlite
+*.sqlite3
+
+# Local multi-agent orchestration records
+.assignment-flow/

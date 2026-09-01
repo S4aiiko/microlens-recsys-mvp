@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/fixture-7b.schema.json",
+  "title": "Isolated Phase 7B fixture contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "fixture_id", "compose_project", "allowed_volume_prefix", "allowed_network_prefix",
+    "artifact_namespace", "environment_marker", "previewed_allowlist", "default_stack_before_checksum",
+    "default_stack_after_checksum", "forbidden_actions", "dirty_existing_fixture_policy"
+  ],
+  "properties": {
+    "fixture_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{2,31}$" },
+    "compose_project": { "type": "string", "pattern": "^microlens-7b-[a-z0-9][a-z0-9-]{2,31}$" },
+    "allowed_volume_prefix": { "const": "microlens-7b-" },
+    "allowed_network_prefix": { "const": "microlens-7b-" },
+    "artifact_namespace": { "type": "string", "pattern": "^/artifacts/experiments/7b/[a-z0-9][a-z0-9-]{2,31}$" },
+    "environment_marker": { "const": "environment_kind=7b_fixture" },
+    "previewed_allowlist": { "const": true },
+    "default_stack_before_checksum": { "$ref": "#/$defs/sha256" },
+    "default_stack_after_checksum": { "$ref": "#/$defs/sha256" },
+    "forbidden_actions": {
+      "const": [
+        "connect_default_project", "flushall", "truncate_default_db", "delete_default_volume",
+        "overwrite_default_model", "automatic_cleanup"
+      ]
+    },
+    "dirty_existing_fixture_policy": { "const": "reject_and_choose_new_fixture_id" }
+  },
+  "$defs": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

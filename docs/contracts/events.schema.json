@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/events.schema.json",
+  "title": "Recommendation event and batch contract",
+  "oneOf": [
+    { "$ref": "#/$defs/persistedEvent" },
+    { "$ref": "#/$defs/eventRequest" },
+    { "$ref": "#/$defs/batchRequest" },
+    { "$ref": "#/$defs/batchResponse" }
+  ],
+  "$defs": {
+    "serverEventType": {
+      "enum": ["impression", "click", "like", "not_interested", "dwell", "revisit", "share"]
+    },
+    "clientEventType": {
+      "enum": ["click", "like", "not_interested", "dwell", "revisit", "share"]
+    },
+    "persistedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "request_id", "item_id", "position", "event_type", "server_timestamp"],
+      "properties": {
+        "event_id": { "type": "string", "format": "uuid" },
+        "request_id": { "type": "string", "format": "uuid" },
+        "item_id": { "type": "string", "minLength": 1 },
+        "position": { "type": "integer", "minimum": 0 },
+        "event_type": { "$ref": "#/$defs/serverEventType" },
+        "client_timestamp": { "type": ["string", "null"], "format": "date-time" },
+        "server_timestamp": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": ["integer", "null"], "minimum": 0, "maximum": 86400000 },
+        "payload": { "type": "object" }
+      }
+    },
+    "eventRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "request_id", "item_id", "position", "event_type", "client_timestamp"],
+      "properties": {
+        "event_id": { "type": "string", "format": "uuid" },
+        "request_id": { "type": "string", "format": "uuid" },
+        "item_id": { "type": "string", "minLength": 1 },
+        "position": { "type": "integer", "minimum": 0 },
+        "event_type": { "$ref": "#/$defs/clientEventType" },
+        "client_timestamp": { "type": "string", "format": "date-time" },
+        "duration_ms": { "type": "integer", "minimum": 0, "maximum": 86400000 },
+        "payload": { "type": "object" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "event_type": { "const": "dwell" } } },
+          "then": { "required": ["duration_ms"] }
+        }
+      ]
+    },
+    "batchRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["batch_id", "events"],
+      "properties": {
+        "batch_id": { "type": "string", "format": "uuid" },
+        "events": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/eventRequest" },
+          "minItems": 1,
+          "maxItems": 100
+        }
+      }
+    },
+    "itemResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "status"],
+      "properties": {
+        "event_id": { "type": "string", "format": "uuid" },
+        "status": { "enum": ["accepted", "duplicate", "rejected"] },
+        "error_code": { "type": ["string", "null"] },
+        "message": { "type": ["string", "null"] }
+      }
+    },
+    "batchResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["batch_id", "semantics", "accepted", "duplicate", "rejected", "results"],
+      "properties": {
+        "batch_id": { "type": "string", "format": "uuid" },
+        "semantics": { "const": "per_item_atomic_partial_success" },
+        "accepted": { "type": "integer", "minimum": 0 },
+        "duplicate": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "results": { "type": "array", "items": { "$ref": "#/$defs/itemResult" } }
+      }
+    }
+  }
+}

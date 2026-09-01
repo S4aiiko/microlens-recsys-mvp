@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/cache.schema.json",
+  "title": "Redis cache key and invalidation contract",
+  "type": "object",
+  "required": ["namespace", "key_kinds", "generations", "ttl_seconds", "authoritative_store", "failure_mode", "metrics"],
+  "properties": {
+    "namespace": { "const": "microlens:v1" },
+    "key_kinds": {
+      "type": "object",
+      "required": ["feed_snapshot", "popular", "profile", "item_state"],
+      "properties": {
+        "feed_snapshot": { "const": "microlens:v1:feed:{user_id}:{feed_type}:{profile_generation}:{model_generation}:{ops_generation}:{snapshot_id}" },
+        "popular": { "const": "microlens:v1:popular:{window}:{model_generation}:{ops_generation}" },
+        "profile": { "const": "microlens:v1:profile:{user_id}:{profile_generation}" },
+        "item_state": { "const": "microlens:v1:item:{item_id}:{ops_generation}" }
+      }
+    },
+    "generations": {
+      "type": "array",
+      "items": { "enum": ["profile_generation", "model_generation", "ops_generation"] },
+      "minItems": 3,
+      "uniqueItems": true
+    },
+    "ttl_seconds": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 1 } },
+    "authoritative_store": { "const": "postgresql" },
+    "failure_mode": { "const": "safe_db_or_process_rebuild_never_stale_offline_content" },
+    "metrics": { "const": ["hit", "miss", "ttl", "invalidated", "degraded"] }
+  }
+}

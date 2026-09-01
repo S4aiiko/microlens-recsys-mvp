@@ -1,0 +1,31 @@
+{
+  "name": "microlens-mvp-web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false",
+    "generate-client": "openapi-ts -i ../../docs/contracts/openapi.json -o src/api/generated",
+    "check-client-drift": "sh ./scripts/check-client-drift.sh"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.4",
+    "@vitejs/plugin-react-swc": "4.3.3",
+    "typescript": "6.0.3",
+    "vite": "8.2.0"
+  },
+  "overrides": {
+    "js-yaml": "4.3.1"
+  }
+}

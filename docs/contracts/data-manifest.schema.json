@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/data-manifest.schema.json",
+  "title": "MicroLens immutable data manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "data_version",
+    "source_urls",
+    "source_files",
+    "config_checksum",
+    "seed",
+    "input_schema",
+    "output_schema",
+    "record_counts",
+    "time_ranges",
+    "split_strategy",
+    "low_interaction_policy",
+    "negative_sampling_candidate_policy",
+    "time_decay",
+    "generation_command",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1.0" },
+    "data_version": { "type": "string", "minLength": 1 },
+    "source_urls": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 3,
+      "items": { "$ref": "#/$defs/fileArtifact" }
+    },
+    "config_checksum": { "$ref": "#/$defs/sha256" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "input_schema": { "type": "object" },
+    "output_schema": { "type": "object" },
+    "record_counts": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 },
+      "required": ["users", "items", "interactions", "train", "validation", "test"]
+    },
+    "time_ranges": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/timeRange" },
+      "required": ["source", "train", "validation", "test"]
+    },
+    "split_strategy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ordering_field", "leakage_checks"],
+      "properties": {
+        "kind": { "const": "per_user_strict_time_holdout" },
+        "ordering_field": { "const": "timestamp" },
+        "leakage_checks": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+      }
+    },
+    "low_interaction_policy": { "type": "object" },
+    "negative_sampling_candidate_policy": {
+      "type": "object",
+      "required": ["statistics_split", "available_strategies"],
+      "properties": {
+        "statistics_split": { "const": "train" },
+        "available_strategies": {
+          "type": "array",
+          "items": { "enum": ["uniform", "popularity_aware"] },
+          "contains": { "const": "uniform" },
+          "minItems": 2,
+          "uniqueItems": true
+        }
+      }
+    },
+    "time_decay": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "reference_time_utc", "half_life_seconds", "statistics_split"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "reference_time_utc": { "type": ["string", "null"], "format": "date-time" },
+        "half_life_seconds": { "type": ["integer", "null"], "minimum": 1 },
+        "statistics_split": { "const": "train" }
+      }
+    },
+    "generation_command": { "type": "string", "minLength": 1 },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fileArtifact" },
+      "minItems": 8
+    },
+    "base_data_version": { "type": "string" },
+    "parent_manifest_checksum": { "$ref": "#/$defs/sha256" },
+    "event_export_uri": { "type": "string" },
+    "event_export_checksum": { "$ref": "#/$defs/sha256" },
+    "event_id_watermark_range": {
+      "type": "object",
+      "required": ["start_exclusive", "end_inclusive"],
+      "properties": {
+        "start_exclusive": { "type": "integer", "minimum": 0 },
+        "end_inclusive": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "event_mapping_version": { "type": "string" },
+    "event_mapping_config_checksum": { "$ref": "#/$defs/sha256" },
+    "event_counts": {
+      "type": "object",
+      "required": ["accepted", "rejected", "deduplicated"],
+      "properties": {
+        "accepted": { "type": "integer", "minimum": 0 },
+        "rejected": { "type": "integer", "minimum": 0 },
+        "deduplicated": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "purpose": { "enum": ["systems_only", "quality_evaluation"] },
+    "evaluation_comparability": { "enum": ["non_comparable", "comparable"] },
+    "activation_eligible": { "type": "boolean" },
+    "train_cutoff_utc": { "type": "string", "format": "date-time" },
+    "validation_window_utc": { "$ref": "#/$defs/timeRange" },
+    "test_window_utc": { "$ref": "#/$defs/timeRange" },
+    "base_split_reuse_policy": { "type": "string" },
+    "holdout_counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["base_data_version"] },
+      "then": {
+        "required": [
+          "parent_manifest_checksum",
+          "event_export_uri",
+          "event_export_checksum",
+          "event_id_watermark_range",
+          "event_mapping_version",
+          "event_mapping_config_checksum",
+          "event_counts",
+          "purpose",
+          "evaluation_comparability",
+          "activation_eligible",
+          "train_cutoff_utc",
+          "validation_window_utc",
+          "test_window_utc",
+          "base_split_reuse_policy",
+          "holdout_counts"
+        ]
+      }
+    },
+    {
+      "if": { "properties": { "purpose": { "const": "systems_only" } }, "required": ["purpose"] },
+      "then": {
+        "properties": {
+          "evaluation_comparability": { "const": "non_comparable" },
+          "activation_eligible": { "const": false }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "fileArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "size_bytes": { "type": "integer", "minimum": 0 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "rows": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "timeRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_utc", "to_utc", "interval"],
+      "properties": {
+        "from_utc": { "type": "string", "format": "date-time" },
+        "to_utc": { "type": "string", "format": "date-time" },
+        "interval": { "const": "[from,to)" }
+      }
+    }
+  }
+}

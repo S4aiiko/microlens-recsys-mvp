@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/model-manifest.schema.json",
+  "title": "MicroLens immutable model manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "model_version", "data_version", "data_manifest_checksum",
+    "purpose", "evaluation_comparability", "activation_eligible", "git_revision",
+    "algorithms", "features", "resolved_config_checksum", "seed", "negative_sampling",
+    "time_decay", "best_epoch", "early_stop_reason", "evaluation", "artifacts",
+    "generation_command", "runtime_environment", "status"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "model_version": { "type": "string", "minLength": 1 },
+    "data_version": { "type": "string", "minLength": 1 },
+    "data_manifest_checksum": { "$ref": "#/$defs/sha256" },
+    "base_data_version": { "type": "string" },
+    "event_export_checksum": { "$ref": "#/$defs/sha256" },
+    "event_id_watermark_range": { "type": "object" },
+    "event_mapping_config_checksum": { "$ref": "#/$defs/sha256" },
+    "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] },
+    "evaluation_comparability": { "enum": ["non_comparable", "comparable"] },
+    "activation_eligible": { "type": "boolean" },
+    "frozen_windows": { "type": "object" },
+    "git_revision": { "type": ["string", "null"] },
+    "algorithms": {
+      "type": "array",
+      "items": { "enum": ["random", "popularity", "dssm", "deepfm"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "features": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+    "resolved_config_checksum": { "$ref": "#/$defs/sha256" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "negative_sampling": { "enum": ["uniform", "popularity_aware", "not_applicable"] },
+    "time_decay": { "type": "object" },
+    "best_epoch": { "type": ["integer", "null"], "minimum": 0 },
+    "early_stop_reason": { "type": ["string", "null"] },
+    "evaluation": {
+      "type": "object",
+      "required": ["split", "candidate_policy", "k", "metrics"],
+      "properties": {
+        "split": { "const": "test" },
+        "candidate_policy": { "type": "string" },
+        "k": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 1 },
+        "metrics": { "type": "object", "additionalProperties": { "type": "number" } }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "shape", "dtype"],
+        "properties": {
+          "path": { "type": "string" },
+          "sha256": { "$ref": "#/$defs/sha256" },
+          "shape": { "type": ["array", "null"], "items": { "type": "integer", "minimum": 0 } },
+          "dtype": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "generation_command": { "type": "string" },
+    "runtime_environment": { "type": "object" },
+    "status": { "enum": ["TRAINING", "EVALUATED", "READY", "ACTIVE", "ARCHIVED", "FAILED"] },
+    "failure_reason": { "type": ["string", "null"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "purpose": { "const": "systems_only" } } },
+      "then": {
+        "properties": {
+          "evaluation_comparability": { "const": "non_comparable" },
+          "activation_eligible": { "const": false },
+          "status": { "enum": ["TRAINING", "EVALUATED", "FAILED"] }
+        }
+      }
+    }
+  ],
+  "$defs": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/training-job.schema.json",
+  "title": "Asynchronous training job contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "job_id", "idempotency_key", "status", "data_version", "data_manifest_checksum",
+    "config_uri", "config_checksum", "purpose", "evaluation_comparability",
+    "activation_eligible", "attempts", "created_at"
+  ],
+  "properties": {
+    "job_id": { "type": "string", "format": "uuid" },
+    "idempotency_key": { "type": "string", "minLength": 1 },
+    "status": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] },
+    "data_version": { "type": "string", "not": { "const": "latest" } },
+    "data_manifest_checksum": { "$ref": "#/$defs/sha256" },
+    "config_uri": { "type": "string" },
+    "config_checksum": { "$ref": "#/$defs/sha256" },
+    "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] },
+    "evaluation_comparability": { "enum": ["non_comparable", "comparable"] },
+    "activation_eligible": { "type": "boolean" },
+    "attempts": { "type": "integer", "minimum": 0 },
+    "lease": {
+      "type": ["object", "null"],
+      "properties": {
+        "worker_id": { "type": "string" },
+        "claimed_at": { "type": "string", "format": "date-time" },
+        "heartbeat_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "started_at": { "type": ["string", "null"], "format": "date-time" },
+    "completed_at": { "type": ["string", "null"], "format": "date-time" },
+    "result_model_version": { "type": ["string", "null"] },
+    "error": { "type": ["object", "null"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "purpose": { "const": "systems_only" } } },
+      "then": {
+        "properties": {
+          "evaluation_comparability": { "const": "non_comparable" },
+          "activation_eligible": { "const": false }
+        }
+      }
+    }
+  ],
+  "$defs": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/auth-rbac.schema.json",
+  "title": "Authentication and role contract",
+  "type": "object",
+  "required": ["roles", "registration", "session", "csrf", "authorization_matrix"],
+  "properties": {
+    "roles": {
+      "const": ["user", "operator_readonly", "operator", "admin"]
+    },
+    "registration": {
+      "type": "object",
+      "required": ["anonymous_assigned_role", "client_role_field", "password_policy", "rate_limit"],
+      "properties": {
+        "anonymous_assigned_role": { "const": "user" },
+        "client_role_field": { "const": "forbidden" },
+        "password_policy": { "type": "object" },
+        "rate_limit": { "type": "object", "required": ["redis", "failure_mode"] }
+      }
+    },
+    "session": {
+      "type": "object",
+      "required": ["transport", "http_only", "jti_persisted", "logout_revokes", "expiry_required"],
+      "properties": {
+        "transport": { "const": "jwt_cookie" },
+        "http_only": { "const": true },
+        "jti_persisted": { "const": true },
+        "logout_revokes": { "const": true },
+        "expiry_required": { "const": true },
+        "same_site": { "enum": ["lax", "strict"] },
+        "secure_in_production": { "const": true }
+      }
+    },
+    "csrf": {
+      "type": "object",
+      "required": ["write_requests_protected", "mechanism"],
+      "properties": {
+        "write_requests_protected": { "const": true },
+        "mechanism": { "const": "double_submit_cookie_and_header" }
+      }
+    },
+    "authorization_matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "feed_and_profile", "dashboard_read", "operations_write", "model_publish", "role_management"
+      ],
+      "properties": {
+        "feed_and_profile": { "const": ["user", "operator_readonly", "operator", "admin"] },
+        "dashboard_read": { "const": ["operator_readonly", "operator", "admin"] },
+        "operations_write": { "const": ["operator", "admin"] },
+        "model_publish": { "const": ["admin"] },
+        "role_management": { "const": ["admin"] }
+      }
+    },
+    "data_isolation": {
+      "const": "user_id_from_authenticated_context_never_from_untrusted_user_parameter"
+    },
+    "unauthenticated_status": { "const": 401 },
+    "forbidden_status": { "const": 403 }
+  }
+}

@@ -1,0 +1,151 @@
+name: ${COMPOSE_PROJECT_NAME:-microlens-mvp}
+
+# Base-image digests were frozen after a successful linux/arm64 Phase 1 build.
+# PyTorch is intentionally deferred until its first real model-stage CPU build.
+x-listener-contract:
+  public:
+    url: http://api:8000
+    host_published: true
+    reject_path_prefixes:
+      - /internal/
+  internal_activation:
+    url: http://api:8001
+    host_published: false
+    network: backend
+    authentication: publishToken
+    implementation_status: phase_1_contract_only
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      VITE_API_BASE_URL: http://localhost:${API_PORT:-8000}
+    ports:
+      - "${WEB_PORT:-5173}:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:5173/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - edge
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      APP_ENV: foundation
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      PUBLISH_TOKEN: ${PUBLISH_TOKEN:?Set PUBLISH_TOKEN in .env}
+      PUBLIC_LISTENER_URL: http://0.0.0.0:8000
+      PUBLIC_REJECT_PATH_PREFIXES: /internal/
+      INTERNAL_ACTIVATION_LISTENER_URL: http://0.0.0.0:8001
+      INTERNAL_ACTIVATION_IMPLEMENTED: "false"
+      MODEL_ARTIFACTS_DIR: /artifacts/models
+      TRAINING_EXPORTS_DIR: /artifacts/training_exports
+    ports:
+      - "${API_PORT:-8000}:8000"
+    expose:
+      - "8001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - model_artifacts:/artifacts/models
+      - training_exports:/artifacts/training_exports
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - edge
+      - backend
+
+  db:
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-microlens}
+      POSTGRES_USER: ${POSTGRES_USER:-microlens_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - backend
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    environment:
+      APP_ENV: foundation
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      MODEL_ARTIFACTS_DIR: /artifacts/models
+      TRAINING_EXPORTS_DIR: /artifacts/training_exports
+      WORKER_PORT: "8081"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - model_artifacts:/artifacts/models
+      - training_exports:/artifacts/training_exports
+    healthcheck:
+      test: ["CMD", "python", "-m", "apps.worker.app", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  model_artifacts:
+  training_exports:
+
+networks:
+  edge:
+  backend:
+    internal: true

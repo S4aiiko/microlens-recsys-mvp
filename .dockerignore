@@ -1,0 +1,51 @@
+# Version-control and local orchestration state
+.git/
+.github/
+.assignment-flow/
+
+# Local secrets and credentials
+.env
+.env.*
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# User-owned datasets, upstream repositories and generated artifacts
+dataset/
+MicroLens*/
+data/
+artifacts/
+models/
+checkpoints/
+training_exports/
+logs/
+cache/
+.cache/
+tmp/
+temp/
+
+# Host dependency/build caches
+**/node_modules/
+apps/web/dist/
+apps/web/.vite/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+*.tsbuildinfo
+
+# Operating-system and editor files
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo

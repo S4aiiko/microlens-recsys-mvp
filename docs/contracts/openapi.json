@@ -1,0 +1,243 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MicroLens Recommendation MVP API",
+    "version": "0.1.0-contract",
+    "description": "Phase 1 contract draft. Only /health and /ready are implemented in the foundation skeleton.",
+    "x-implementation-status": "contract-only-except-health"
+  },
+  "servers": [{ "url": "http://localhost:8000", "description": "Host-published public listener" }],
+  "x-listener-contract": {
+    "public": {
+      "url": "http://api:8000",
+      "host_published": true,
+      "reject_path_prefixes": ["/internal/"]
+    }
+  },
+  "tags": [
+    { "name": "system" }, { "name": "auth" }, { "name": "feeds" },
+    { "name": "events" }, { "name": "profile" }, { "name": "admin" }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": ["system"],
+        "responses": { "200": { "description": "Process is alive", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } } }
+      }
+    },
+    "/ready": {
+      "get": {
+        "operationId": "getReady",
+        "tags": ["system"],
+        "responses": { "200": { "description": "Configured readiness checks pass", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ready" } } } } }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "registerUser",
+        "tags": ["auth"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } } },
+        "responses": { "201": { "description": "User account created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "409": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" }, "429": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "loginUser",
+        "tags": ["auth"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } } },
+        "responses": { "200": { "description": "Sets HttpOnly session cookie and readable CSRF cookie", "headers": { "Set-Cookie": { "schema": { "type": "string" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "tags": ["auth"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "responses": { "200": { "description": "Current user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "operationId": "logoutUser",
+        "tags": ["auth"],
+        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "responses": { "204": { "description": "Session jti revoked and cookie cleared" }, "401": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/feeds/{feed_type}": {
+      "get": {
+        "operationId": "getFeedPage",
+        "tags": ["feeds"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "parameters": [
+          { "name": "feed_type", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/FeedType" } },
+          { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } }
+        ],
+        "responses": { "200": { "description": "Stable snapshot page with a new per-page request_id", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FeedPage" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/events": {
+      "post": {
+        "operationId": "createEvent",
+        "tags": ["events"],
+        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventRequest" } } } },
+        "responses": { "200": { "description": "Accepted or duplicate event", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventItemResult" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/events/batch": {
+      "post": {
+        "operationId": "createEventBatch",
+        "tags": ["events"],
+        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventBatchRequest" } } } },
+        "responses": { "200": { "description": "Per-item atomic partial success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/profile/me": {
+      "get": {
+        "operationId": "getMyProfile",
+        "tags": ["profile"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "responses": { "200": { "description": "Authenticated user's current profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/items/{item_id}": {
+      "get": {
+        "operationId": "getItem",
+        "tags": ["feeds"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
+        "parameters": [{ "name": "item_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Online item", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FeedItem" } } } }, "404": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/admin/dashboard/overview": { "$ref": "#/components/pathItems/adminOverview" },
+    "/api/admin/dashboard/timeseries": { "$ref": "#/components/pathItems/adminTimeseries" },
+    "/api/admin/dashboard/feeds": { "$ref": "#/components/pathItems/adminFeeds" },
+    "/api/admin/dashboard/export.csv": { "$ref": "#/components/pathItems/adminExport" },
+    "/api/admin/users/{user_id}/debug": {
+      "get": {
+        "operationId": "debugUser",
+        "tags": ["admin"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["operator_readonly", "operator", "admin"],
+        "parameters": [{ "name": "user_id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Profile and recent recommendation trace", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserDebug" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/admin/requests/{request_id}": {
+      "get": {
+        "operationId": "debugRecommendationRequest",
+        "tags": ["admin"],
+        "security": [{ "cookieAuth": [] }],
+        "x-required-roles": ["operator_readonly", "operator", "admin"],
+        "parameters": [{ "name": "request_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
+        "responses": { "200": { "description": "Candidate/filter/rank/exposure/event trace", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecommendationRequestDebug" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "404": { "$ref": "#/components/responses/Error" } }
+      }
+    },
+    "/api/admin/models": { "$ref": "#/components/pathItems/adminModels" },
+    "/api/admin/models/compare": { "$ref": "#/components/pathItems/adminModelCompare" },
+    "/api/admin/training-jobs": { "$ref": "#/components/pathItems/adminTrainingJobs" },
+    "/api/admin/items": { "$ref": "#/components/pathItems/adminItems" },
+    "/api/admin/promotions": { "$ref": "#/components/pathItems/adminPromotionWrite" },
+    "/api/admin/operations": { "$ref": "#/components/pathItems/adminOperations" },
+    "/api/admin/operation-batches": { "$ref": "#/components/pathItems/adminOperationBatchWrite" },
+    "/api/admin/users": { "$ref": "#/components/pathItems/adminUsers" },
+    "/api/admin/roles": { "$ref": "#/components/pathItems/adminRoleWrite" }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": { "type": "apiKey", "in": "cookie", "name": "microlens_session" },
+      "csrfHeader": { "type": "apiKey", "in": "header", "name": "X-CSRF-Token" }
+    },
+    "responses": {
+      "Error": { "description": "Business error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
+    },
+    "parameters": {
+      "FromUtc": { "name": "from_utc", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
+      "ToUtc": { "name": "to_utc", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
+      "FeedFilter": { "name": "feed_type", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/FeedType" } }
+    },
+    "pathItems": {
+      "adminOverview": {
+        "get": { "operationId": "getDashboardOverview", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }], "responses": { "200": { "description": "Database-derived metrics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardOverview" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminTimeseries": {
+        "get": { "operationId": "getDashboardTimeseries", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }, { "$ref": "#/components/parameters/FeedFilter" }], "responses": { "200": { "description": "UTC half-open buckets", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DashboardBucket" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminFeeds": {
+        "get": { "operationId": "getDashboardFeeds", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }], "responses": { "200": { "description": "Feed-group diagnostics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardFeedDiagnostics" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminExport": {
+        "get": { "operationId": "exportDashboardCsv", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }, { "$ref": "#/components/parameters/FeedFilter" }], "responses": { "200": { "description": "UTF-8 BOM, RFC4180, stable-order, formula-safe CSV", "content": { "text/csv": { "schema": { "type": "string", "contentMediaType": "text/csv" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminModels": {
+        "get": { "operationId": "listModelVersions", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Model versions", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ModelVersion" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminModelCompare": {
+        "get": { "operationId": "compareModelVersions", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Comparable model metrics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelComparison" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminTrainingJobs": {
+        "get": { "operationId": "listTrainingJobs", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Training jobs", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TrainingJob" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminItems": {
+        "get": { "operationId": "searchAdminItems", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Searchable online/offline items", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminPromotionWrite": {
+        "post": { "operationId": "createPromotion", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["operator", "admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchRequest" } } } }, "responses": { "201": { "description": "Promotion created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminOperations": {
+        "get": { "operationId": "listOperations", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Audited operation records", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AuditOperation" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminOperationBatchWrite": {
+        "post": { "operationId": "createOperationBatch", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["operator", "admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchRequest" } } } }, "responses": { "201": { "description": "Preflighted all-or-nothing batch", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminUsers": {
+        "get": { "operationId": "listAdminUsers", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["admin"], "responses": { "200": { "description": "Admin-only user listing", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      },
+      "adminRoleWrite": {
+        "put": { "operationId": "updateUserRole", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["user_id", "role"], "properties": { "user_id": { "type": "string" }, "role": { "$ref": "#/components/schemas/Role" } } } } } }, "responses": { "200": { "description": "Role updated by admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      }
+    },
+    "schemas": {
+      "Role": { "type": "string", "enum": ["user", "operator_readonly", "operator", "admin"] },
+      "FeedType": { "type": "string", "enum": ["personalized", "popular", "explore"] },
+      "ServerEventType": { "type": "string", "enum": ["impression", "click", "like", "not_interested", "dwell", "revisit", "share"] },
+      "ClientEventType": { "type": "string", "enum": ["click", "like", "not_interested", "dwell", "revisit", "share"] },
+      "Health": { "type": "object", "required": ["status", "service", "phase"], "properties": { "status": { "const": "ok" }, "service": { "type": "string" }, "phase": { "type": "string" } } },
+      "Ready": { "type": "object", "required": ["status", "service", "checks"], "properties": { "status": { "type": "string" }, "service": { "type": "string" }, "checks": { "type": "object" }, "business_routes_ready": { "type": "boolean" } } },
+      "RegisterRequest": { "type": "object", "additionalProperties": false, "required": ["username", "password"], "properties": { "username": { "type": "string", "minLength": 3, "maxLength": 64 }, "password": { "type": "string", "minLength": 12, "maxLength": 256 } } },
+      "LoginRequest": { "type": "object", "additionalProperties": false, "required": ["username", "password"], "properties": { "username": { "type": "string" }, "password": { "type": "string" } } },
+      "User": { "type": "object", "required": ["id", "username", "role", "status", "created_at"], "properties": { "id": { "type": "string" }, "username": { "type": "string" }, "role": { "$ref": "#/components/schemas/Role" }, "status": { "enum": ["enabled", "disabled"] }, "created_at": { "type": "string", "format": "date-time" } } },
+      "FeedItem": { "type": "object", "required": ["item_id", "title", "cover", "position", "source", "score", "reason", "model_version"], "properties": { "item_id": { "type": "string" }, "title": { "type": "string" }, "cover": { "type": ["string", "null"] }, "position": { "type": "integer", "minimum": 0 }, "source": { "type": "string" }, "score": { "type": "number" }, "reason": { "type": "string" }, "model_version": { "type": "string" } } },
+      "FeedPage": { "type": "object", "required": ["snapshot_id", "request_id", "model_version", "items", "next_cursor"], "properties": { "snapshot_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "model_version": { "type": "string" }, "items": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } }, "next_cursor": { "type": ["string", "null"] } } },
+      "PersistedEvent": { "type": "object", "additionalProperties": false, "required": ["event_id", "request_id", "item_id", "position", "event_type", "server_timestamp"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "item_id": { "type": "string" }, "position": { "type": "integer", "minimum": 0 }, "event_type": { "$ref": "#/components/schemas/ServerEventType" }, "client_timestamp": { "type": ["string", "null"], "format": "date-time" }, "server_timestamp": { "type": "string", "format": "date-time" }, "duration_ms": { "type": ["integer", "null"], "minimum": 0, "maximum": 86400000 }, "payload": { "type": "object" } } },
+      "EventRequest": { "type": "object", "additionalProperties": false, "required": ["event_id", "request_id", "item_id", "position", "event_type", "client_timestamp"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "item_id": { "type": "string" }, "position": { "type": "integer", "minimum": 0 }, "event_type": { "$ref": "#/components/schemas/ClientEventType" }, "client_timestamp": { "type": "string", "format": "date-time" }, "duration_ms": { "type": "integer", "minimum": 0, "maximum": 86400000 }, "payload": { "type": "object" } } },
+      "EventItemResult": { "type": "object", "required": ["event_id", "status"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "status": { "enum": ["accepted", "duplicate", "rejected"] }, "error_code": { "type": ["string", "null"] }, "message": { "type": ["string", "null"] } } },
+      "EventBatchRequest": { "type": "object", "required": ["batch_id", "events"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "events": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/components/schemas/EventRequest" } } } },
+      "EventBatchResponse": { "type": "object", "required": ["batch_id", "semantics", "accepted", "duplicate", "rejected", "results"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "semantics": { "const": "per_item_atomic_partial_success" }, "accepted": { "type": "integer", "minimum": 0 }, "duplicate": { "type": "integer", "minimum": 0 }, "rejected": { "type": "integer", "minimum": 0 }, "results": { "type": "array", "items": { "$ref": "#/components/schemas/EventItemResult" } } } },
+      "UserProfile": { "type": "object", "required": ["user_id", "profile_version", "recent_interactions", "updated_at"], "properties": { "user_id": { "type": "string" }, "profile_version": { "type": "integer", "minimum": 0 }, "recent_interactions": { "type": "array", "items": { "type": "object" } }, "positive_summary": { "type": "object" }, "negative_summary": { "type": "object" }, "dwell_summary": { "type": "object" }, "revisit_summary": { "type": "object" }, "share_summary": { "type": "object" }, "title_preferences": { "type": "object" }, "updated_at": { "type": "string", "format": "date-time" } } },
+      "DashboardOverview": { "type": "object", "required": ["from_utc", "to_utc", "timezone", "total_users", "active_users", "requests", "exposures", "clicks", "likes", "ctr", "zero_denominator", "active_model_version"], "properties": { "from_utc": { "type": "string", "format": "date-time" }, "to_utc": { "type": "string", "format": "date-time" }, "timezone": { "const": "UTC" }, "total_users": { "type": "integer", "minimum": 0 }, "active_users": { "type": "integer", "minimum": 0 }, "requests": { "type": "integer", "minimum": 0 }, "exposures": { "type": "integer", "minimum": 0 }, "clicks": { "type": "integer", "minimum": 0 }, "likes": { "type": "integer", "minimum": 0 }, "shares": { "type": "integer", "minimum": 0 }, "revisits": { "type": "integer", "minimum": 0 }, "dwell_ms_total": { "type": "integer", "minimum": 0 }, "ctr": { "type": "number", "minimum": 0 }, "zero_denominator": { "type": "boolean" }, "active_model_version": { "type": ["string", "null"] } } },
+      "DashboardBucket": { "type": "object", "required": ["bucket_start_utc", "bucket_end_utc", "feed_type", "request_count", "exposure_count", "click_count", "like_count", "share_count", "revisit_count", "dwell_ms_total", "dwell_ms_avg", "ctr", "active_user_count"], "properties": { "bucket_start_utc": { "type": "string", "format": "date-time" }, "bucket_end_utc": { "type": "string", "format": "date-time" }, "feed_type": { "$ref": "#/components/schemas/FeedType" }, "request_count": { "type": "integer" }, "exposure_count": { "type": "integer" }, "click_count": { "type": "integer" }, "like_count": { "type": "integer" }, "share_count": { "type": "integer" }, "revisit_count": { "type": "integer" }, "dwell_ms_total": { "type": "integer" }, "dwell_ms_avg": { "type": "number" }, "ctr": { "type": "number" }, "active_user_count": { "type": "integer" } } },
+      "DashboardFeedDiagnostics": { "type": "object", "required": ["from_utc", "to_utc", "feeds"], "properties": { "from_utc": { "type": "string", "format": "date-time" }, "to_utc": { "type": "string", "format": "date-time" }, "feeds": { "type": "array", "items": { "$ref": "#/components/schemas/DashboardBucket" } } } },
+      "UserDebug": { "type": "object", "required": ["user_id", "profile", "recent_request_ids"], "properties": { "user_id": { "type": "string" }, "profile": { "$ref": "#/components/schemas/UserProfile" }, "recent_request_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } } } },
+      "RecommendationRequestDebug": { "type": "object", "required": ["request_id", "candidate_item_ids", "filtered_item_ids", "ranked_items", "events"], "properties": { "request_id": { "type": "string", "format": "uuid" }, "candidate_item_ids": { "type": "array", "items": { "type": "string" } }, "filtered_item_ids": { "type": "array", "items": { "type": "string" } }, "ranked_items": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } }, "events": { "type": "array", "items": { "$ref": "#/components/schemas/PersistedEvent" } } } },
+      "OperationBatchRequest": { "type": "object", "required": ["batch_id", "operation_type", "targets", "reason", "semantics"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "operation_type": { "enum": ["promote", "offline", "restore"] }, "targets": { "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": { "type": "string" } }, "scope_type": { "enum": ["all", "user", "feed"] }, "scope_value": { "type": ["string", "null"] }, "starts_at_utc": { "type": "string", "format": "date-time" }, "ends_at_utc": { "type": ["string", "null"], "format": "date-time" }, "priority": { "type": "integer", "minimum": 0 }, "target_position": { "type": ["integer", "null"], "minimum": 0 }, "reason": { "type": "string", "minLength": 1 }, "semantics": { "const": "preflight_then_all_or_nothing_transaction" } } },
+      "OperationBatchResponse": { "type": "object", "required": ["batch_id", "status", "expected_state_version", "scheduled_at", "created_at"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "status": { "enum": ["scheduled", "running", "succeeded", "failed"] }, "expected_state_version": { "type": "integer", "minimum": 0 }, "scheduled_at": { "type": ["string", "null"], "format": "date-time" }, "started_at": { "type": ["string", "null"], "format": "date-time" }, "completed_at": { "type": ["string", "null"], "format": "date-time" }, "created_at": { "type": "string", "format": "date-time" }, "result": { "type": ["object", "null"] } } },
+      "AuditOperation": { "type": "object", "required": ["operation_id", "batch_id", "target", "result", "effective_at"], "properties": { "operation_id": { "type": "string" }, "batch_id": { "type": "string", "format": "uuid" }, "target": { "type": "string" }, "before_value": { "type": ["object", "null"] }, "after_value": { "type": ["object", "null"] }, "result": { "enum": ["succeeded", "failed"] }, "error": { "type": ["string", "null"] }, "effective_at": { "type": "string", "format": "date-time" } } },
+      "TrainingJob": { "type": "object", "required": ["job_id", "idempotency_key", "status", "data_version", "data_manifest_checksum", "purpose", "evaluation_comparability", "activation_eligible"], "properties": { "job_id": { "type": "string", "format": "uuid" }, "idempotency_key": { "type": "string" }, "status": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] }, "data_version": { "type": "string" }, "data_manifest_checksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] }, "evaluation_comparability": { "enum": ["non_comparable", "comparable"] }, "activation_eligible": { "type": "boolean" }, "failure_reason": { "type": ["string", "null"] } } },
+      "ModelVersion": { "type": "object", "required": ["model_version", "data_version", "status", "purpose", "evaluation_comparability", "activation_eligible", "metrics"], "properties": { "model_version": { "type": "string" }, "data_version": { "type": "string" }, "status": { "enum": ["TRAINING", "EVALUATED", "READY", "ACTIVE", "ARCHIVED", "FAILED"] }, "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] }, "evaluation_comparability": { "enum": ["non_comparable", "comparable"] }, "activation_eligible": { "type": "boolean" }, "metrics": { "type": "object", "additionalProperties": { "type": "number" } }, "trained_at": { "type": ["string", "null"], "format": "date-time" }, "published_at": { "type": ["string", "null"], "format": "date-time" } } },
+      "ModelComparison": { "type": "object", "required": ["versions", "comparable", "reason"], "properties": { "versions": { "type": "array", "minItems": 2, "items": { "$ref": "#/components/schemas/ModelVersion" } }, "comparable": { "type": "boolean" }, "reason": { "type": ["string", "null"] } } },
+      "ErrorEnvelope": { "type": "object", "additionalProperties": false, "required": ["code", "message", "request_id", "details"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "request_id": { "type": ["string", "null"] }, "details": { "type": ["object", "array", "null"] } } }
+    }
+  }
+}

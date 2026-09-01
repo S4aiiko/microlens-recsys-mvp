@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://microlens.local/contracts/cursor.schema.json",
+  "title": "Stable feed cursor contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["snapshot_id", "next_offset", "user_id", "expires_at", "integrity"],
+  "properties": {
+    "snapshot_id": { "type": "string", "format": "uuid" },
+    "next_offset": { "type": "integer", "minimum": 0 },
+    "user_id": { "type": "string", "minLength": 1 },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "integrity": { "enum": ["signed", "server_stored_opaque"] }
+  },
+  "description": "Each cursor use creates a new request_id while retaining snapshot_id/model_version; offline is rechecked before delivery."
+}

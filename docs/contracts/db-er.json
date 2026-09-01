@@ -1,0 +1,34 @@
+{
+  "contract_version": "0.1.0",
+  "database": "postgresql",
+  "timestamps": "UTC",
+  "tables": {
+    "users": { "pk": "id", "unique": ["username"], "fields": ["username", "password_hash", "role", "source_user_id", "status", "created_at"] },
+    "auth_sessions": { "pk": "id", "foreign_keys": { "user_id": "users.id" }, "unique": ["jti"], "fields": ["expires_at", "revoked_at"] },
+    "items": { "pk": "id", "fields": ["title", "likes_snapshot", "views_snapshot", "cover_ref", "metadata_status", "online_status", "updated_at"] },
+    "recommendation_snapshots": { "pk": "snapshot_id", "foreign_keys": { "user_id": "users.id" }, "fields": ["feed_type", "model_version", "snapshot_seed", "expires_at", "created_at"] },
+    "recommendation_requests": { "pk": "request_id", "foreign_keys": { "snapshot_id": "recommendation_snapshots.snapshot_id", "user_id": "users.id" }, "fields": ["offset", "limit", "latency_ms", "created_at"] },
+    "recommendation_snapshot_items": { "pk": ["snapshot_id", "item_id"], "foreign_keys": { "snapshot_id": "recommendation_snapshots.snapshot_id", "item_id": "items.id" }, "fields": ["source", "raw_score", "normalized_score", "filter_reason", "snapshot_position", "promotion_rule_id"] },
+    "exposures": { "pk": "id", "foreign_keys": { "request_id": "recommendation_requests.request_id", "snapshot_id": "recommendation_snapshots.snapshot_id", "user_id": "users.id", "item_id": "items.id" }, "unique": ["request_id,item_id,position"], "fields": ["position", "source", "model_version", "exposed_at"] },
+    "events": { "pk": "id", "foreign_keys": { "request_id": "recommendation_requests.request_id", "user_id": "users.id", "item_id": "items.id" }, "unique": ["event_id"], "fields": ["position", "feed_type", "source", "event_type", "client_timestamp", "server_timestamp", "payload"] },
+    "event_batches": { "pk": "batch_id", "foreign_keys": { "user_id": "users.id" }, "fields": ["payload_hash", "item_count", "accepted_count", "duplicate_count", "rejected_count", "started_at", "completed_at", "result"] },
+    "user_profiles": { "pk": "user_id", "foreign_keys": { "user_id": "users.id" }, "fields": ["recent_interactions", "positive_summary", "negative_summary", "dwell_summary", "revisit_summary", "share_summary", "title_preferences", "profile_version", "updated_at"] },
+    "promotion_rules": { "pk": "id", "foreign_keys": { "item_id": "items.id", "created_by": "users.id" }, "fields": ["scope_type", "scope_value", "starts_at", "ends_at", "priority", "target_position", "reason", "status"] },
+    "operation_batches": { "pk": "batch_id", "foreign_keys": { "operator_id": "users.id" }, "fields": ["operation_type", "targets", "reason", "expected_state_version", "status", "scheduled_at", "started_at", "completed_at", "result", "created_at"] },
+    "operations": { "pk": "id", "foreign_keys": { "batch_id": "operation_batches.batch_id" }, "fields": ["target", "before_value", "after_value", "result", "error", "effective_at"] },
+    "model_versions": { "pk": "model_version", "fields": ["data_version", "config_checksum", "metrics", "artifact_uri", "artifact_checksum", "purpose", "evaluation_comparability", "activation_eligible", "status", "failure_reason", "trained_at", "published_at"] },
+    "training_jobs": { "pk": "job_id", "unique": ["idempotency_key"], "fields": ["data_version", "data_manifest_checksum", "config_checksum", "purpose", "evaluation_comparability", "activation_eligible", "status", "created_at", "completed_at"] },
+    "job_attempts": { "pk": "id", "foreign_keys": { "job_id": "training_jobs.job_id" }, "fields": ["worker_id", "attempt", "lease_expires_at", "heartbeat_at", "status", "result", "error"] },
+    "training_export_watermarks": { "pk": "name", "fields": ["last_event_id", "expected_checksum", "status", "updated_at"] }
+  },
+  "constraints": [
+    "one_active_model_version_via_partial_unique_index",
+    "canonical_impression_unique_per_exposure",
+    "event_user_request_item_position_must_match_exposure",
+    "operation_batch_preflight_then_all_or_nothing",
+    "export_watermark_compare_and_swap",
+    "server_event_id_monotonic_export_range"
+  ],
+  "retention": "TBD_BY_BACKEND_AGENT_AND_DOCUMENTED_BEFORE_PRODUCTION",
+  "migration_owner": "Backend Core Agent"
+}

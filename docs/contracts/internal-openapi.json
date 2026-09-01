@@ -1,0 +1,138 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MicroLens Internal Model Activation API",
+    "version": "0.1.0-contract",
+    "description": "Compose-internal publishing contract. Phase 1 does not implement this listener.",
+    "x-implementation-status": "phase_1_contract_only"
+  },
+  "servers": [
+    {
+      "url": "http://api:8001",
+      "description": "Non-host-published Compose backend listener"
+    }
+  ],
+  "x-listener-contract": {
+    "host_published": false,
+    "compose_network": "backend",
+    "network_scope": "compose-internal-only",
+    "public_listener_rejects": ["/internal/"]
+  },
+  "tags": [{ "name": "internal" }],
+  "paths": {
+    "/internal/model-versions/{version}/activate": {
+      "post": {
+        "operationId": "activateModelVersion",
+        "tags": ["internal"],
+        "security": [{ "publishToken": [] }],
+        "parameters": [
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "minLength": 1 }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ActivationRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Validated staging load and transactional CAS activation",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ModelVersion" }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Error" },
+          "409": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" }
+        },
+        "x-network-scope": "compose-internal-only"
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "publishToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Publish-Token"
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Internal publishing error",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ActivationRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expected_current_version", "manifest_checksum"],
+        "properties": {
+          "expected_current_version": { "type": ["string", "null"] },
+          "manifest_checksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        }
+      },
+      "ModelVersion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "model_version",
+          "data_version",
+          "status",
+          "purpose",
+          "evaluation_comparability",
+          "activation_eligible",
+          "metrics"
+        ],
+        "properties": {
+          "model_version": { "type": "string" },
+          "data_version": { "type": "string" },
+          "status": {
+            "enum": ["TRAINING", "EVALUATED", "READY", "ACTIVE", "ARCHIVED", "FAILED"]
+          },
+          "purpose": {
+            "enum": ["base_official", "systems_only", "quality_evaluation"]
+          },
+          "evaluation_comparability": {
+            "enum": ["non_comparable", "comparable"]
+          },
+          "activation_eligible": { "type": "boolean" },
+          "metrics": {
+            "type": "object",
+            "additionalProperties": { "type": "number" }
+          },
+          "trained_at": { "type": ["string", "null"], "format": "date-time" },
+          "published_at": { "type": ["string", "null"], "format": "date-time" }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "message", "request_id", "details"],
+        "properties": {
+          "code": { "type": "string" },
+          "message": { "type": "string" },
+          "request_id": { "type": ["string", "null"] },
+          "details": { "type": ["object", "array", "null"] }
+        }
+      }
+    }
+  }
+}
