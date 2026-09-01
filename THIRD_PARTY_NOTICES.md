@@ -14,15 +14,25 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `python` | `3.12-slim@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc` | `UNKNOWN` | `direct` |
 | `redis` | `7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf` | `UNKNOWN` | `direct` |
 | `CycloneDX/cyclonedx-python` | `reference-only-2026-09-01` | `Apache-2.0` | `reference-only` |
+| `USTCLLM/RecStudio` | `9114975b8e9ec85bce16c1ed8abbf0e194e4afb3` | `MIT` | `reference-only` |
+| `apache/arrow` | `a769c291e01093b73d03a075179cf7a09bf92ad8` | `Apache-2.0` | `reference-only` |
+| `apache/iceberg` | `86da2dc8414756e05106b3272fd6e6d0dde306e3` | `Apache-2.0` | `reference-only` |
 | `apple/ml-negative-sampling` | `8dc093469cf0ac693dd894fc904e1f2e88cc34e7` | `UNKNOWN` | `reference-only` |
 | `docker/awesome-compose` | `reference-gate` | `CC0-1.0` | `reference-only` |
+| `duckdb/duckdb` | `d8cdaa33fda8df955cc76ef58a280f68f4cd43fa` | `MIT` | `reference-only` |
+| `elastic/elasticsearch-py` | `76e23a37d0cea34c7a580781fd6bf2b678139fb4` | `Apache-2.0` | `reference-only` |
+| `elastic/elasticsearch` | `3c7c6027c5769d860d87448e2749f4c550a239da` | `Elastic-2.0 OR AGPL-3.0-only OR SSPL-1.0` | `reference-only` |
 | `fastapi-users/fastapi-users` | `9ef8cd82619856772ac06a178b114eb47c79586c` | `MIT` | `reference-only` |
 | `fastapi/full-stack-fastapi-template` | `486f054cc8d1aead59ec96cc0a16933d06c10e0d` | `MIT` | `reference-only` |
 | `frictionlessdata/frictionless-py` | `5debad3409639438bb4dbffa15d200dbb458a555` | `MIT` | `reference-only` |
+| `hyzyla/outbox-streaming` | `6f682a64104c7004935c9a75f47f843422955707` | `MIT` | `reference-only` |
 | `microsoft/playwright` | `reference-gate` | `Apache-2.0` | `reference-only` |
 | `oasdiff/oasdiff` | `9e66f6fe923f14816d39898320450b65e6932a55` | `Apache-2.0` | `reference-only` |
+| `procrastinate-org/procrastinate` | `509487b0765c3a95be93424ec5c844d8e306c089` | `MIT` | `reference-only` |
+| `prometheus/alertmanager` | `7935b44682464fa7ba3e8a1f15a6f39eff1b3369` | `Apache-2.0` | `reference-only` |
 | `raimon49/pip-licenses` | `reference-only-2026-09-01` | `MIT` | `reference-only` |
 | `recommenders-team/recommenders` | `0bb4b3690941ffb668118e31ccaf8a7d19f8212a` | `MIT` | `reference-only` |
+| `rixwew/pytorch-fm` | `f74ad19771eda104e99874d19dc892e988ec53fa` | `MIT` | `reference-only` |
 | `westlake-repl/MicroLens` | `0fc876066987fb3b920df2765cfbac2763c515eb` | `UNKNOWN` | `reference-only` |
 | `@asamuzakjp/css-color` | `5.1.11` | `MIT` | `transitive` |
 | `@asamuzakjp/dom-selector` | `7.1.1` | `MIT` | `transitive` |
@@ -232,7 +242,12 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `cffi` | `2.1.1` | `MIT-0` | `transitive` |
 | `click` | `8.5.0` | `BSD-3-Clause` | `transitive` |
 | `colorama` | `0.4.6` | `BSD-3-Clause` | `transitive` |
+| `duckdb` | `1.5.5` | `MIT` | `direct` |
+| `elastic-transport` | `9.4.2` | `Apache-2.0` | `transitive` |
+| `elasticsearch` | `9.4.0` | `Apache-2.0` | `direct` |
 | `fastapi` | `0.141.1` | `MIT` | `direct` |
+| `filelock` | `3.32.5` | `MIT` | `transitive` |
+| `fsspec` | `2026.7.0` | `BSD-3-Clause` | `transitive` |
 | `greenlet` | `3.5.5` | `MIT AND PSF-2.0` | `transitive` |
 | `h11` | `0.16.0` | `MIT` | `transitive` |
 | `httpcore` | `1.0.9` | `BSD-3-Clause` | `transitive` |
@@ -240,10 +255,13 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `httpx` | `0.28.1` | `BSD-3-Clause` | `direct` |
 | `idna` | `3.19` | `BSD-3-Clause` | `transitive` |
 | `iniconfig` | `2.3.0` | `MIT` | `transitive` |
+| `jinja2` | `3.1.6` | `BSD-3-Clause` | `transitive` |
 | `jsonschema-specifications` | `2025.9.1` | `MIT` | `transitive` |
 | `jsonschema` | `4.26.0` | `MIT` | `direct` |
 | `mako` | `1.4.1` | `MIT` | `transitive` |
 | `markupsafe` | `3.0.3` | `BSD-3-Clause` | `transitive` |
+| `mpmath` | `1.3.0` | `BSD-3-Clause` | `transitive` |
+| `networkx` | `3.6.1` | `BSD-3-Clause` | `transitive` |
 | `packaging` | `26.3` | `Apache-2.0 OR BSD-2-Clause` | `transitive` |
 | `pluggy` | `1.6.0` | `MIT` | `transitive` |
 | `psycopg-binary` | `3.3.5` | `LGPL-3.0-only` | `transitive` |
@@ -256,16 +274,23 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `pygments` | `2.21.0` | `BSD-2-Clause` | `transitive` |
 | `pyjwt` | `2.13.0` | `MIT` | `direct` |
 | `pytest` | `8.4.2` | `MIT` | `direct` |
+| `python-dateutil` | `2.9.0.post0` | `Apache-2.0 OR BSD-3-Clause` | `transitive` |
 | `python-dotenv` | `1.2.3` | `BSD-3-Clause` | `transitive` |
 | `pyyaml` | `6.0.3` | `MIT` | `direct` |
 | `redis` | `7.3.1` | `MIT` | `direct` |
 | `referencing` | `0.37.0` | `MIT` | `transitive` |
 | `rpds-py` | `2026.6.3` | `MIT` | `transitive` |
 | `ruff` | `0.16.5` | `MIT` | `direct` |
+| `setuptools` | `84.0.0` | `MIT` | `transitive` |
+| `six` | `1.17.0` | `MIT` | `transitive` |
+| `sniffio` | `1.3.1` | `MIT` | `transitive` |
 | `sqlalchemy` | `2.0.52` | `MIT` | `direct` |
 | `starlette` | `1.6.0` | `BSD-3-Clause` | `transitive` |
+| `sympy` | `1.14.0` | `BSD-3-Clause` | `transitive` |
+| `torch` | `2.13.0+cpu` | `Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT` | `direct` |
 | `typing-extensions` | `4.16.0` | `PSF-2.0` | `transitive` |
 | `typing-inspection` | `0.4.4` | `MIT` | `transitive` |
+| `urllib3` | `2.7.0` | `MIT` | `transitive` |
 | `uvicorn` | `0.52.4` | `BSD-3-Clause` | `direct` |
 | `uvloop` | `0.22.1` | `MIT` | `transitive` |
 | `watchfiles` | `1.2.0` | `MIT` | `transitive` |

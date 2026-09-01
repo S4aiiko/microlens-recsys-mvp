@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "base_config": "configs/models/smoke-a.json",
+  "execution_policy": "one_variable_at_a_time_full_data_phase_7a",
+  "experiments": [
+    {
+      "experiment_id": "negative-uniform",
+      "unique_variable": "dssm.negative_sampling",
+      "value": "uniform",
+      "control": "negative-uniform",
+      "execution_path": "sync_cli_and_async_worker_contract_check"
+    },
+    {
+      "experiment_id": "negative-popularity",
+      "unique_variable": "dssm.negative_sampling",
+      "value": "popularity_aware",
+      "control": "negative-uniform",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "negative-hard",
+      "unique_variable": "dssm.negative_sampling",
+      "value": "train_only_hard",
+      "control": "negative-uniform",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "decay-off",
+      "unique_variable": "dssm.time_decay",
+      "value": {"enabled": false, "half_life_seconds": 604800},
+      "control": "decay-off",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "decay-3d",
+      "unique_variable": "dssm.time_decay",
+      "value": {"enabled": true, "half_life_seconds": 259200},
+      "control": "decay-off",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "decay-14d",
+      "unique_variable": "dssm.time_decay",
+      "value": {"enabled": true, "half_life_seconds": 1209600},
+      "control": "decay-off",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "title-off",
+      "unique_variable": "title.enabled",
+      "value": false,
+      "control": "title-on",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "title-on",
+      "unique_variable": "title.enabled",
+      "value": true,
+      "control": "title-on",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "dssm-hparam-b",
+      "unique_variable": "dssm_capacity_and_optimizer_group",
+      "value": "configs/models/smoke-b.json#dssm",
+      "control": "configs/models/smoke-a.json#dssm",
+      "execution_path": "sync_cli"
+    },
+    {
+      "experiment_id": "deepfm-hparam-b",
+      "unique_variable": "deepfm_capacity_and_optimizer_group",
+      "value": "configs/models/smoke-b.json#deepfm",
+      "control": "configs/models/smoke-a.json#deepfm",
+      "execution_path": "sync_cli"
+    }
+  ]
+}

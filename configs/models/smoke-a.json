@@ -1,0 +1,55 @@
+{
+  "schema_version": "1.0",
+  "experiment_name": "official-smoke-a-uniform-no-decay",
+  "mode": "smoke",
+  "seed": 20260901,
+  "title": {
+    "enabled": true,
+    "bucket_count": 256,
+    "ngram_min": 1,
+    "ngram_max": 2,
+    "embedding_dim": 8,
+    "maximum_tokens": 12
+  },
+  "dssm": {
+    "embedding_dim": 12,
+    "hidden_dims": [24],
+    "output_dim": 12,
+    "dropout": 0.0,
+    "temperature": 0.2,
+    "learning_rate": 0.01,
+    "batch_size": 128,
+    "epochs": 5,
+    "patience": 2,
+    "min_delta": 0.0001,
+    "negative_sampling": "uniform",
+    "negatives_per_positive": 2,
+    "popularity_alpha": 0.75,
+    "candidate_top_n": 40,
+    "time_decay": {"enabled": false, "half_life_seconds": 604800}
+  },
+  "deepfm": {
+    "embedding_dim": 8,
+    "hidden_dims": [32, 16],
+    "dropout": 0.0,
+    "learning_rate": 0.005,
+    "batch_size": 128,
+    "epochs": 5,
+    "patience": 2,
+    "min_delta": 0.0001,
+    "negatives_per_positive": 3,
+    "dense_features": [
+      "dssm_recall_score",
+      "title_history_similarity",
+      "train_popularity_log_normalized",
+      "train_novelty",
+      "train_user_activity_log_normalized",
+      "train_time_decay_weight"
+    ]
+  },
+  "evaluation": {
+    "candidate_policy": "full_catalog_excluding_train_seen",
+    "k": [5, 10, 20],
+    "maximum_badcases": 200
+  }
+}

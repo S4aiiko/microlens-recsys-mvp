@@ -104,7 +104,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "api,worker"
+          "value": "api,model,worker"
         },
         {
           "name": "microlens:source-copied",
@@ -191,6 +191,117 @@
       "version": "reference-only-2026-09-01"
     },
     {
+      "bom-ref": "pkg:github/USTCLLM/RecStudio@9114975b8e9ec85bce16c1ed8abbf0e194e4afb3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/USTCLLM/RecStudio"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "USTCLLM/RecStudio",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/USTCLLM/RecStudio@9114975b8e9ec85bce16c1ed8abbf0e194e4afb3",
+      "scope": "excluded",
+      "type": "library",
+      "version": "9114975b8e9ec85bce16c1ed8abbf0e194e4afb3"
+    },
+    {
+      "bom-ref": "pkg:github/apache/arrow@a769c291e01093b73d03a075179cf7a09bf92ad8",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/apache/arrow"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "apache/arrow",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/apache/arrow@a769c291e01093b73d03a075179cf7a09bf92ad8",
+      "scope": "excluded",
+      "type": "library",
+      "version": "a769c291e01093b73d03a075179cf7a09bf92ad8"
+    },
+    {
+      "bom-ref": "pkg:github/apache/iceberg@86da2dc8414756e05106b3272fd6e6d0dde306e3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/apache/iceberg"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "apache/iceberg",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/apache/iceberg@86da2dc8414756e05106b3272fd6e6d0dde306e3",
+      "scope": "excluded",
+      "type": "library",
+      "version": "86da2dc8414756e05106b3272fd6e6d0dde306e3"
+    },
+    {
       "bom-ref": "pkg:github/apple/ml-negative-sampling@8dc093469cf0ac693dd894fc904e1f2e88cc34e7",
       "externalReferences": [
         {
@@ -265,6 +376,117 @@
       "scope": "excluded",
       "type": "library",
       "version": "reference-gate"
+    },
+    {
+      "bom-ref": "pkg:github/duckdb/duckdb@d8cdaa33fda8df955cc76ef58a280f68f4cd43fa",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/duckdb/duckdb"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "duckdb/duckdb",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/duckdb/duckdb@d8cdaa33fda8df955cc76ef58a280f68f4cd43fa",
+      "scope": "excluded",
+      "type": "library",
+      "version": "d8cdaa33fda8df955cc76ef58a280f68f4cd43fa"
+    },
+    {
+      "bom-ref": "pkg:github/elastic/elasticsearch-py@76e23a37d0cea34c7a580781fd6bf2b678139fb4",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/elastic/elasticsearch-py"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "elastic/elasticsearch-py",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/elastic/elasticsearch-py@76e23a37d0cea34c7a580781fd6bf2b678139fb4",
+      "scope": "excluded",
+      "type": "library",
+      "version": "76e23a37d0cea34c7a580781fd6bf2b678139fb4"
+    },
+    {
+      "bom-ref": "pkg:github/elastic/elasticsearch@3c7c6027c5769d860d87448e2749f4c550a239da",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/elastic/elasticsearch"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Elastic-2.0 OR AGPL-3.0-only OR SSPL-1.0"
+        }
+      ],
+      "name": "elastic/elasticsearch",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/elastic/elasticsearch@3c7c6027c5769d860d87448e2749f4c550a239da",
+      "scope": "excluded",
+      "type": "library",
+      "version": "3c7c6027c5769d860d87448e2749f4c550a239da"
     },
     {
       "bom-ref": "pkg:github/fastapi-users/fastapi-users@9ef8cd82619856772ac06a178b114eb47c79586c",
@@ -378,6 +600,43 @@
       "version": "5debad3409639438bb4dbffa15d200dbb458a555"
     },
     {
+      "bom-ref": "pkg:github/hyzyla/outbox-streaming@6f682a64104c7004935c9a75f47f843422955707",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/hyzyla/outbox-streaming"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "hyzyla/outbox-streaming",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/hyzyla/outbox-streaming@6f682a64104c7004935c9a75f47f843422955707",
+      "scope": "excluded",
+      "type": "library",
+      "version": "6f682a64104c7004935c9a75f47f843422955707"
+    },
+    {
       "bom-ref": "pkg:github/microsoft/playwright@reference-gate",
       "externalReferences": [
         {
@@ -452,6 +711,80 @@
       "version": "9e66f6fe923f14816d39898320450b65e6932a55"
     },
     {
+      "bom-ref": "pkg:github/procrastinate-org/procrastinate@509487b0765c3a95be93424ec5c844d8e306c089",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/procrastinate-org/procrastinate"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "procrastinate-org/procrastinate",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/procrastinate-org/procrastinate@509487b0765c3a95be93424ec5c844d8e306c089",
+      "scope": "excluded",
+      "type": "library",
+      "version": "509487b0765c3a95be93424ec5c844d8e306c089"
+    },
+    {
+      "bom-ref": "pkg:github/prometheus/alertmanager@7935b44682464fa7ba3e8a1f15a6f39eff1b3369",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/prometheus/alertmanager"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "prometheus/alertmanager",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/prometheus/alertmanager@7935b44682464fa7ba3e8a1f15a6f39eff1b3369",
+      "scope": "excluded",
+      "type": "library",
+      "version": "7935b44682464fa7ba3e8a1f15a6f39eff1b3369"
+    },
+    {
       "bom-ref": "pkg:github/raimon49/pip-licenses@reference-only-2026-09-01",
       "externalReferences": [
         {
@@ -524,6 +857,43 @@
       "scope": "excluded",
       "type": "library",
       "version": "0bb4b3690941ffb668118e31ccaf8a7d19f8212a"
+    },
+    {
+      "bom-ref": "pkg:github/rixwew/pytorch-fm@f74ad19771eda104e99874d19dc892e988ec53fa",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/rixwew/pytorch-fm"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "rixwew/pytorch-fm",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-reference"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "reference-only"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "none"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/rixwew/pytorch-fm@f74ad19771eda104e99874d19dc892e988ec53fa",
+      "scope": "excluded",
+      "type": "library",
+      "version": "f74ad19771eda104e99874d19dc892e988ec53fa"
     },
     {
       "bom-ref": "pkg:github/westlake-repl/MicroLens@0fc876066987fb3b920df2765cfbac2763c515eb",
@@ -7789,7 +8159,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "api,dev"
+          "value": "api,dev,search"
         },
         {
           "name": "microlens:source-copied",
@@ -7933,7 +8303,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "dev"
+          "value": "dev,search"
         },
         {
           "name": "microlens:source-copied",
@@ -8053,6 +8423,114 @@
       "version": "0.4.6"
     },
     {
+      "bom-ref": "pkg:pypi/duckdb@1.5.5",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/duckdb/1.5.5/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "duckdb",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "analytics"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/duckdb@1.5.5",
+      "type": "library",
+      "version": "1.5.5"
+    },
+    {
+      "bom-ref": "pkg:pypi/elastic-transport@9.4.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/elastic-transport/9.4.2/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "elastic-transport",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/elastic-transport@9.4.2",
+      "type": "library",
+      "version": "9.4.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/elasticsearch@9.4.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/elasticsearch/9.4.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "elasticsearch",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/elasticsearch@9.4.0",
+      "type": "library",
+      "version": "9.4.0"
+    },
+    {
       "bom-ref": "pkg:pypi/fastapi@0.141.1",
       "externalReferences": [
         {
@@ -8087,6 +8565,78 @@
       "purl": "pkg:pypi/fastapi@0.141.1",
       "type": "library",
       "version": "0.141.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/filelock@3.32.5",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/filelock/3.32.5/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "filelock",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/filelock@3.32.5",
+      "type": "library",
+      "version": "3.32.5"
+    },
+    {
+      "bom-ref": "pkg:pypi/fsspec@2026.7.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/fsspec/2026.7.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "fsspec",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/fsspec@2026.7.0",
+      "type": "library",
+      "version": "2026.7.0"
     },
     {
       "bom-ref": "pkg:pypi/greenlet@3.5.5",
@@ -8293,7 +8843,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "api,dev"
+          "value": "api,dev,search"
         },
         {
           "name": "microlens:source-copied",
@@ -8339,6 +8889,42 @@
       "purl": "pkg:pypi/iniconfig@2.3.0",
       "type": "library",
       "version": "2.3.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/jinja2@3.1.6",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/jinja2/3.1.6/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "jinja2",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/jinja2@3.1.6",
+      "type": "library",
+      "version": "3.1.6"
     },
     {
       "bom-ref": "pkg:pypi/jsonschema-specifications@2025.9.1",
@@ -8473,7 +9059,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "api"
+          "value": "api,model"
         },
         {
           "name": "microlens:source-copied",
@@ -8483,6 +9069,78 @@
       "purl": "pkg:pypi/markupsafe@3.0.3",
       "type": "library",
       "version": "3.0.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/mpmath@1.3.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/mpmath/1.3.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "mpmath",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/mpmath@1.3.0",
+      "type": "library",
+      "version": "1.3.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/networkx@3.6.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/networkx/3.6.1/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "networkx",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/networkx@3.6.1",
+      "type": "library",
+      "version": "3.6.1"
     },
     {
       "bom-ref": "pkg:pypi/packaging@26.3",
@@ -8689,7 +9347,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "data"
+          "value": "analytics,data"
         },
         {
           "name": "microlens:source-copied",
@@ -8917,6 +9575,42 @@
       "version": "8.4.2"
     },
     {
+      "bom-ref": "pkg:pypi/python-dateutil@2.9.0.post0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/python-dateutil/2.9.0.post0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR BSD-3-Clause"
+        }
+      ],
+      "name": "python-dateutil",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/python-dateutil@2.9.0.post0",
+      "type": "library",
+      "version": "2.9.0.post0"
+    },
+    {
       "bom-ref": "pkg:pypi/python-dotenv@1.2.3",
       "externalReferences": [
         {
@@ -9133,6 +9827,114 @@
       "version": "0.16.5"
     },
     {
+      "bom-ref": "pkg:pypi/setuptools@84.0.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/setuptools/84.0.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "setuptools",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/setuptools@84.0.0",
+      "type": "library",
+      "version": "84.0.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/six@1.17.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/six/1.17.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "six",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/six@1.17.0",
+      "type": "library",
+      "version": "1.17.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/sniffio@1.3.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/sniffio/1.3.1/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "sniffio",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/sniffio@1.3.1",
+      "type": "library",
+      "version": "1.3.1"
+    },
+    {
       "bom-ref": "pkg:pypi/sqlalchemy@2.0.52",
       "externalReferences": [
         {
@@ -9205,6 +10007,78 @@
       "version": "1.6.0"
     },
     {
+      "bom-ref": "pkg:pypi/sympy@1.14.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/sympy/1.14.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause"
+        }
+      ],
+      "name": "sympy",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/sympy@1.14.0",
+      "type": "library",
+      "version": "1.14.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/torch@2.13.0+cpu",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://download.pytorch.org/whl/cpu/torch/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause AND BSD-3-Clause AND BSL-1.0 AND MIT"
+        }
+      ],
+      "name": "torch",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "model"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/torch@2.13.0+cpu",
+      "type": "library",
+      "version": "2.13.0+cpu"
+    },
+    {
       "bom-ref": "pkg:pypi/typing-extensions@4.16.0",
       "externalReferences": [
         {
@@ -9229,7 +10103,7 @@
         },
         {
           "name": "microlens:scopes",
-          "value": "api,dev"
+          "value": "api,dev,model,search"
         },
         {
           "name": "microlens:source-copied",
@@ -9275,6 +10149,42 @@
       "purl": "pkg:pypi/typing-inspection@0.4.4",
       "type": "library",
       "version": "0.4.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/urllib3@2.7.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/project/urllib3/2.7.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "urllib3",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "python"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "transitive"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "search"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:pypi/urllib3@2.7.0",
+      "type": "library",
+      "version": "2.7.0"
     },
     {
       "bom-ref": "pkg:pypi/uvicorn@0.52.4",
@@ -9450,6 +10360,8 @@
         "pkg:npm/vite@8.2.0",
         "pkg:npm/vitest@4.1.11",
         "pkg:pypi/alembic@1.19.1",
+        "pkg:pypi/duckdb@1.5.5",
+        "pkg:pypi/elasticsearch@9.4.0",
         "pkg:pypi/fastapi@0.141.1",
         "pkg:pypi/httpx@0.28.1",
         "pkg:pypi/jsonschema@4.26.0",
@@ -9462,6 +10374,7 @@
         "pkg:pypi/redis@7.3.1",
         "pkg:pypi/ruff@0.16.5",
         "pkg:pypi/sqlalchemy@2.0.52",
+        "pkg:pypi/torch@2.13.0+cpu",
         "pkg:pypi/uvicorn@0.52.4"
       ],
       "ref": "microlens-recsys-mvp@0.0.0"
@@ -9488,11 +10401,35 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:github/USTCLLM/RecStudio@9114975b8e9ec85bce16c1ed8abbf0e194e4afb3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/apache/arrow@a769c291e01093b73d03a075179cf7a09bf92ad8"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/apache/iceberg@86da2dc8414756e05106b3272fd6e6d0dde306e3"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:github/apple/ml-negative-sampling@8dc093469cf0ac693dd894fc904e1f2e88cc34e7"
     },
     {
       "dependsOn": [],
       "ref": "pkg:github/docker/awesome-compose@reference-gate"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/duckdb/duckdb@d8cdaa33fda8df955cc76ef58a280f68f4cd43fa"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/elastic/elasticsearch-py@76e23a37d0cea34c7a580781fd6bf2b678139fb4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/elastic/elasticsearch@3c7c6027c5769d860d87448e2749f4c550a239da"
     },
     {
       "dependsOn": [],
@@ -9508,6 +10445,10 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:github/hyzyla/outbox-streaming@6f682a64104c7004935c9a75f47f843422955707"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:github/microsoft/playwright@reference-gate"
     },
     {
@@ -9516,11 +10457,23 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:github/procrastinate-org/procrastinate@509487b0765c3a95be93424ec5c844d8e306c089"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/prometheus/alertmanager@7935b44682464fa7ba3e8a1f15a6f39eff1b3369"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:github/raimon49/pip-licenses@reference-only-2026-09-01"
     },
     {
       "dependsOn": [],
       "ref": "pkg:github/recommenders-team/recommenders@0bb4b3690941ffb668118e31ccaf8a7d19f8212a"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/rixwew/pytorch-fm@f74ad19771eda104e99874d19dc892e988ec53fa"
     },
     {
       "dependsOn": [],
@@ -10360,7 +11313,27 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:pypi/duckdb@1.5.5"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/elastic-transport@9.4.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/elasticsearch@9.4.0"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:pypi/fastapi@0.141.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/filelock@3.32.5"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/fsspec@2026.7.0"
     },
     {
       "dependsOn": [],
@@ -10392,6 +11365,10 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:pypi/jinja2@3.1.6"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:pypi/jsonschema-specifications@2025.9.1"
     },
     {
@@ -10405,6 +11382,14 @@
     {
       "dependsOn": [],
       "ref": "pkg:pypi/markupsafe@3.0.3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/mpmath@1.3.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/networkx@3.6.1"
     },
     {
       "dependsOn": [],
@@ -10456,6 +11441,10 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:pypi/python-dateutil@2.9.0.post0"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:pypi/python-dotenv@1.2.3"
     },
     {
@@ -10480,6 +11469,18 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:pypi/setuptools@84.0.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/six@1.17.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/sniffio@1.3.1"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:pypi/sqlalchemy@2.0.52"
     },
     {
@@ -10488,11 +11489,23 @@
     },
     {
       "dependsOn": [],
+      "ref": "pkg:pypi/sympy@1.14.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/torch@2.13.0+cpu"
+    },
+    {
+      "dependsOn": [],
       "ref": "pkg:pypi/typing-extensions@4.16.0"
     },
     {
       "dependsOn": [],
       "ref": "pkg:pypi/typing-inspection@0.4.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/urllib3@2.7.0"
     },
     {
       "dependsOn": [],

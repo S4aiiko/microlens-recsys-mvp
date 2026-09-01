@@ -1,0 +1,23 @@
+-- Hive-compatible template only. NOT VALIDATED AGAINST A REAL HIVE INSTANCE.
+CREATE EXTERNAL TABLE IF NOT EXISTS `${database}`.`${events_table}` (
+  event_sequence_id BIGINT,
+  event_id STRING,
+  exposure_id STRING,
+  request_id STRING,
+  user_id STRING,
+  item_id STRING,
+  position INT,
+  feed_type STRING,
+  source STRING,
+  client_timestamp TIMESTAMP,
+  server_timestamp TIMESTAMP,
+  duration_ms BIGINT,
+  payload_json STRING,
+  schema_version STRING
+)
+PARTITIONED BY (dt STRING, event_type STRING)
+STORED AS PARQUET
+LOCATION '${events_location}';
+
+-- Register published partitions after manifest/checksum validation.
+-- MSCK REPAIR TABLE `${database}`.`${events_table}`;

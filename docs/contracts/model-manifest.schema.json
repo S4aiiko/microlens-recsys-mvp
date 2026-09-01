@@ -8,7 +8,7 @@
     "schema_version", "model_version", "data_version", "data_manifest_checksum",
     "purpose", "evaluation_comparability", "activation_eligible", "git_revision",
     "algorithms", "features", "resolved_config_checksum", "seed", "negative_sampling",
-    "time_decay", "best_epoch", "early_stop_reason", "evaluation", "artifacts",
+    "time_decay", "model_identity", "best_epoch", "early_stop_reason", "evaluation", "artifacts",
     "generation_command", "runtime_environment", "status"
   ],
   "properties": {
@@ -34,8 +34,36 @@
     "features": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
     "resolved_config_checksum": { "$ref": "#/$defs/sha256" },
     "seed": { "type": "integer", "minimum": 0 },
-    "negative_sampling": { "enum": ["uniform", "popularity_aware", "not_applicable"] },
+    "negative_sampling": {
+      "enum": ["uniform", "popularity_aware", "train_only_hard", "not_applicable"]
+    },
     "time_decay": { "type": "object" },
+    "model_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "data_version", "data_manifest_checksum",
+        "resolved_config_checksum", "seed", "title_encoder_checksum",
+        "user_ids_checksum", "item_ids_checksum", "train_popularity_checksum",
+        "dssm_state_checksum", "deepfm_state_checksum", "metrics_checksum",
+        "stage_execution_checksum"
+      ],
+      "properties": {
+        "schema_version": { "const": "1.0" },
+        "data_version": { "type": "string", "minLength": 1 },
+        "data_manifest_checksum": { "$ref": "#/$defs/sha256" },
+        "resolved_config_checksum": { "$ref": "#/$defs/sha256" },
+        "seed": { "type": "integer", "minimum": 0 },
+        "title_encoder_checksum": { "$ref": "#/$defs/sha256" },
+        "user_ids_checksum": { "$ref": "#/$defs/sha256" },
+        "item_ids_checksum": { "$ref": "#/$defs/sha256" },
+        "train_popularity_checksum": { "$ref": "#/$defs/sha256" },
+        "dssm_state_checksum": { "$ref": "#/$defs/sha256" },
+        "deepfm_state_checksum": { "$ref": "#/$defs/sha256" },
+        "metrics_checksum": { "$ref": "#/$defs/sha256" },
+        "stage_execution_checksum": { "$ref": "#/$defs/sha256" }
+      }
+    },
     "best_epoch": { "type": ["integer", "null"], "minimum": 0 },
     "early_stop_reason": { "type": ["string", "null"] },
     "evaluation": {

@@ -1,0 +1,26 @@
+schema_version: "1.0"
+timezone: UTC
+window_semantics: "[from_utc,to_utc)"
+source_ordering: postgres_events.id
+late_event_policy: immutable_follow_up_revision
+writer:
+  implementation: pyarrow
+  exact_version: 25.0.1
+  format: parquet
+  parquet_version: "2.6"
+  compression: zstd
+  compression_level: 3
+  row_group_size: 65536
+  use_dictionary: false
+datasets:
+  events:
+    partition_fields: [dt, event_type]
+    path_template: "events/dt={YYYY-MM-DD}/event_type={event_type}/part-00000.parquet"
+  exposures:
+    partition_fields: [dt, feed_type]
+    path_template: "exposures/dt={YYYY-MM-DD}/feed_type={feed_type}/part-00000.parquet"
+schema_evolution:
+  same_major_only: true
+  preserve_existing_field_order_type_nullability: true
+  added_fields_must_be_nullable: true
+  partition_fields_immutable_within_major: true

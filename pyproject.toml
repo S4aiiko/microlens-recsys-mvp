@@ -26,6 +26,16 @@ api = [
 data = [
   "pyarrow==25.0.1",
 ]
+analytics = [
+  "duckdb==1.5.5",
+  "pyarrow==25.0.1",
+]
+model = [
+  "torch==2.13.0+cpu",
+]
+search = [
+  "elasticsearch==9.4.0",
+]
 dev = [
   "httpx>=0.27,<1.0",
   "jsonschema>=4.23,<5.0",

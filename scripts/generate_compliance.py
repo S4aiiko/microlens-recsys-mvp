@@ -29,7 +29,12 @@ PYTHON_LICENSES = {
     "cffi": "MIT-0",
     "click": "BSD-3-Clause",
     "colorama": "BSD-3-Clause",
+    "duckdb": "MIT",
+    "elastic-transport": "Apache-2.0",
+    "elasticsearch": "Apache-2.0",
     "fastapi": "MIT",
+    "filelock": "MIT",
+    "fsspec": "BSD-3-Clause",
     "greenlet": "MIT AND PSF-2.0",
     "h11": "MIT",
     "httpcore": "BSD-3-Clause",
@@ -37,10 +42,13 @@ PYTHON_LICENSES = {
     "httpx": "BSD-3-Clause",
     "idna": "BSD-3-Clause",
     "iniconfig": "MIT",
+    "jinja2": "BSD-3-Clause",
     "jsonschema": "MIT",
     "jsonschema-specifications": "MIT",
     "mako": "MIT",
     "markupsafe": "BSD-3-Clause",
+    "mpmath": "BSD-3-Clause",
+    "networkx": "BSD-3-Clause",
     "packaging": "Apache-2.0 OR BSD-2-Clause",
     "pluggy": "MIT",
     "psycopg": "LGPL-3.0-only",
@@ -53,6 +61,7 @@ PYTHON_LICENSES = {
     "pygments": "BSD-2-Clause",
     "pyjwt": "MIT",
     "pytest": "MIT",
+    "python-dateutil": "Apache-2.0 OR BSD-3-Clause",
     "python-dotenv": "BSD-3-Clause",
     "pyyaml": "MIT",
     "redis": "MIT",
@@ -61,10 +70,19 @@ PYTHON_LICENSES = {
     "ruff": "MIT",
     "sqlalchemy": "MIT",
     "starlette": "BSD-3-Clause",
+    "setuptools": "MIT",
+    "six": "MIT",
+    "sniffio": "MIT",
+    "sympy": "BSD-3-Clause",
+    "torch": (
+        "Apache-2.0 AND Apache-2.0 WITH LLVM-exception AND BSD-2-Clause "
+        "AND BSD-3-Clause AND BSL-1.0 AND MIT"
+    ),
     "typing-extensions": "PSF-2.0",
     "typing-inspection": "MIT",
     "uvicorn": "BSD-3-Clause",
     "uvloop": "MIT",
+    "urllib3": "MIT",
     "watchfiles": "MIT",
     "websockets": "BSD-3-Clause",
 }
@@ -74,6 +92,12 @@ BASE_IMAGE_SOURCES = {
     "node": "https://github.com/nodejs/docker-node",
     "postgres": "https://github.com/docker-library/postgres",
     "redis": "https://github.com/redis/docker-library-redis",
+}
+
+PYTHON_PACKAGE_SOURCES = {
+    # The model lock is intentionally resolved from PyTorch's official CPU-only
+    # wheel index; the ``+cpu`` build is not distributed by PyPI.
+    "torch": "https://download.pytorch.org/whl/cpu/torch/",
 }
 
 # These were inspected only. They are deliberately excluded from the runtime
@@ -91,6 +115,20 @@ REFERENCES = [
     ("microsoft/playwright", "reference-gate", "Apache-2.0"),
     ("CycloneDX/cyclonedx-python", "reference-only-2026-09-01", "Apache-2.0"),
     ("raimon49/pip-licenses", "reference-only-2026-09-01", "MIT"),
+    ("procrastinate-org/procrastinate", "509487b0765c3a95be93424ec5c844d8e306c089", "MIT"),
+    ("hyzyla/outbox-streaming", "6f682a64104c7004935c9a75f47f843422955707", "MIT"),
+    ("prometheus/alertmanager", "7935b44682464fa7ba3e8a1f15a6f39eff1b3369", "Apache-2.0"),
+    ("apache/arrow", "a769c291e01093b73d03a075179cf7a09bf92ad8", "Apache-2.0"),
+    ("duckdb/duckdb", "d8cdaa33fda8df955cc76ef58a280f68f4cd43fa", "MIT"),
+    ("apache/iceberg", "86da2dc8414756e05106b3272fd6e6d0dde306e3", "Apache-2.0"),
+    ("rixwew/pytorch-fm", "f74ad19771eda104e99874d19dc892e988ec53fa", "MIT"),
+    ("USTCLLM/RecStudio", "9114975b8e9ec85bce16c1ed8abbf0e194e4afb3", "MIT"),
+    ("elastic/elasticsearch-py", "76e23a37d0cea34c7a580781fd6bf2b678139fb4", "Apache-2.0"),
+    (
+        "elastic/elasticsearch",
+        "3c7c6027c5769d860d87448e2749f4c550a239da",
+        "Elastic-2.0 OR AGPL-3.0-only OR SSPL-1.0",
+    ),
 ]
 
 
@@ -125,7 +163,9 @@ def _python_components() -> list[dict[str, Any]]:
                 version=version,
                 purl=f"pkg:pypi/{name}@{version}",
                 license_id=license_id,
-                source=f"https://pypi.org/project/{name}/{version}/",
+                source=PYTHON_PACKAGE_SOURCES.get(
+                    name, f"https://pypi.org/project/{name}/{version}/"
+                ),
                 ecosystem="python",
                 relation="direct" if name in direct else "transitive",
                 scopes=",".join(sorted(scopes)),
@@ -183,6 +223,7 @@ def _base_images() -> list[tuple[str, str, str, str, str]]:
     observed: dict[tuple[str, str, str], set[str]] = {}
     for service, dockerfile in (
         ("api", ROOT / "apps/api/Dockerfile"),
+        ("model", ROOT / "docker/model.Dockerfile"),
         ("worker", ROOT / "apps/worker/Dockerfile"),
         ("web", ROOT / "apps/web/Dockerfile"),
     ):
