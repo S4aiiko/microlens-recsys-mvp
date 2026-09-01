@@ -9,21 +9,28 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "typecheck": "tsc -b --pretty false",
     "generate-client": "openapi-ts -i ../../docs/contracts/openapi.json -o src/api/generated",
     "check-client-drift": "sh ./scripts/check-client-drift.sh"
   },
   "dependencies": {
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-router": "7.18.3"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.3",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react-swc": "4.3.3",
+    "jsdom": "29.1.1",
     "typescript": "6.0.3",
-    "vite": "8.2.0"
+    "vite": "8.2.0",
+    "vitest": "4.1.11"
   },
   "overrides": {
     "js-yaml": "4.3.1"

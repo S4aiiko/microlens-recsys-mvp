@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CompareModelVersionsData, CompareModelVersionsErrors, CompareModelVersionsResponses, CreateEventBatchData, CreateEventBatchErrors, CreateEventBatchResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateOperationBatchData, CreateOperationBatchErrors, CreateOperationBatchResponses, CreatePromotionData, CreatePromotionErrors, CreatePromotionResponses, DebugRecommendationRequestData, DebugRecommendationRequestErrors, DebugRecommendationRequestResponses, DebugUserData, DebugUserErrors, DebugUserResponses, ExportDashboardCsvData, ExportDashboardCsvErrors, ExportDashboardCsvResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDashboardFeedsData, GetDashboardFeedsErrors, GetDashboardFeedsResponses, GetDashboardOverviewData, GetDashboardOverviewErrors, GetDashboardOverviewResponses, GetDashboardTimeseriesData, GetDashboardTimeseriesErrors, GetDashboardTimeseriesResponses, GetFeedPageData, GetFeedPageErrors, GetFeedPageResponses, GetHealthData, GetHealthResponses, GetItemData, GetItemErrors, GetItemResponses, GetMyProfileData, GetMyProfileErrors, GetMyProfileResponses, GetReadyData, GetReadyResponses, ListAdminUsersData, ListAdminUsersErrors, ListAdminUsersResponses, ListModelVersionsData, ListModelVersionsErrors, ListModelVersionsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTrainingJobsData, ListTrainingJobsErrors, ListTrainingJobsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, SearchAdminItemsData, SearchAdminItemsErrors, SearchAdminItemsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { CompareModelVersionsData, CompareModelVersionsErrors, CompareModelVersionsResponses, CreateEventBatchData, CreateEventBatchErrors, CreateEventBatchResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateOperationBatchData, CreateOperationBatchErrors, CreateOperationBatchResponses, CreatePromotionData, CreatePromotionErrors, CreatePromotionResponses, DebugRecommendationRequestData, DebugRecommendationRequestErrors, DebugRecommendationRequestResponses, DebugUserData, DebugUserErrors, DebugUserResponses, ExportDashboardCsvData, ExportDashboardCsvErrors, ExportDashboardCsvResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDashboardFeedsData, GetDashboardFeedsErrors, GetDashboardFeedsResponses, GetDashboardHotItemsData, GetDashboardHotItemsErrors, GetDashboardHotItemsResponses, GetDashboardOverviewData, GetDashboardOverviewErrors, GetDashboardOverviewResponses, GetDashboardTimeseriesData, GetDashboardTimeseriesErrors, GetDashboardTimeseriesResponses, GetFeedPageData, GetFeedPageErrors, GetFeedPageResponses, GetHealthData, GetHealthResponses, GetItemData, GetItemErrors, GetItemResponses, GetMyProfileData, GetMyProfileErrors, GetMyProfileResponses, GetReadyData, GetReadyResponses, ListAdminUsersData, ListAdminUsersErrors, ListAdminUsersResponses, ListModelVersionsData, ListModelVersionsErrors, ListModelVersionsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTrainingJobsData, ListTrainingJobsErrors, ListTrainingJobsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, SearchAdminItemsData, SearchAdminItemsErrors, SearchAdminItemsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -18,10 +18,9 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
     meta?: keyof ClientMeta extends never ? Record<string, unknown> : ClientMeta;
 };
 
-export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>): RequestResult<GetHealthResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetHealthResponses, unknown, ThrowOnError>({ url: '/health', ...options });
-
-export const getReady = <ThrowOnError extends boolean = false>(options?: Options<GetReadyData, ThrowOnError>): RequestResult<GetReadyResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetReadyResponses, unknown, ThrowOnError>({ url: '/ready', ...options });
-
+/**
+ * Register
+ */
 export const registerUser = <ThrowOnError extends boolean = false>(options: Options<RegisterUserData, ThrowOnError>): RequestResult<RegisterUserResponses, RegisterUserErrors, ThrowOnError> => (options.client ?? client).post<RegisterUserResponses, RegisterUserErrors, ThrowOnError>({
     url: '/api/auth/register',
     ...options,
@@ -31,6 +30,9 @@ export const registerUser = <ThrowOnError extends boolean = false>(options: Opti
     }
 });
 
+/**
+ * Login
+ */
 export const loginUser = <ThrowOnError extends boolean = false>(options: Options<LoginUserData, ThrowOnError>): RequestResult<LoginUserResponses, LoginUserErrors, ThrowOnError> => (options.client ?? client).post<LoginUserResponses, LoginUserErrors, ThrowOnError>({
     url: '/api/auth/login',
     ...options,
@@ -40,6 +42,9 @@ export const loginUser = <ThrowOnError extends boolean = false>(options: Options
     }
 });
 
+/**
+ * Me
+ */
 export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: Options<GetCurrentUserData, ThrowOnError>): RequestResult<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError> => (options?.client ?? client).get<GetCurrentUserResponses, GetCurrentUserErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -50,6 +55,9 @@ export const getCurrentUser = <ThrowOnError extends boolean = false>(options?: O
     ...options
 });
 
+/**
+ * Logout
+ */
 export const logoutUser = <ThrowOnError extends boolean = false>(options?: Options<LogoutUserData, ThrowOnError>): RequestResult<LogoutUserResponses, LogoutUserErrors, ThrowOnError> => (options?.client ?? client).post<LogoutUserResponses, LogoutUserErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -60,16 +68,39 @@ export const logoutUser = <ThrowOnError extends boolean = false>(options?: Optio
     ...options
 });
 
-export const getFeedPage = <ThrowOnError extends boolean = false>(options: Options<GetFeedPageData, ThrowOnError>): RequestResult<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError> => (options.client ?? client).get<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError>({
+/**
+ * List Users
+ */
+export const listAdminUsers = <ThrowOnError extends boolean = false>(options?: Options<ListAdminUsersData, ThrowOnError>): RequestResult<ListAdminUsersResponses, ListAdminUsersErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminUsersResponses, ListAdminUsersErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'microlens_session',
             type: 'apiKey'
         }],
-    url: '/api/feeds/{feed_type}',
+    url: '/api/admin/users',
     ...options
 });
 
+/**
+ * Update Role
+ */
+export const updateUserRole = <ThrowOnError extends boolean = false>(options: Options<UpdateUserRoleData, ThrowOnError>): RequestResult<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError> => (options.client ?? client).put<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/roles',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Event
+ */
 export const createEvent = <ThrowOnError extends boolean = false>(options: Options<CreateEventData, ThrowOnError>): RequestResult<CreateEventResponses, CreateEventErrors, ThrowOnError> => (options.client ?? client).post<CreateEventResponses, CreateEventErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -84,6 +115,9 @@ export const createEvent = <ThrowOnError extends boolean = false>(options: Optio
     }
 });
 
+/**
+ * Create Event Batch
+ */
 export const createEventBatch = <ThrowOnError extends boolean = false>(options: Options<CreateEventBatchData, ThrowOnError>): RequestResult<CreateEventBatchResponses, CreateEventBatchErrors, ThrowOnError> => (options.client ?? client).post<CreateEventBatchResponses, CreateEventBatchErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -98,6 +132,9 @@ export const createEventBatch = <ThrowOnError extends boolean = false>(options: 
     }
 });
 
+/**
+ * My Profile
+ */
 export const getMyProfile = <ThrowOnError extends boolean = false>(options?: Options<GetMyProfileData, ThrowOnError>): RequestResult<GetMyProfileResponses, GetMyProfileErrors, ThrowOnError> => (options?.client ?? client).get<GetMyProfileResponses, GetMyProfileErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -108,6 +145,9 @@ export const getMyProfile = <ThrowOnError extends boolean = false>(options?: Opt
     ...options
 });
 
+/**
+ * Get Item
+ */
 export const getItem = <ThrowOnError extends boolean = false>(options: Options<GetItemData, ThrowOnError>): RequestResult<GetItemResponses, GetItemErrors, ThrowOnError> => (options.client ?? client).get<GetItemResponses, GetItemErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -118,96 +158,9 @@ export const getItem = <ThrowOnError extends boolean = false>(options: Options<G
     ...options
 });
 
-export const getDashboardOverview = <ThrowOnError extends boolean = false>(options: Options<GetDashboardOverviewData, ThrowOnError>): RequestResult<GetDashboardOverviewResponses, GetDashboardOverviewErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardOverviewResponses, GetDashboardOverviewErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/dashboard/overview',
-    ...options
-});
-
-export const getDashboardTimeseries = <ThrowOnError extends boolean = false>(options: Options<GetDashboardTimeseriesData, ThrowOnError>): RequestResult<GetDashboardTimeseriesResponses, GetDashboardTimeseriesErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardTimeseriesResponses, GetDashboardTimeseriesErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/dashboard/timeseries',
-    ...options
-});
-
-export const getDashboardFeeds = <ThrowOnError extends boolean = false>(options: Options<GetDashboardFeedsData, ThrowOnError>): RequestResult<GetDashboardFeedsResponses, GetDashboardFeedsErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardFeedsResponses, GetDashboardFeedsErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/dashboard/feeds',
-    ...options
-});
-
-export const exportDashboardCsv = <ThrowOnError extends boolean = false>(options: Options<ExportDashboardCsvData, ThrowOnError>): RequestResult<ExportDashboardCsvResponses, ExportDashboardCsvErrors, ThrowOnError> => (options.client ?? client).get<ExportDashboardCsvResponses, ExportDashboardCsvErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/dashboard/export.csv',
-    ...options
-});
-
-export const debugUser = <ThrowOnError extends boolean = false>(options: Options<DebugUserData, ThrowOnError>): RequestResult<DebugUserResponses, DebugUserErrors, ThrowOnError> => (options.client ?? client).get<DebugUserResponses, DebugUserErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/users/{user_id}/debug',
-    ...options
-});
-
-export const debugRecommendationRequest = <ThrowOnError extends boolean = false>(options: Options<DebugRecommendationRequestData, ThrowOnError>): RequestResult<DebugRecommendationRequestResponses, DebugRecommendationRequestErrors, ThrowOnError> => (options.client ?? client).get<DebugRecommendationRequestResponses, DebugRecommendationRequestErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/requests/{request_id}',
-    ...options
-});
-
-export const listModelVersions = <ThrowOnError extends boolean = false>(options?: Options<ListModelVersionsData, ThrowOnError>): RequestResult<ListModelVersionsResponses, ListModelVersionsErrors, ThrowOnError> => (options?.client ?? client).get<ListModelVersionsResponses, ListModelVersionsErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/models',
-    ...options
-});
-
-export const compareModelVersions = <ThrowOnError extends boolean = false>(options?: Options<CompareModelVersionsData, ThrowOnError>): RequestResult<CompareModelVersionsResponses, CompareModelVersionsErrors, ThrowOnError> => (options?.client ?? client).get<CompareModelVersionsResponses, CompareModelVersionsErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/models/compare',
-    ...options
-});
-
-export const listTrainingJobs = <ThrowOnError extends boolean = false>(options?: Options<ListTrainingJobsData, ThrowOnError>): RequestResult<ListTrainingJobsResponses, ListTrainingJobsErrors, ThrowOnError> => (options?.client ?? client).get<ListTrainingJobsResponses, ListTrainingJobsErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/training-jobs',
-    ...options
-});
-
+/**
+ * Search Items
+ */
 export const searchAdminItems = <ThrowOnError extends boolean = false>(options?: Options<SearchAdminItemsData, ThrowOnError>): RequestResult<SearchAdminItemsResponses, SearchAdminItemsErrors, ThrowOnError> => (options?.client ?? client).get<SearchAdminItemsResponses, SearchAdminItemsErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -218,6 +171,9 @@ export const searchAdminItems = <ThrowOnError extends boolean = false>(options?:
     ...options
 });
 
+/**
+ * Create Promotion
+ */
 export const createPromotion = <ThrowOnError extends boolean = false>(options: Options<CreatePromotionData, ThrowOnError>): RequestResult<CreatePromotionResponses, CreatePromotionErrors, ThrowOnError> => (options.client ?? client).post<CreatePromotionResponses, CreatePromotionErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -232,16 +188,9 @@ export const createPromotion = <ThrowOnError extends boolean = false>(options: O
     }
 });
 
-export const listOperations = <ThrowOnError extends boolean = false>(options?: Options<ListOperationsData, ThrowOnError>): RequestResult<ListOperationsResponses, ListOperationsErrors, ThrowOnError> => (options?.client ?? client).get<ListOperationsResponses, ListOperationsErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/admin/operations',
-    ...options
-});
-
+/**
+ * Create Operation Batch
+ */
 export const createOperationBatch = <ThrowOnError extends boolean = false>(options: Options<CreateOperationBatchData, ThrowOnError>): RequestResult<CreateOperationBatchResponses, CreateOperationBatchErrors, ThrowOnError> => (options.client ?? client).post<CreateOperationBatchResponses, CreateOperationBatchErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
@@ -256,26 +205,168 @@ export const createOperationBatch = <ThrowOnError extends boolean = false>(optio
     }
 });
 
-export const listAdminUsers = <ThrowOnError extends boolean = false>(options?: Options<ListAdminUsersData, ThrowOnError>): RequestResult<ListAdminUsersResponses, ListAdminUsersErrors, ThrowOnError> => (options?.client ?? client).get<ListAdminUsersResponses, ListAdminUsersErrors, ThrowOnError>({
+/**
+ * List Operations
+ */
+export const listOperations = <ThrowOnError extends boolean = false>(options?: Options<ListOperationsData, ThrowOnError>): RequestResult<ListOperationsResponses, ListOperationsErrors, ThrowOnError> => (options?.client ?? client).get<ListOperationsResponses, ListOperationsErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'microlens_session',
             type: 'apiKey'
         }],
-    url: '/api/admin/users',
+    url: '/api/admin/operations',
     ...options
 });
 
-export const updateUserRole = <ThrowOnError extends boolean = false>(options: Options<UpdateUserRoleData, ThrowOnError>): RequestResult<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError> => (options.client ?? client).put<UpdateUserRoleResponses, UpdateUserRoleErrors, ThrowOnError>({
+/**
+ * Overview
+ */
+export const getDashboardOverview = <ThrowOnError extends boolean = false>(options: Options<GetDashboardOverviewData, ThrowOnError>): RequestResult<GetDashboardOverviewResponses, GetDashboardOverviewErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardOverviewResponses, GetDashboardOverviewErrors, ThrowOnError>({
     security: [{
             in: 'cookie',
             name: 'microlens_session',
             type: 'apiKey'
-        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
-    url: '/api/admin/roles',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
+        }],
+    url: '/api/admin/dashboard/overview',
+    ...options
+});
+
+/**
+ * Timeseries
+ */
+export const getDashboardTimeseries = <ThrowOnError extends boolean = false>(options: Options<GetDashboardTimeseriesData, ThrowOnError>): RequestResult<GetDashboardTimeseriesResponses, GetDashboardTimeseriesErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardTimeseriesResponses, GetDashboardTimeseriesErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/dashboard/timeseries',
+    ...options
+});
+
+/**
+ * Feeds
+ */
+export const getDashboardFeeds = <ThrowOnError extends boolean = false>(options: Options<GetDashboardFeedsData, ThrowOnError>): RequestResult<GetDashboardFeedsResponses, GetDashboardFeedsErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardFeedsResponses, GetDashboardFeedsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/dashboard/feeds',
+    ...options
+});
+
+/**
+ * Export Csv
+ */
+export const exportDashboardCsv = <ThrowOnError extends boolean = false>(options: Options<ExportDashboardCsvData, ThrowOnError>): RequestResult<ExportDashboardCsvResponses, ExportDashboardCsvErrors, ThrowOnError> => (options.client ?? client).get<ExportDashboardCsvResponses, ExportDashboardCsvErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/dashboard/export.csv',
+    ...options
+});
+
+/**
+ * Hot Items
+ */
+export const getDashboardHotItems = <ThrowOnError extends boolean = false>(options: Options<GetDashboardHotItemsData, ThrowOnError>): RequestResult<GetDashboardHotItemsResponses, GetDashboardHotItemsErrors, ThrowOnError> => (options.client ?? client).get<GetDashboardHotItemsResponses, GetDashboardHotItemsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/dashboard/hot-items',
+    ...options
+});
+
+/**
+ * Debug User
+ */
+export const debugUser = <ThrowOnError extends boolean = false>(options: Options<DebugUserData, ThrowOnError>): RequestResult<DebugUserResponses, DebugUserErrors, ThrowOnError> => (options.client ?? client).get<DebugUserResponses, DebugUserErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/users/{user_id}/debug',
+    ...options
+});
+
+/**
+ * Debug Request
+ */
+export const debugRecommendationRequest = <ThrowOnError extends boolean = false>(options: Options<DebugRecommendationRequestData, ThrowOnError>): RequestResult<DebugRecommendationRequestResponses, DebugRecommendationRequestErrors, ThrowOnError> => (options.client ?? client).get<DebugRecommendationRequestResponses, DebugRecommendationRequestErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/requests/{request_id}',
+    ...options
+});
+
+/**
+ * List Models
+ */
+export const listModelVersions = <ThrowOnError extends boolean = false>(options?: Options<ListModelVersionsData, ThrowOnError>): RequestResult<ListModelVersionsResponses, ListModelVersionsErrors, ThrowOnError> => (options?.client ?? client).get<ListModelVersionsResponses, ListModelVersionsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/models',
+    ...options
+});
+
+/**
+ * Compare Models
+ */
+export const compareModelVersions = <ThrowOnError extends boolean = false>(options?: Options<CompareModelVersionsData, ThrowOnError>): RequestResult<CompareModelVersionsResponses, CompareModelVersionsErrors, ThrowOnError> => (options?.client ?? client).get<CompareModelVersionsResponses, CompareModelVersionsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/models/compare',
+    ...options
+});
+
+/**
+ * List Training Jobs
+ */
+export const listTrainingJobs = <ThrowOnError extends boolean = false>(options?: Options<ListTrainingJobsData, ThrowOnError>): RequestResult<ListTrainingJobsResponses, ListTrainingJobsErrors, ThrowOnError> => (options?.client ?? client).get<ListTrainingJobsResponses, ListTrainingJobsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/training-jobs',
+    ...options
+});
+
+/**
+ * Health
+ */
+export const getHealth = <ThrowOnError extends boolean = false>(options?: Options<GetHealthData, ThrowOnError>): RequestResult<GetHealthResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetHealthResponses, unknown, ThrowOnError>({ url: '/health', ...options });
+
+/**
+ * Ready
+ */
+export const getReady = <ThrowOnError extends boolean = false>(options?: Options<GetReadyData, ThrowOnError>): RequestResult<GetReadyResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetReadyResponses, unknown, ThrowOnError>({ url: '/ready', ...options });
+
+/**
+ * Deferred Feed
+ */
+export const getFeedPage = <ThrowOnError extends boolean = false>(options: Options<GetFeedPageData, ThrowOnError>): RequestResult<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError> => (options.client ?? client).get<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/feeds/{feed_type}',
+    ...options
 });

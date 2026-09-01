@@ -1,0 +1,100 @@
+services:
+  db:
+    image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+    environment:
+      POSTGRES_DB: microlens_7b
+      POSTGRES_USER: microlens_7b
+      POSTGRES_PASSWORD: ${FIXTURE_POSTGRES_PASSWORD:?fixture postgres password required}
+    ports:
+      - "127.0.0.1:${FIXTURE_DB_PORT:?fixture db port required}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    labels: &fixture-labels
+      io.microlens.environment_kind: 7b_fixture
+      io.microlens.fixture_id: ${FIXTURE_ID:?fixture id required}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1"]
+    ports:
+      - "127.0.0.1:${FIXTURE_REDIS_PORT:?fixture redis port required}:6379"
+    volumes:
+      - redis_data:/data
+    labels: *fixture-labels
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - backend
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      APP_ENV: 7b_fixture
+      DATABASE_URL: postgresql+psycopg://microlens_7b:${FIXTURE_POSTGRES_PASSWORD}@db:5432/microlens_7b
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: ${FIXTURE_JWT_SECRET:?fixture jwt secret required}
+      PUBLISH_TOKEN: ${FIXTURE_PUBLISH_TOKEN:?fixture publish token required}
+      MICROLENS_SEED_PASSWORD: ${FIXTURE_SEED_PASSWORD:?fixture seed password required}
+      WEB_ORIGIN: http://127.0.0.1:${FIXTURE_WEB_ORIGIN_PORT:?fixture web origin port required}
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: strict
+      PUBLIC_LISTENER_URL: http://0.0.0.0:8000
+      PUBLIC_REJECT_PATH_PREFIXES: /internal/
+      INTERNAL_ACTIVATION_LISTENER_URL: http://0.0.0.0:8001
+      INTERNAL_ACTIVATION_IMPLEMENTED: "true"
+      ALEMBIC_INI: /workspace/apps/api/alembic/alembic.ini
+      MODEL_ARTIFACTS_DIR: /artifacts/experiments/7b/${FIXTURE_ID}
+      TRAINING_EXPORTS_DIR: /artifacts/training_exports/7b/${FIXTURE_ID}
+    ports:
+      - "127.0.0.1:${FIXTURE_API_PORT:?fixture api port required}:8000"
+    expose:
+      - "8001"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - model_artifacts:/artifacts/experiments/7b/${FIXTURE_ID}
+      - training_exports:/artifacts/training_exports/7b/${FIXTURE_ID}
+    labels: *fixture-labels
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+    labels: *fixture-labels
+  redis_data:
+    labels: *fixture-labels
+  model_artifacts:
+    labels: *fixture-labels
+  training_exports:
+    labels: *fixture-labels
+
+networks:
+  backend:
+    labels: *fixture-labels

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "contract_version": "0.1.0",
-  "status": "phase_1_draft",
+  "status": "phase_2d_runtime_aligned",
   "files": {
     "data_manifest": "data-manifest.schema.json",
     "model_manifest": "model-manifest.schema.json",

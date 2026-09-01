@@ -2,242 +2,3290 @@
   "openapi": "3.1.0",
   "info": {
     "title": "MicroLens Recommendation MVP API",
-    "version": "0.1.0-contract",
-    "description": "Phase 1 contract draft. Only /health and /ready are implemented in the foundation skeleton.",
-    "x-implementation-status": "contract-only-except-health"
+    "description": "Phase 2D public runtime. Feed orchestration remains explicitly deferred to Phase 4.",
+    "version": "0.2.0-phase2d",
+    "x-implementation-status": "phase_2d_public_runtime"
   },
-  "servers": [{ "url": "http://localhost:8000", "description": "Host-published public listener" }],
-  "x-listener-contract": {
-    "public": {
-      "url": "http://api:8000",
-      "host_published": true,
-      "reject_path_prefixes": ["/internal/"]
-    }
-  },
-  "tags": [
-    { "name": "system" }, { "name": "auth" }, { "name": "feeds" },
-    { "name": "events" }, { "name": "profile" }, { "name": "admin" }
-  ],
   "paths": {
-    "/health": {
-      "get": {
-        "operationId": "getHealth",
-        "tags": ["system"],
-        "responses": { "200": { "description": "Process is alive", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } } }
-      }
-    },
-    "/ready": {
-      "get": {
-        "operationId": "getReady",
-        "tags": ["system"],
-        "responses": { "200": { "description": "Configured readiness checks pass", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ready" } } } } }
-      }
-    },
     "/api/auth/register": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register",
         "operationId": "registerUser",
-        "tags": ["auth"],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } } } },
-        "responses": { "201": { "description": "User account created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "409": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" }, "429": { "$ref": "#/components/responses/Error" } }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/auth/login": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
         "operationId": "loginUser",
-        "tags": ["auth"],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } } } },
-        "responses": { "200": { "description": "Sets HttpOnly session cookie and readable CSRF cookie", "headers": { "Set-Cookie": { "schema": { "type": "string" } } }, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/auth/me": {
       "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
         "operationId": "getCurrentUser",
-        "tags": ["auth"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "responses": { "200": { "description": "Current user", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
     "/api/auth/logout": {
       "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
         "operationId": "logoutUser",
-        "tags": ["auth"],
-        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "responses": { "204": { "description": "Session jti revoked and cookie cleared" }, "401": { "$ref": "#/components/responses/Error" } }
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
-    "/api/feeds/{feed_type}": {
+    "/api/admin/users": {
       "get": {
-        "operationId": "getFeedPage",
-        "tags": ["feeds"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "parameters": [
-          { "name": "feed_type", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/FeedType" } },
-          { "name": "cursor", "in": "query", "required": false, "schema": { "type": "string" } },
-          { "name": "limit", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 } }
+        "tags": [
+          "admin"
         ],
-        "responses": { "200": { "description": "Stable snapshot page with a new per-page request_id", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FeedPage" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+        "summary": "List Users",
+        "operationId": "listAdminUsers",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/User"
+                  },
+                  "type": "array",
+                  "title": "Response Listadminusers"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/roles": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Update Role",
+        "operationId": "updateUserRole",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "admin"
+        ]
       }
     },
     "/api/events": {
       "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Create Event",
         "operationId": "createEvent",
-        "tags": ["events"],
-        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventRequest" } } } },
-        "responses": { "200": { "description": "Accepted or duplicate event", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventItemResult" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventItemResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
     "/api/events/batch": {
       "post": {
+        "tags": [
+          "events"
+        ],
+        "summary": "Create Event Batch",
         "operationId": "createEventBatch",
-        "tags": ["events"],
-        "security": [{ "cookieAuth": [], "csrfHeader": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventBatchRequest" } } } },
-        "responses": { "200": { "description": "Per-item atomic partial success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EventBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } }
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EventBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
     "/api/profile/me": {
       "get": {
+        "tags": [
+          "events"
+        ],
+        "summary": "My Profile",
         "operationId": "getMyProfile",
-        "tags": ["profile"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "responses": { "200": { "description": "Authenticated user's current profile", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserProfile" } } } }, "401": { "$ref": "#/components/responses/Error" } }
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
     "/api/items/{item_id}": {
       "get": {
+        "tags": [
+          "feeds"
+        ],
+        "summary": "Get Item",
         "operationId": "getItem",
-        "tags": ["feeds"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-        "parameters": [{ "name": "item_id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Online item", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/FeedItem" } } } }, "404": { "$ref": "#/components/responses/Error" } }
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
-    "/api/admin/dashboard/overview": { "$ref": "#/components/pathItems/adminOverview" },
-    "/api/admin/dashboard/timeseries": { "$ref": "#/components/pathItems/adminTimeseries" },
-    "/api/admin/dashboard/feeds": { "$ref": "#/components/pathItems/adminFeeds" },
-    "/api/admin/dashboard/export.csv": { "$ref": "#/components/pathItems/adminExport" },
+    "/api/admin/items": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Search Items",
+        "operationId": "searchAdminItems",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "name": "online_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/OnlineStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Online Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminItem"
+                  },
+                  "title": "Response Searchadminitems"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/promotions": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create Promotion",
+        "operationId": "createPromotion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/operation-batches": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Create Operation Batch",
+        "operationId": "createOperationBatch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationBatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationBatchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/operations": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Operations",
+        "operationId": "listOperations",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditOperation"
+                  },
+                  "type": "array",
+                  "title": "Response Listoperations"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/dashboard/overview": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Overview",
+        "operationId": "getDashboardOverview",
+        "parameters": [
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "To Utc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/dashboard/timeseries": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Timeseries",
+        "operationId": "getDashboardTimeseries",
+        "parameters": [
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "To Utc"
+            }
+          },
+          {
+            "name": "feed_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FeedType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Feed Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DashboardBucket"
+                  },
+                  "title": "Response Getdashboardtimeseries"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/dashboard/feeds": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Feeds",
+        "operationId": "getDashboardFeeds",
+        "parameters": [
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "To Utc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardFeedDiagnostics"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/dashboard/export.csv": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Export Csv",
+        "operationId": "exportDashboardCsv",
+        "parameters": [
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "To Utc"
+            }
+          },
+          {
+            "name": "feed_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/FeedType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Feed Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/dashboard/hot-items": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Hot Items",
+        "operationId": "getDashboardHotItems",
+        "parameters": [
+          {
+            "name": "from_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "From Utc"
+            }
+          },
+          {
+            "name": "to_utc",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "title": "To Utc"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/HotItem"
+                  },
+                  "title": "Response Getdashboardhotitems"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
     "/api/admin/users/{user_id}/debug": {
       "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Debug User",
         "operationId": "debugUser",
-        "tags": ["admin"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["operator_readonly", "operator", "admin"],
-        "parameters": [{ "name": "user_id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Profile and recent recommendation trace", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserDebug" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } }
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDebugResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
     "/api/admin/requests/{request_id}": {
       "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Debug Request",
         "operationId": "debugRecommendationRequest",
-        "tags": ["admin"],
-        "security": [{ "cookieAuth": [] }],
-        "x-required-roles": ["operator_readonly", "operator", "admin"],
-        "parameters": [{ "name": "request_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }],
-        "responses": { "200": { "description": "Candidate/filter/rank/exposure/event trace", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RecommendationRequestDebug" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "404": { "$ref": "#/components/responses/Error" } }
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationRequestDebugResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
       }
     },
-    "/api/admin/models": { "$ref": "#/components/pathItems/adminModels" },
-    "/api/admin/models/compare": { "$ref": "#/components/pathItems/adminModelCompare" },
-    "/api/admin/training-jobs": { "$ref": "#/components/pathItems/adminTrainingJobs" },
-    "/api/admin/items": { "$ref": "#/components/pathItems/adminItems" },
-    "/api/admin/promotions": { "$ref": "#/components/pathItems/adminPromotionWrite" },
-    "/api/admin/operations": { "$ref": "#/components/pathItems/adminOperations" },
-    "/api/admin/operation-batches": { "$ref": "#/components/pathItems/adminOperationBatchWrite" },
-    "/api/admin/users": { "$ref": "#/components/pathItems/adminUsers" },
-    "/api/admin/roles": { "$ref": "#/components/pathItems/adminRoleWrite" }
+    "/api/admin/models": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Models",
+        "operationId": "listModelVersions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ModelVersionResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listmodelversions"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/models/compare": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Compare Models",
+        "operationId": "compareModelVersions",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelComparisonResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/training-jobs": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List Training Jobs",
+        "operationId": "listTrainingJobs",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrainingJobResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listtrainingjobs"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Ready",
+        "operationId": "getReady",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ready"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feeds/{feed_type}": {
+      "get": {
+        "tags": [
+          "feeds"
+        ],
+        "summary": "Deferred Feed",
+        "operationId": "getFeedPage",
+        "parameters": [
+          {
+            "name": "feed_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FeedType"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedPage"
+                }
+              }
+            }
+          },
+          "501": {
+            "description": "Deferred to Phase 4",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ],
+        "x-implementation-phase": "phase_4_deferred"
+      }
+    }
   },
   "components": {
-    "securitySchemes": {
-      "cookieAuth": { "type": "apiKey", "in": "cookie", "name": "microlens_session" },
-      "csrfHeader": { "type": "apiKey", "in": "header", "name": "X-CSRF-Token" }
-    },
-    "responses": {
-      "Error": { "description": "Business error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } }
-    },
-    "parameters": {
-      "FromUtc": { "name": "from_utc", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
-      "ToUtc": { "name": "to_utc", "in": "query", "required": true, "schema": { "type": "string", "format": "date-time" } },
-      "FeedFilter": { "name": "feed_type", "in": "query", "required": false, "schema": { "$ref": "#/components/schemas/FeedType" } }
-    },
-    "pathItems": {
-      "adminOverview": {
-        "get": { "operationId": "getDashboardOverview", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }], "responses": { "200": { "description": "Database-derived metrics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardOverview" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+    "schemas": {
+      "AccountStatus": {
+        "type": "string",
+        "enum": [
+          "enabled",
+          "disabled"
+        ],
+        "title": "AccountStatus"
       },
-      "adminTimeseries": {
-        "get": { "operationId": "getDashboardTimeseries", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }, { "$ref": "#/components/parameters/FeedFilter" }], "responses": { "200": { "description": "UTC half-open buckets", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/DashboardBucket" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "DashboardBucket": {
+        "properties": {
+          "bucket_start_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket Start Utc"
+          },
+          "bucket_end_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Bucket End Utc"
+          },
+          "feed_type": {
+            "type": "string",
+            "enum": [
+              "personalized",
+              "popular",
+              "explore"
+            ],
+            "title": "Feed Type"
+          },
+          "request_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Request Count"
+          },
+          "exposure_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Exposure Count"
+          },
+          "click_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Click Count"
+          },
+          "like_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Like Count"
+          },
+          "share_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Share Count"
+          },
+          "revisit_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revisit Count"
+          },
+          "dwell_ms_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Dwell Ms Total"
+          },
+          "dwell_ms_avg": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Dwell Ms Avg"
+          },
+          "ctr": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Ctr"
+          },
+          "active_user_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active User Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "bucket_start_utc",
+          "bucket_end_utc",
+          "feed_type",
+          "request_count",
+          "exposure_count",
+          "click_count",
+          "like_count",
+          "share_count",
+          "revisit_count",
+          "dwell_ms_total",
+          "dwell_ms_avg",
+          "ctr",
+          "active_user_count"
+        ],
+        "title": "DashboardBucket"
       },
-      "adminFeeds": {
-        "get": { "operationId": "getDashboardFeeds", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }], "responses": { "200": { "description": "Feed-group diagnostics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardFeedDiagnostics" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "DashboardFeedDiagnostics": {
+        "properties": {
+          "from_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "From Utc"
+          },
+          "to_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "To Utc"
+          },
+          "feeds": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardBucket"
+            },
+            "type": "array",
+            "title": "Feeds"
+          },
+          "feed_share": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "enum": [
+                "personalized",
+                "popular",
+                "explore"
+              ]
+            },
+            "type": "object",
+            "title": "Feed Share"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from_utc",
+          "to_utc",
+          "feeds",
+          "feed_share"
+        ],
+        "title": "DashboardFeedDiagnostics"
       },
-      "adminExport": {
-        "get": { "operationId": "exportDashboardCsv", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "parameters": [{ "$ref": "#/components/parameters/FromUtc" }, { "$ref": "#/components/parameters/ToUtc" }, { "$ref": "#/components/parameters/FeedFilter" }], "responses": { "200": { "description": "UTF-8 BOM, RFC4180, stable-order, formula-safe CSV", "content": { "text/csv": { "schema": { "type": "string", "contentMediaType": "text/csv" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "DashboardOverview": {
+        "properties": {
+          "from_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "From Utc"
+          },
+          "to_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "To Utc"
+          },
+          "timezone": {
+            "type": "string",
+            "const": "UTC",
+            "title": "Timezone",
+            "default": "UTC"
+          },
+          "total_users": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Users"
+          },
+          "active_users": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Users"
+          },
+          "requests": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Requests"
+          },
+          "exposures": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Exposures"
+          },
+          "clicks": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Clicks"
+          },
+          "likes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Likes"
+          },
+          "shares": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Shares"
+          },
+          "revisits": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Revisits"
+          },
+          "dwell_ms_total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Dwell Ms Total"
+          },
+          "offline_item_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Offline Item Count"
+          },
+          "ctr": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Ctr"
+          },
+          "zero_denominator": {
+            "type": "boolean",
+            "title": "Zero Denominator"
+          },
+          "active_model_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Model Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "from_utc",
+          "to_utc",
+          "total_users",
+          "active_users",
+          "requests",
+          "exposures",
+          "clicks",
+          "likes",
+          "shares",
+          "revisits",
+          "dwell_ms_total",
+          "offline_item_count",
+          "ctr",
+          "zero_denominator",
+          "active_model_version"
+        ],
+        "title": "DashboardOverview"
       },
-      "adminModels": {
-        "get": { "operationId": "listModelVersions", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Model versions", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/ModelVersion" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "ErrorEnvelope": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "request_id",
+          "details"
+        ],
+        "title": "ErrorEnvelope"
       },
-      "adminModelCompare": {
-        "get": { "operationId": "compareModelVersions", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Comparable model metrics", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ModelComparison" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "EventBatchRequest": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/EventRequest"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Events"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "events"
+        ],
+        "title": "EventBatchRequest"
       },
-      "adminTrainingJobs": {
-        "get": { "operationId": "listTrainingJobs", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Training jobs", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/TrainingJob" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "EventBatchResponse": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "semantics": {
+            "type": "string",
+            "const": "per_item_atomic_partial_success",
+            "title": "Semantics",
+            "default": "per_item_atomic_partial_success"
+          },
+          "accepted": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Accepted"
+          },
+          "duplicate": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Duplicate"
+          },
+          "rejected": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Rejected"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/EventItemResult"
+            },
+            "type": "array",
+            "title": "Results"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "accepted",
+          "duplicate",
+          "rejected",
+          "results"
+        ],
+        "title": "EventBatchResponse"
       },
-      "adminItems": {
-        "get": { "operationId": "searchAdminItems", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Searchable online/offline items", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "EventItemResult": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "accepted",
+              "duplicate",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "status"
+        ],
+        "title": "EventItemResult"
       },
-      "adminPromotionWrite": {
-        "post": { "operationId": "createPromotion", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["operator", "admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchRequest" } } } }, "responses": { "201": { "description": "Promotion created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } } }
+      "EventRequest": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "item_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Item Id"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/ClientEventType"
+          },
+          "client_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Client Timestamp"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 86400000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "request_id",
+          "item_id",
+          "position",
+          "event_type",
+          "client_timestamp"
+        ],
+        "title": "EventRequest"
       },
-      "adminOperations": {
-        "get": { "operationId": "listOperations", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["operator_readonly", "operator", "admin"], "responses": { "200": { "description": "Audited operation records", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/AuditOperation" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "FeedItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "cover",
+          "position",
+          "source",
+          "score",
+          "reason",
+          "model_version"
+        ],
+        "title": "FeedItem"
       },
-      "adminOperationBatchWrite": {
-        "post": { "operationId": "createOperationBatch", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["operator", "admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchRequest" } } } }, "responses": { "201": { "description": "Preflighted all-or-nothing batch", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/OperationBatchResponse" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" }, "422": { "$ref": "#/components/responses/Error" } } }
+      "FeedItemResponse": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "cover",
+          "position",
+          "source",
+          "score",
+          "reason",
+          "model_version"
+        ],
+        "title": "FeedItemResponse"
       },
-      "adminUsers": {
-        "get": { "operationId": "listAdminUsers", "tags": ["admin"], "security": [{ "cookieAuth": [] }], "x-required-roles": ["admin"], "responses": { "200": { "description": "Admin-only user listing", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "FeedPage": {
+        "properties": {
+          "snapshot_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Snapshot Id"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "snapshot_id",
+          "request_id",
+          "model_version",
+          "items",
+          "next_cursor"
+        ],
+        "title": "FeedPage"
       },
-      "adminRoleWrite": {
-        "put": { "operationId": "updateUserRole", "tags": ["admin"], "security": [{ "cookieAuth": [], "csrfHeader": [] }], "x-required-roles": ["admin"], "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["user_id", "role"], "properties": { "user_id": { "type": "string" }, "role": { "$ref": "#/components/schemas/Role" } } } } } }, "responses": { "200": { "description": "Role updated by admin", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } }, "401": { "$ref": "#/components/responses/Error" }, "403": { "$ref": "#/components/responses/Error" } } }
+      "FeedType": {
+        "type": "string",
+        "enum": [
+          "personalized",
+          "popular",
+          "explore"
+        ],
+        "title": "FeedType"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "phase"
+        ],
+        "title": "Health"
+      },
+      "HotItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "exposure_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Exposure Count"
+          },
+          "click_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Click Count"
+          },
+          "like_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Like Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "exposure_count",
+          "click_count",
+          "like_count"
+        ],
+        "title": "HotItem"
+      },
+      "ItemDetailResponse": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "cover",
+          "position",
+          "source",
+          "score",
+          "reason",
+          "model_version"
+        ],
+        "title": "ItemDetailResponse"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "ModelComparisonResponse": {
+        "properties": {
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ModelVersionResponse"
+            },
+            "type": "array",
+            "minItems": 2,
+            "title": "Versions"
+          },
+          "comparable": {
+            "type": "boolean",
+            "title": "Comparable"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "versions",
+          "comparable",
+          "reason"
+        ],
+        "title": "ModelComparisonResponse"
+      },
+      "ModelVersionResponse": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "data_version": {
+            "type": "string",
+            "title": "Data Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "TRAINING",
+              "EVALUATED",
+              "READY",
+              "ACTIVE",
+              "ARCHIVED",
+              "FAILED"
+            ],
+            "title": "Status"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "base_official",
+              "systems_only",
+              "quality_evaluation"
+            ],
+            "title": "Purpose"
+          },
+          "evaluation_comparability": {
+            "type": "string",
+            "enum": [
+              "non_comparable",
+              "comparable"
+            ],
+            "title": "Evaluation Comparability"
+          },
+          "activation_eligible": {
+            "type": "boolean",
+            "title": "Activation Eligible"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "trained_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trained At"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model_version",
+          "data_version",
+          "status",
+          "purpose",
+          "evaluation_comparability",
+          "activation_eligible",
+          "metrics",
+          "trained_at",
+          "published_at"
+        ],
+        "title": "ModelVersionResponse"
+      },
+      "OnlineStatus": {
+        "type": "string",
+        "enum": [
+          "online",
+          "offline"
+        ],
+        "title": "OnlineStatus"
+      },
+      "OperationBatchRequest": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "operation_type": {
+            "type": "string",
+            "enum": [
+              "promote",
+              "offline",
+              "restore"
+            ],
+            "title": "Operation Type"
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Targets"
+          },
+          "scope_type": {
+            "type": "string",
+            "enum": [
+              "all",
+              "user",
+              "feed"
+            ],
+            "title": "Scope Type",
+            "default": "all"
+          },
+          "scope_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Value"
+          },
+          "starts_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At Utc"
+          },
+          "ends_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At Utc"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Priority",
+            "default": 0
+          },
+          "target_position": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Position"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "semantics": {
+            "type": "string",
+            "const": "preflight_then_all_or_nothing_transaction",
+            "title": "Semantics",
+            "default": "preflight_then_all_or_nothing_transaction"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "operation_type",
+          "targets",
+          "starts_at_utc",
+          "reason"
+        ],
+        "title": "OperationBatchRequest"
+      },
+      "OperationBatchResponse": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "running",
+              "succeeded",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "expected_state_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Expected State Version"
+          },
+          "scheduled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheduled At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "status",
+          "expected_state_version",
+          "scheduled_at",
+          "created_at"
+        ],
+        "title": "OperationBatchResponse"
+      },
+      "Ready": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "phase": {
+            "type": "string",
+            "title": "Phase"
+          },
+          "checks": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Checks"
+          },
+          "business_routes_ready": {
+            "type": "boolean",
+            "title": "Business Routes Ready"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "phase",
+          "checks",
+          "business_routes_ready"
+        ],
+        "title": "Ready"
+      },
+      "RecommendationRequestDebugResponse": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "candidate_item_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Candidate Item Ids"
+          },
+          "filtered_item_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Filtered Item Ids"
+          },
+          "ranked_items": {
+            "items": {
+              "$ref": "#/components/schemas/FeedItemResponse"
+            },
+            "type": "array",
+            "title": "Ranked Items"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/PersistedEvent"
+            },
+            "type": "array",
+            "title": "Events"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "candidate_item_ids",
+          "filtered_item_ids",
+          "ranked_items",
+          "events"
+        ],
+        "title": "RecommendationRequestDebugResponse"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 3,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 12,
+            "title": "Password"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ],
+        "title": "Role"
+      },
+      "RoleUpdateRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "title": "RoleUpdateRequest"
+      },
+      "TrainingJobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "data_version": {
+            "type": "string",
+            "title": "Data Version"
+          },
+          "data_manifest_checksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Data Manifest Checksum"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "base_official",
+              "systems_only",
+              "quality_evaluation"
+            ],
+            "title": "Purpose"
+          },
+          "evaluation_comparability": {
+            "type": "string",
+            "enum": [
+              "non_comparable",
+              "comparable"
+            ],
+            "title": "Evaluation Comparability"
+          },
+          "activation_eligible": {
+            "type": "boolean",
+            "title": "Activation Eligible"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job_id",
+          "idempotency_key",
+          "status",
+          "data_version",
+          "data_manifest_checksum",
+          "purpose",
+          "evaluation_comparability",
+          "activation_eligible",
+          "failure_reason"
+        ],
+        "title": "TrainingJobResponse"
+      },
+      "UserDebugResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/UserProfileResponse"
+          },
+          "recent_request_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Recent Request Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "profile",
+          "recent_request_ids"
+        ],
+        "title": "UserDebugResponse"
+      },
+      "UserProfileResponse": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "profile_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Profile Version"
+          },
+          "recent_interactions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Recent Interactions"
+          },
+          "positive_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Positive Summary"
+          },
+          "negative_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Negative Summary"
+          },
+          "dwell_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Dwell Summary"
+          },
+          "revisit_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Revisit Summary"
+          },
+          "share_summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Share Summary"
+          },
+          "title_preferences": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Title Preferences"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "user_id",
+          "profile_version",
+          "recent_interactions",
+          "positive_summary",
+          "negative_summary",
+          "dwell_summary",
+          "revisit_summary",
+          "share_summary",
+          "title_preferences",
+          "updated_at"
+        ],
+        "title": "UserProfileResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "AdminItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "heat": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Heat"
+          },
+          "online_status": {
+            "type": "string",
+            "enum": [
+              "online",
+              "offline"
+            ],
+            "title": "Online Status"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "state_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "State Version"
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "heat",
+          "online_status",
+          "updated_at",
+          "state_version",
+          "cover"
+        ],
+        "title": "AdminItem"
+      },
+      "AuditOperation": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Operation Id"
+          },
+          "batch_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Batch Id"
+          },
+          "operator_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Operator Id"
+          },
+          "operator_role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "operator_readonly",
+              "operator",
+              "admin"
+            ],
+            "title": "Operator Role"
+          },
+          "operation_type": {
+            "type": "string",
+            "enum": [
+              "promote",
+              "offline",
+              "restore"
+            ],
+            "title": "Operation Type"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "targets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Targets"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "before_value": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Value"
+          },
+          "after_value": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Value"
+          },
+          "result": {
+            "type": "string",
+            "enum": [
+              "succeeded",
+              "failed"
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Effective At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_id",
+          "batch_id",
+          "operator_id",
+          "operator_role",
+          "operation_type",
+          "reason",
+          "targets",
+          "target",
+          "before_value",
+          "after_value",
+          "result",
+          "error",
+          "effective_at"
+        ],
+        "title": "AuditOperation"
+      },
+      "PersistedEvent": {
+        "properties": {
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Event Id"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Request Id"
+          },
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Position"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/ServerEventType"
+          },
+          "client_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Timestamp"
+          },
+          "server_timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Server Timestamp"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "event_id",
+          "request_id",
+          "item_id",
+          "position",
+          "event_type",
+          "client_timestamp",
+          "server_timestamp"
+        ],
+        "title": "PersistedEvent"
+      },
+      "User": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AccountStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "role",
+          "status",
+          "created_at"
+        ],
+        "title": "User"
+      },
+      "ServerEventType": {
+        "type": "string",
+        "enum": [
+          "impression",
+          "click",
+          "like",
+          "not_interested",
+          "dwell",
+          "revisit",
+          "share"
+        ],
+        "title": "ServerEventType"
+      },
+      "ClientEventType": {
+        "type": "string",
+        "enum": [
+          "click",
+          "like",
+          "not_interested",
+          "dwell",
+          "revisit",
+          "share"
+        ],
+        "title": "ClientEventType"
       }
     },
-    "schemas": {
-      "Role": { "type": "string", "enum": ["user", "operator_readonly", "operator", "admin"] },
-      "FeedType": { "type": "string", "enum": ["personalized", "popular", "explore"] },
-      "ServerEventType": { "type": "string", "enum": ["impression", "click", "like", "not_interested", "dwell", "revisit", "share"] },
-      "ClientEventType": { "type": "string", "enum": ["click", "like", "not_interested", "dwell", "revisit", "share"] },
-      "Health": { "type": "object", "required": ["status", "service", "phase"], "properties": { "status": { "const": "ok" }, "service": { "type": "string" }, "phase": { "type": "string" } } },
-      "Ready": { "type": "object", "required": ["status", "service", "checks"], "properties": { "status": { "type": "string" }, "service": { "type": "string" }, "checks": { "type": "object" }, "business_routes_ready": { "type": "boolean" } } },
-      "RegisterRequest": { "type": "object", "additionalProperties": false, "required": ["username", "password"], "properties": { "username": { "type": "string", "minLength": 3, "maxLength": 64 }, "password": { "type": "string", "minLength": 12, "maxLength": 256 } } },
-      "LoginRequest": { "type": "object", "additionalProperties": false, "required": ["username", "password"], "properties": { "username": { "type": "string" }, "password": { "type": "string" } } },
-      "User": { "type": "object", "required": ["id", "username", "role", "status", "created_at"], "properties": { "id": { "type": "string" }, "username": { "type": "string" }, "role": { "$ref": "#/components/schemas/Role" }, "status": { "enum": ["enabled", "disabled"] }, "created_at": { "type": "string", "format": "date-time" } } },
-      "FeedItem": { "type": "object", "required": ["item_id", "title", "cover", "position", "source", "score", "reason", "model_version"], "properties": { "item_id": { "type": "string" }, "title": { "type": "string" }, "cover": { "type": ["string", "null"] }, "position": { "type": "integer", "minimum": 0 }, "source": { "type": "string" }, "score": { "type": "number" }, "reason": { "type": "string" }, "model_version": { "type": "string" } } },
-      "FeedPage": { "type": "object", "required": ["snapshot_id", "request_id", "model_version", "items", "next_cursor"], "properties": { "snapshot_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "model_version": { "type": "string" }, "items": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } }, "next_cursor": { "type": ["string", "null"] } } },
-      "PersistedEvent": { "type": "object", "additionalProperties": false, "required": ["event_id", "request_id", "item_id", "position", "event_type", "server_timestamp"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "item_id": { "type": "string" }, "position": { "type": "integer", "minimum": 0 }, "event_type": { "$ref": "#/components/schemas/ServerEventType" }, "client_timestamp": { "type": ["string", "null"], "format": "date-time" }, "server_timestamp": { "type": "string", "format": "date-time" }, "duration_ms": { "type": ["integer", "null"], "minimum": 0, "maximum": 86400000 }, "payload": { "type": "object" } } },
-      "EventRequest": { "type": "object", "additionalProperties": false, "required": ["event_id", "request_id", "item_id", "position", "event_type", "client_timestamp"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "request_id": { "type": "string", "format": "uuid" }, "item_id": { "type": "string" }, "position": { "type": "integer", "minimum": 0 }, "event_type": { "$ref": "#/components/schemas/ClientEventType" }, "client_timestamp": { "type": "string", "format": "date-time" }, "duration_ms": { "type": "integer", "minimum": 0, "maximum": 86400000 }, "payload": { "type": "object" } } },
-      "EventItemResult": { "type": "object", "required": ["event_id", "status"], "properties": { "event_id": { "type": "string", "format": "uuid" }, "status": { "enum": ["accepted", "duplicate", "rejected"] }, "error_code": { "type": ["string", "null"] }, "message": { "type": ["string", "null"] } } },
-      "EventBatchRequest": { "type": "object", "required": ["batch_id", "events"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "events": { "type": "array", "minItems": 1, "maxItems": 100, "items": { "$ref": "#/components/schemas/EventRequest" } } } },
-      "EventBatchResponse": { "type": "object", "required": ["batch_id", "semantics", "accepted", "duplicate", "rejected", "results"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "semantics": { "const": "per_item_atomic_partial_success" }, "accepted": { "type": "integer", "minimum": 0 }, "duplicate": { "type": "integer", "minimum": 0 }, "rejected": { "type": "integer", "minimum": 0 }, "results": { "type": "array", "items": { "$ref": "#/components/schemas/EventItemResult" } } } },
-      "UserProfile": { "type": "object", "required": ["user_id", "profile_version", "recent_interactions", "updated_at"], "properties": { "user_id": { "type": "string" }, "profile_version": { "type": "integer", "minimum": 0 }, "recent_interactions": { "type": "array", "items": { "type": "object" } }, "positive_summary": { "type": "object" }, "negative_summary": { "type": "object" }, "dwell_summary": { "type": "object" }, "revisit_summary": { "type": "object" }, "share_summary": { "type": "object" }, "title_preferences": { "type": "object" }, "updated_at": { "type": "string", "format": "date-time" } } },
-      "DashboardOverview": { "type": "object", "required": ["from_utc", "to_utc", "timezone", "total_users", "active_users", "requests", "exposures", "clicks", "likes", "ctr", "zero_denominator", "active_model_version"], "properties": { "from_utc": { "type": "string", "format": "date-time" }, "to_utc": { "type": "string", "format": "date-time" }, "timezone": { "const": "UTC" }, "total_users": { "type": "integer", "minimum": 0 }, "active_users": { "type": "integer", "minimum": 0 }, "requests": { "type": "integer", "minimum": 0 }, "exposures": { "type": "integer", "minimum": 0 }, "clicks": { "type": "integer", "minimum": 0 }, "likes": { "type": "integer", "minimum": 0 }, "shares": { "type": "integer", "minimum": 0 }, "revisits": { "type": "integer", "minimum": 0 }, "dwell_ms_total": { "type": "integer", "minimum": 0 }, "ctr": { "type": "number", "minimum": 0 }, "zero_denominator": { "type": "boolean" }, "active_model_version": { "type": ["string", "null"] } } },
-      "DashboardBucket": { "type": "object", "required": ["bucket_start_utc", "bucket_end_utc", "feed_type", "request_count", "exposure_count", "click_count", "like_count", "share_count", "revisit_count", "dwell_ms_total", "dwell_ms_avg", "ctr", "active_user_count"], "properties": { "bucket_start_utc": { "type": "string", "format": "date-time" }, "bucket_end_utc": { "type": "string", "format": "date-time" }, "feed_type": { "$ref": "#/components/schemas/FeedType" }, "request_count": { "type": "integer" }, "exposure_count": { "type": "integer" }, "click_count": { "type": "integer" }, "like_count": { "type": "integer" }, "share_count": { "type": "integer" }, "revisit_count": { "type": "integer" }, "dwell_ms_total": { "type": "integer" }, "dwell_ms_avg": { "type": "number" }, "ctr": { "type": "number" }, "active_user_count": { "type": "integer" } } },
-      "DashboardFeedDiagnostics": { "type": "object", "required": ["from_utc", "to_utc", "feeds"], "properties": { "from_utc": { "type": "string", "format": "date-time" }, "to_utc": { "type": "string", "format": "date-time" }, "feeds": { "type": "array", "items": { "$ref": "#/components/schemas/DashboardBucket" } } } },
-      "UserDebug": { "type": "object", "required": ["user_id", "profile", "recent_request_ids"], "properties": { "user_id": { "type": "string" }, "profile": { "$ref": "#/components/schemas/UserProfile" }, "recent_request_ids": { "type": "array", "items": { "type": "string", "format": "uuid" } } } },
-      "RecommendationRequestDebug": { "type": "object", "required": ["request_id", "candidate_item_ids", "filtered_item_ids", "ranked_items", "events"], "properties": { "request_id": { "type": "string", "format": "uuid" }, "candidate_item_ids": { "type": "array", "items": { "type": "string" } }, "filtered_item_ids": { "type": "array", "items": { "type": "string" } }, "ranked_items": { "type": "array", "items": { "$ref": "#/components/schemas/FeedItem" } }, "events": { "type": "array", "items": { "$ref": "#/components/schemas/PersistedEvent" } } } },
-      "OperationBatchRequest": { "type": "object", "required": ["batch_id", "operation_type", "targets", "reason", "semantics"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "operation_type": { "enum": ["promote", "offline", "restore"] }, "targets": { "type": "array", "minItems": 1, "maxItems": 100, "uniqueItems": true, "items": { "type": "string" } }, "scope_type": { "enum": ["all", "user", "feed"] }, "scope_value": { "type": ["string", "null"] }, "starts_at_utc": { "type": "string", "format": "date-time" }, "ends_at_utc": { "type": ["string", "null"], "format": "date-time" }, "priority": { "type": "integer", "minimum": 0 }, "target_position": { "type": ["integer", "null"], "minimum": 0 }, "reason": { "type": "string", "minLength": 1 }, "semantics": { "const": "preflight_then_all_or_nothing_transaction" } } },
-      "OperationBatchResponse": { "type": "object", "required": ["batch_id", "status", "expected_state_version", "scheduled_at", "created_at"], "properties": { "batch_id": { "type": "string", "format": "uuid" }, "status": { "enum": ["scheduled", "running", "succeeded", "failed"] }, "expected_state_version": { "type": "integer", "minimum": 0 }, "scheduled_at": { "type": ["string", "null"], "format": "date-time" }, "started_at": { "type": ["string", "null"], "format": "date-time" }, "completed_at": { "type": ["string", "null"], "format": "date-time" }, "created_at": { "type": "string", "format": "date-time" }, "result": { "type": ["object", "null"] } } },
-      "AuditOperation": { "type": "object", "required": ["operation_id", "batch_id", "target", "result", "effective_at"], "properties": { "operation_id": { "type": "string" }, "batch_id": { "type": "string", "format": "uuid" }, "target": { "type": "string" }, "before_value": { "type": ["object", "null"] }, "after_value": { "type": ["object", "null"] }, "result": { "enum": ["succeeded", "failed"] }, "error": { "type": ["string", "null"] }, "effective_at": { "type": "string", "format": "date-time" } } },
-      "TrainingJob": { "type": "object", "required": ["job_id", "idempotency_key", "status", "data_version", "data_manifest_checksum", "purpose", "evaluation_comparability", "activation_eligible"], "properties": { "job_id": { "type": "string", "format": "uuid" }, "idempotency_key": { "type": "string" }, "status": { "enum": ["queued", "running", "succeeded", "failed", "cancelled"] }, "data_version": { "type": "string" }, "data_manifest_checksum": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] }, "evaluation_comparability": { "enum": ["non_comparable", "comparable"] }, "activation_eligible": { "type": "boolean" }, "failure_reason": { "type": ["string", "null"] } } },
-      "ModelVersion": { "type": "object", "required": ["model_version", "data_version", "status", "purpose", "evaluation_comparability", "activation_eligible", "metrics"], "properties": { "model_version": { "type": "string" }, "data_version": { "type": "string" }, "status": { "enum": ["TRAINING", "EVALUATED", "READY", "ACTIVE", "ARCHIVED", "FAILED"] }, "purpose": { "enum": ["base_official", "systems_only", "quality_evaluation"] }, "evaluation_comparability": { "enum": ["non_comparable", "comparable"] }, "activation_eligible": { "type": "boolean" }, "metrics": { "type": "object", "additionalProperties": { "type": "number" } }, "trained_at": { "type": ["string", "null"], "format": "date-time" }, "published_at": { "type": ["string", "null"], "format": "date-time" } } },
-      "ModelComparison": { "type": "object", "required": ["versions", "comparable", "reason"], "properties": { "versions": { "type": "array", "minItems": 2, "items": { "$ref": "#/components/schemas/ModelVersion" } }, "comparable": { "type": "boolean" }, "reason": { "type": ["string", "null"] } } },
-      "ErrorEnvelope": { "type": "object", "additionalProperties": false, "required": ["code", "message", "request_id", "details"], "properties": { "code": { "type": "string" }, "message": { "type": "string" }, "request_id": { "type": ["string", "null"] }, "details": { "type": ["object", "array", "null"] } } }
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "microlens_session"
+      },
+      "csrfHeader": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token"
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Structured API error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
+          }
+        }
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Host-published public listener"
+    }
+  ],
+  "x-listener-contract": {
+    "public": {
+      "url": "http://api:8000",
+      "host_published": true,
+      "reject_path_prefixes": [
+        "/internal/"
+      ]
+    },
+    "internal_activation": {
+      "contract": "internal-openapi.json",
+      "url": "http://api:8001",
+      "host_published": false
     }
   }
 }

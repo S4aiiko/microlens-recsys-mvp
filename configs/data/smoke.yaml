@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "mode": "smoke",
+  "smoke_user_count": 1000,
+  "seed": 20260901,
+  "source_urls": [
+    "https://recsys.westlake.edu.cn/MicroLens-50K-Dataset/"
+  ],
+  "split": {
+    "min_train_interactions": 1,
+    "low_interaction": "train_only"
+  },
+  "quality": {
+    "duplicate_policy": "reject",
+    "orphan_policy": "reject"
+  },
+  "negative_sampling": {
+    "strategies": ["uniform", "popularity_aware"],
+    "popularity_alpha": 0.75
+  },
+  "time_decay": {
+    "enabled": true,
+    "half_life_seconds": 2592000
+  }
+}

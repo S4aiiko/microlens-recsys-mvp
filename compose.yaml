@@ -13,7 +13,7 @@ x-listener-contract:
     host_published: false
     network: backend
     authentication: publishToken
-    implementation_status: phase_1_contract_only
+    implementation_status: phase_2d_runtime
 
 services:
   web:
@@ -45,15 +45,24 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
-      APP_ENV: foundation
+      APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       PUBLISH_TOKEN: ${PUBLISH_TOKEN:?Set PUBLISH_TOKEN in .env}
+      MICROLENS_SEED_PASSWORD: ${MICROLENS_SEED_PASSWORD:?Set MICROLENS_SEED_PASSWORD in .env}
+      WEB_ORIGIN: ${WEB_ORIGIN:-http://localhost:5173}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      COOKIE_SAMESITE: ${COOKIE_SAMESITE:-lax}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
+      SESSION_LIFETIME_SECONDS: ${SESSION_LIFETIME_SECONDS:-28800}
+      REGISTRATION_RATE_LIMIT: ${REGISTRATION_RATE_LIMIT:-5}
+      REGISTRATION_RATE_WINDOW_SECONDS: ${REGISTRATION_RATE_WINDOW_SECONDS:-300}
       PUBLIC_LISTENER_URL: http://0.0.0.0:8000
       PUBLIC_REJECT_PATH_PREFIXES: /internal/
       INTERNAL_ACTIVATION_LISTENER_URL: http://0.0.0.0:8001
-      INTERNAL_ACTIVATION_IMPLEMENTED: "false"
+      INTERNAL_ACTIVATION_IMPLEMENTED: "true"
+      ALEMBIC_INI: /workspace/apps/api/alembic/alembic.ini
       MODEL_ARTIFACTS_DIR: /artifacts/models
       TRAINING_EXPORTS_DIR: /artifacts/training_exports
     ports:
@@ -62,6 +71,8 @@ services:
       - "8001"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     volumes:
       - model_artifacts:/artifacts/models
@@ -122,8 +133,11 @@ services:
       MODEL_ARTIFACTS_DIR: /artifacts/models
       TRAINING_EXPORTS_DIR: /artifacts/training_exports
       WORKER_PORT: "8081"
+      # Phase 2D runs in an explicit ready_degraded mode until Phase 3 supplies
+      # a real model-training plugin. The worker must not claim queued jobs.
+      WORKER_REQUIRE_TRAINING_HANDLER: ${WORKER_REQUIRE_TRAINING_HANDLER:-false}
     depends_on:
-      db:
+      api:
         condition: service_healthy
       redis:
         condition: service_healthy

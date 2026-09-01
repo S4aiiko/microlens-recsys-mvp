@@ -2,63 +2,234 @@
   "openapi": "3.1.0",
   "info": {
     "title": "MicroLens Internal Model Activation API",
-    "version": "0.1.0-contract",
-    "description": "Compose-internal publishing contract. Phase 1 does not implement this listener.",
-    "x-implementation-status": "phase_1_contract_only"
+    "description": "Compose-internal publishing runtime; never host-published.",
+    "version": "0.2.0-phase2d",
+    "x-implementation-status": "phase_2d_internal_runtime"
   },
-  "servers": [
-    {
-      "url": "http://api:8001",
-      "description": "Non-host-published Compose backend listener"
-    }
-  ],
-  "x-listener-contract": {
-    "host_published": false,
-    "compose_network": "backend",
-    "network_scope": "compose-internal-only",
-    "public_listener_rejects": ["/internal/"]
-  },
-  "tags": [{ "name": "internal" }],
   "paths": {
     "/internal/model-versions/{version}/activate": {
       "post": {
+        "tags": [
+          "internal"
+        ],
+        "summary": "Activate Model",
         "operationId": "activateModelVersion",
-        "tags": ["internal"],
-        "security": [{ "publishToken": [] }],
         "parameters": [
           {
             "name": "version",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "minLength": 1 }
+            "schema": {
+              "type": "string",
+              "title": "Version"
+            }
+          },
+          {
+            "name": "X-Publish-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Publish-Token"
+            }
           }
         ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/ActivationRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/ActivationRequest"
+              }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Validated staging load and transactional CAS activation",
+            "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ModelVersion" }
+                "schema": {
+                  "$ref": "#/components/schemas/ModelVersion"
+                }
               }
             }
           },
-          "401": { "$ref": "#/components/responses/Error" },
-          "409": { "$ref": "#/components/responses/Error" },
-          "422": { "$ref": "#/components/responses/Error" }
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
         },
-        "x-network-scope": "compose-internal-only"
+        "security": [
+          {
+            "publishToken": []
+          }
+        ],
+        "x-internal-only": true
       }
     }
   },
   "components": {
+    "schemas": {
+      "ActivationRequest": {
+        "properties": {
+          "expected_current_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Version"
+          },
+          "manifest_checksum": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Manifest Checksum"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "expected_current_version",
+          "manifest_checksum"
+        ],
+        "title": "ActivationRequest"
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "message",
+          "request_id",
+          "details"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "details": {}
+        }
+      },
+      "ModelVersion": {
+        "properties": {
+          "model_version": {
+            "type": "string",
+            "title": "Model Version"
+          },
+          "data_version": {
+            "type": "string",
+            "title": "Data Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "TRAINING",
+              "EVALUATED",
+              "READY",
+              "ACTIVE",
+              "ARCHIVED",
+              "FAILED"
+            ],
+            "title": "Status"
+          },
+          "purpose": {
+            "type": "string",
+            "enum": [
+              "base_official",
+              "systems_only",
+              "quality_evaluation"
+            ],
+            "title": "Purpose"
+          },
+          "evaluation_comparability": {
+            "type": "string",
+            "enum": [
+              "non_comparable",
+              "comparable"
+            ],
+            "title": "Evaluation Comparability"
+          },
+          "activation_eligible": {
+            "type": "boolean",
+            "title": "Activation Eligible"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "trained_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trained At"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "model_version",
+          "data_version",
+          "status",
+          "purpose",
+          "evaluation_comparability",
+          "activation_eligible",
+          "metrics",
+          "trained_at",
+          "published_at"
+        ],
+        "title": "ModelVersion"
+      }
+    },
     "securitySchemes": {
       "publishToken": {
         "type": "apiKey",
@@ -71,68 +242,26 @@
         "description": "Internal publishing error",
         "content": {
           "application/json": {
-            "schema": { "$ref": "#/components/schemas/ErrorEnvelope" }
+            "schema": {
+              "$ref": "#/components/schemas/ErrorEnvelope"
+            }
           }
-        }
-      }
-    },
-    "schemas": {
-      "ActivationRequest": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["expected_current_version", "manifest_checksum"],
-        "properties": {
-          "expected_current_version": { "type": ["string", "null"] },
-          "manifest_checksum": {
-            "type": "string",
-            "pattern": "^[a-f0-9]{64}$"
-          }
-        }
-      },
-      "ModelVersion": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "model_version",
-          "data_version",
-          "status",
-          "purpose",
-          "evaluation_comparability",
-          "activation_eligible",
-          "metrics"
-        ],
-        "properties": {
-          "model_version": { "type": "string" },
-          "data_version": { "type": "string" },
-          "status": {
-            "enum": ["TRAINING", "EVALUATED", "READY", "ACTIVE", "ARCHIVED", "FAILED"]
-          },
-          "purpose": {
-            "enum": ["base_official", "systems_only", "quality_evaluation"]
-          },
-          "evaluation_comparability": {
-            "enum": ["non_comparable", "comparable"]
-          },
-          "activation_eligible": { "type": "boolean" },
-          "metrics": {
-            "type": "object",
-            "additionalProperties": { "type": "number" }
-          },
-          "trained_at": { "type": ["string", "null"], "format": "date-time" },
-          "published_at": { "type": ["string", "null"], "format": "date-time" }
-        }
-      },
-      "ErrorEnvelope": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["code", "message", "request_id", "details"],
-        "properties": {
-          "code": { "type": "string" },
-          "message": { "type": "string" },
-          "request_id": { "type": ["string", "null"] },
-          "details": { "type": ["object", "array", "null"] }
         }
       }
     }
+  },
+  "servers": [
+    {
+      "url": "http://api:8001",
+      "description": "Non-host-published Compose backend listener"
+    }
+  ],
+  "x-listener-contract": {
+    "host_published": false,
+    "compose_network": "backend",
+    "network_scope": "compose-internal-only",
+    "public_listener_rejects": [
+      "/internal/"
+    ]
   }
 }

@@ -1,0 +1,15 @@
+# Test-only host bindings. Always combine with compose.yaml and an isolated
+# COMPOSE_PROJECT_NAME; the production/default Compose contract keeps both stores private.
+services:
+  db:
+    ports:
+      - "127.0.0.1:${PHASE2D_POSTGRES_PORT:-15432}:5432"
+    networks:
+      - backend
+      - edge
+  redis:
+    ports:
+      - "127.0.0.1:${PHASE2D_REDIS_PORT:-16379}:6379"
+    networks:
+      - backend
+      - edge

@@ -4,315 +4,1055 @@ export type ClientOptions = {
     baseUrl: 'http://localhost:8000' | (string & {});
 };
 
-export type Role = 'user' | 'operator_readonly' | 'operator' | 'admin';
+/**
+ * AccountStatus
+ */
+export type AccountStatus = 'enabled' | 'disabled';
 
-export type FeedType = 'personalized' | 'popular' | 'explore';
-
-export type ServerEventType = 'impression' | 'click' | 'like' | 'not_interested' | 'dwell' | 'revisit' | 'share';
-
-export type ClientEventType = 'click' | 'like' | 'not_interested' | 'dwell' | 'revisit' | 'share';
-
-export type Health = {
-    status: 'ok';
-    service: string;
-    phase: string;
-};
-
-export type Ready = {
-    status: string;
-    service: string;
-    checks: {
-        [key: string]: unknown;
-    };
-    business_routes_ready?: boolean;
-};
-
-export type RegisterRequest = {
-    username: string;
-    password: string;
-};
-
-export type LoginRequest = {
-    username: string;
-    password: string;
-};
-
-export type User = {
-    id: string;
-    username: string;
-    role: Role;
-    status: 'enabled' | 'disabled';
-    created_at: string;
-};
-
-export type FeedItem = {
-    item_id: string;
-    title: string;
-    cover: string | null;
-    position: number;
-    source: string;
-    score: number;
-    reason: string;
-    model_version: string;
-};
-
-export type FeedPage = {
-    snapshot_id: string;
-    request_id: string;
-    model_version: string;
-    items: Array<FeedItem>;
-    next_cursor: string | null;
-};
-
-export type PersistedEvent = {
-    event_id: string;
-    request_id: string;
-    item_id: string;
-    position: number;
-    event_type: ServerEventType;
-    client_timestamp?: string | null;
-    server_timestamp: string;
-    duration_ms?: number | null;
-    payload?: {
-        [key: string]: unknown;
-    };
-};
-
-export type EventRequest = {
-    event_id: string;
-    request_id: string;
-    item_id: string;
-    position: number;
-    event_type: ClientEventType;
-    client_timestamp: string;
-    duration_ms?: number;
-    payload?: {
-        [key: string]: unknown;
-    };
-};
-
-export type EventItemResult = {
-    event_id: string;
-    status: 'accepted' | 'duplicate' | 'rejected';
-    error_code?: string | null;
-    message?: string | null;
-};
-
-export type EventBatchRequest = {
-    batch_id: string;
-    events: Array<EventRequest>;
-};
-
-export type EventBatchResponse = {
-    batch_id: string;
-    semantics: 'per_item_atomic_partial_success';
-    accepted: number;
-    duplicate: number;
-    rejected: number;
-    results: Array<EventItemResult>;
-};
-
-export type UserProfile = {
-    user_id: string;
-    profile_version: number;
-    recent_interactions: Array<{
-        [key: string]: unknown;
-    }>;
-    positive_summary?: {
-        [key: string]: unknown;
-    };
-    negative_summary?: {
-        [key: string]: unknown;
-    };
-    dwell_summary?: {
-        [key: string]: unknown;
-    };
-    revisit_summary?: {
-        [key: string]: unknown;
-    };
-    share_summary?: {
-        [key: string]: unknown;
-    };
-    title_preferences?: {
-        [key: string]: unknown;
-    };
-    updated_at: string;
-};
-
-export type DashboardOverview = {
-    from_utc: string;
-    to_utc: string;
-    timezone: 'UTC';
-    total_users: number;
-    active_users: number;
-    requests: number;
-    exposures: number;
-    clicks: number;
-    likes: number;
-    shares?: number;
-    revisits?: number;
-    dwell_ms_total?: number;
-    ctr: number;
-    zero_denominator: boolean;
-    active_model_version: string | null;
-};
-
+/**
+ * DashboardBucket
+ */
 export type DashboardBucket = {
+    /**
+     * Bucket Start Utc
+     */
     bucket_start_utc: string;
+    /**
+     * Bucket End Utc
+     */
     bucket_end_utc: string;
-    feed_type: FeedType;
+    /**
+     * Feed Type
+     */
+    feed_type: 'personalized' | 'popular' | 'explore';
+    /**
+     * Request Count
+     */
     request_count: number;
+    /**
+     * Exposure Count
+     */
     exposure_count: number;
+    /**
+     * Click Count
+     */
     click_count: number;
+    /**
+     * Like Count
+     */
     like_count: number;
+    /**
+     * Share Count
+     */
     share_count: number;
+    /**
+     * Revisit Count
+     */
     revisit_count: number;
+    /**
+     * Dwell Ms Total
+     */
     dwell_ms_total: number;
+    /**
+     * Dwell Ms Avg
+     */
     dwell_ms_avg: number;
+    /**
+     * Ctr
+     */
     ctr: number;
+    /**
+     * Active User Count
+     */
     active_user_count: number;
 };
 
+/**
+ * DashboardFeedDiagnostics
+ */
 export type DashboardFeedDiagnostics = {
+    /**
+     * From Utc
+     */
     from_utc: string;
+    /**
+     * To Utc
+     */
     to_utc: string;
+    /**
+     * Feeds
+     */
     feeds: Array<DashboardBucket>;
-};
-
-export type UserDebug = {
-    user_id: string;
-    profile: UserProfile;
-    recent_request_ids: Array<string>;
-};
-
-export type RecommendationRequestDebug = {
-    request_id: string;
-    candidate_item_ids: Array<string>;
-    filtered_item_ids: Array<string>;
-    ranked_items: Array<FeedItem>;
-    events: Array<PersistedEvent>;
-};
-
-export type OperationBatchRequest = {
-    batch_id: string;
-    operation_type: 'promote' | 'offline' | 'restore';
-    targets: Array<string>;
-    scope_type?: 'all' | 'user' | 'feed';
-    scope_value?: string | null;
-    starts_at_utc?: string;
-    ends_at_utc?: string | null;
-    priority?: number;
-    target_position?: number | null;
-    reason: string;
-    semantics: 'preflight_then_all_or_nothing_transaction';
-};
-
-export type OperationBatchResponse = {
-    batch_id: string;
-    status: 'scheduled' | 'running' | 'succeeded' | 'failed';
-    expected_state_version: number;
-    scheduled_at: string | null;
-    started_at?: string | null;
-    completed_at?: string | null;
-    created_at: string;
-    result?: {
-        [key: string]: unknown;
-    } | null;
-};
-
-export type AuditOperation = {
-    operation_id: string;
-    batch_id: string;
-    target: string;
-    before_value?: {
-        [key: string]: unknown;
-    } | null;
-    after_value?: {
-        [key: string]: unknown;
-    } | null;
-    result: 'succeeded' | 'failed';
-    error?: string | null;
-    effective_at: string;
-};
-
-export type TrainingJob = {
-    job_id: string;
-    idempotency_key: string;
-    status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
-    data_version: string;
-    data_manifest_checksum: string;
-    purpose: 'base_official' | 'systems_only' | 'quality_evaluation';
-    evaluation_comparability: 'non_comparable' | 'comparable';
-    activation_eligible: boolean;
-    failure_reason?: string | null;
-};
-
-export type ModelVersion = {
-    model_version: string;
-    data_version: string;
-    status: 'TRAINING' | 'EVALUATED' | 'READY' | 'ACTIVE' | 'ARCHIVED' | 'FAILED';
-    purpose: 'base_official' | 'systems_only' | 'quality_evaluation';
-    evaluation_comparability: 'non_comparable' | 'comparable';
-    activation_eligible: boolean;
-    metrics: {
+    /**
+     * Feed Share
+     */
+    feed_share: {
         [key: string]: number;
     };
-    trained_at?: string | null;
-    published_at?: string | null;
 };
 
-export type ModelComparison = {
-    versions: Array<ModelVersion>;
-    comparable: boolean;
-    reason: string | null;
+/**
+ * DashboardOverview
+ */
+export type DashboardOverview = {
+    /**
+     * From Utc
+     */
+    from_utc: string;
+    /**
+     * To Utc
+     */
+    to_utc: string;
+    /**
+     * Timezone
+     */
+    timezone?: 'UTC';
+    /**
+     * Total Users
+     */
+    total_users: number;
+    /**
+     * Active Users
+     */
+    active_users: number;
+    /**
+     * Requests
+     */
+    requests: number;
+    /**
+     * Exposures
+     */
+    exposures: number;
+    /**
+     * Clicks
+     */
+    clicks: number;
+    /**
+     * Likes
+     */
+    likes: number;
+    /**
+     * Shares
+     */
+    shares: number;
+    /**
+     * Revisits
+     */
+    revisits: number;
+    /**
+     * Dwell Ms Total
+     */
+    dwell_ms_total: number;
+    /**
+     * Offline Item Count
+     */
+    offline_item_count: number;
+    /**
+     * Ctr
+     */
+    ctr: number;
+    /**
+     * Zero Denominator
+     */
+    zero_denominator: boolean;
+    /**
+     * Active Model Version
+     */
+    active_model_version: string | null;
 };
 
+/**
+ * ErrorEnvelope
+ */
 export type ErrorEnvelope = {
+    /**
+     * Code
+     */
     code: string;
+    /**
+     * Message
+     */
     message: string;
+    /**
+     * Request Id
+     */
     request_id: string | null;
+    /**
+     * Details
+     */
     details: {
         [key: string]: unknown;
     } | Array<unknown> | null;
 };
 
-export type FromUtc = string;
-
-export type ToUtc = string;
-
-export type FeedFilter = FeedType;
-
-export type GetHealthData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/health';
-};
-
-export type GetHealthResponses = {
+/**
+ * EventBatchRequest
+ */
+export type EventBatchRequest = {
     /**
-     * Process is alive
+     * Batch Id
      */
-    200: Health;
-};
-
-export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
-
-export type GetReadyData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/ready';
-};
-
-export type GetReadyResponses = {
+    batch_id: string;
     /**
-     * Configured readiness checks pass
+     * Events
      */
-    200: Ready;
+    events: Array<EventRequest>;
 };
 
-export type GetReadyResponse = GetReadyResponses[keyof GetReadyResponses];
+/**
+ * EventBatchResponse
+ */
+export type EventBatchResponse = {
+    /**
+     * Batch Id
+     */
+    batch_id: string;
+    /**
+     * Semantics
+     */
+    semantics?: 'per_item_atomic_partial_success';
+    /**
+     * Accepted
+     */
+    accepted: number;
+    /**
+     * Duplicate
+     */
+    duplicate: number;
+    /**
+     * Rejected
+     */
+    rejected: number;
+    /**
+     * Results
+     */
+    results: Array<EventItemResult>;
+};
+
+/**
+ * EventItemResult
+ */
+export type EventItemResult = {
+    /**
+     * Event Id
+     */
+    event_id: string;
+    /**
+     * Status
+     */
+    status: 'accepted' | 'duplicate' | 'rejected';
+    /**
+     * Error Code
+     */
+    error_code?: string | null;
+    /**
+     * Message
+     */
+    message?: string | null;
+};
+
+/**
+ * EventRequest
+ */
+export type EventRequest = {
+    /**
+     * Event Id
+     */
+    event_id: string;
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Position
+     */
+    position: number;
+    event_type: ClientEventType;
+    /**
+     * Client Timestamp
+     */
+    client_timestamp: string;
+    /**
+     * Duration Ms
+     */
+    duration_ms?: number | null;
+    /**
+     * Payload
+     */
+    payload?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * FeedItem
+ */
+export type FeedItem = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Cover
+     */
+    cover: string | null;
+    /**
+     * Position
+     */
+    position: number;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Model Version
+     */
+    model_version: string;
+};
+
+/**
+ * FeedItemResponse
+ */
+export type FeedItemResponse = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Cover
+     */
+    cover: string | null;
+    /**
+     * Position
+     */
+    position: number;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Model Version
+     */
+    model_version: string;
+};
+
+/**
+ * FeedPage
+ */
+export type FeedPage = {
+    /**
+     * Snapshot Id
+     */
+    snapshot_id: string;
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Model Version
+     */
+    model_version: string;
+    /**
+     * Items
+     */
+    items: Array<FeedItem>;
+    /**
+     * Next Cursor
+     */
+    next_cursor: string | null;
+};
+
+/**
+ * FeedType
+ */
+export type FeedType = 'personalized' | 'popular' | 'explore';
+
+/**
+ * HTTPValidationError
+ */
+export type HttpValidationError = {
+    /**
+     * Detail
+     */
+    detail?: Array<ValidationError>;
+};
+
+/**
+ * Health
+ */
+export type Health = {
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Service
+     */
+    service: string;
+    /**
+     * Phase
+     */
+    phase: string;
+};
+
+/**
+ * HotItem
+ */
+export type HotItem = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Exposure Count
+     */
+    exposure_count: number;
+    /**
+     * Click Count
+     */
+    click_count: number;
+    /**
+     * Like Count
+     */
+    like_count: number;
+};
+
+/**
+ * ItemDetailResponse
+ */
+export type ItemDetailResponse = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Cover
+     */
+    cover: string | null;
+    /**
+     * Position
+     */
+    position: number;
+    /**
+     * Source
+     */
+    source: string;
+    /**
+     * Score
+     */
+    score: number;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Model Version
+     */
+    model_version: string;
+};
+
+/**
+ * LoginRequest
+ */
+export type LoginRequest = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
+ * ModelComparisonResponse
+ */
+export type ModelComparisonResponse = {
+    /**
+     * Versions
+     */
+    versions: Array<ModelVersionResponse>;
+    /**
+     * Comparable
+     */
+    comparable: boolean;
+    /**
+     * Reason
+     */
+    reason: string | null;
+};
+
+/**
+ * ModelVersionResponse
+ */
+export type ModelVersionResponse = {
+    /**
+     * Model Version
+     */
+    model_version: string;
+    /**
+     * Data Version
+     */
+    data_version: string;
+    /**
+     * Status
+     */
+    status: 'TRAINING' | 'EVALUATED' | 'READY' | 'ACTIVE' | 'ARCHIVED' | 'FAILED';
+    /**
+     * Purpose
+     */
+    purpose: 'base_official' | 'systems_only' | 'quality_evaluation';
+    /**
+     * Evaluation Comparability
+     */
+    evaluation_comparability: 'non_comparable' | 'comparable';
+    /**
+     * Activation Eligible
+     */
+    activation_eligible: boolean;
+    /**
+     * Metrics
+     */
+    metrics: {
+        [key: string]: number;
+    };
+    /**
+     * Trained At
+     */
+    trained_at: string | null;
+    /**
+     * Published At
+     */
+    published_at: string | null;
+};
+
+/**
+ * OnlineStatus
+ */
+export type OnlineStatus = 'online' | 'offline';
+
+/**
+ * OperationBatchRequest
+ */
+export type OperationBatchRequest = {
+    /**
+     * Batch Id
+     */
+    batch_id: string;
+    /**
+     * Operation Type
+     */
+    operation_type: 'promote' | 'offline' | 'restore';
+    /**
+     * Targets
+     */
+    targets: Array<string>;
+    /**
+     * Scope Type
+     */
+    scope_type?: 'all' | 'user' | 'feed';
+    /**
+     * Scope Value
+     */
+    scope_value?: string | null;
+    /**
+     * Starts At Utc
+     */
+    starts_at_utc: string;
+    /**
+     * Ends At Utc
+     */
+    ends_at_utc?: string | null;
+    /**
+     * Priority
+     */
+    priority?: number;
+    /**
+     * Target Position
+     */
+    target_position?: number | null;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Semantics
+     */
+    semantics?: 'preflight_then_all_or_nothing_transaction';
+};
+
+/**
+ * OperationBatchResponse
+ */
+export type OperationBatchResponse = {
+    /**
+     * Batch Id
+     */
+    batch_id: string;
+    /**
+     * Status
+     */
+    status: 'scheduled' | 'running' | 'succeeded' | 'failed';
+    /**
+     * Expected State Version
+     */
+    expected_state_version: number;
+    /**
+     * Scheduled At
+     */
+    scheduled_at: string | null;
+    /**
+     * Started At
+     */
+    started_at?: string | null;
+    /**
+     * Completed At
+     */
+    completed_at?: string | null;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Result
+     */
+    result?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * Ready
+ */
+export type Ready = {
+    /**
+     * Status
+     */
+    status: string;
+    /**
+     * Service
+     */
+    service: string;
+    /**
+     * Phase
+     */
+    phase: string;
+    /**
+     * Checks
+     */
+    checks: {
+        [key: string]: unknown;
+    };
+    /**
+     * Business Routes Ready
+     */
+    business_routes_ready: boolean;
+};
+
+/**
+ * RecommendationRequestDebugResponse
+ */
+export type RecommendationRequestDebugResponse = {
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Candidate Item Ids
+     */
+    candidate_item_ids: Array<string>;
+    /**
+     * Filtered Item Ids
+     */
+    filtered_item_ids: Array<string>;
+    /**
+     * Ranked Items
+     */
+    ranked_items: Array<FeedItemResponse>;
+    /**
+     * Events
+     */
+    events: Array<PersistedEvent>;
+};
+
+/**
+ * RegisterRequest
+ */
+export type RegisterRequest = {
+    /**
+     * Username
+     */
+    username: string;
+    /**
+     * Password
+     */
+    password: string;
+};
+
+/**
+ * Role
+ */
+export type Role = 'user' | 'operator_readonly' | 'operator' | 'admin';
+
+/**
+ * RoleUpdateRequest
+ */
+export type RoleUpdateRequest = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    role: Role;
+};
+
+/**
+ * TrainingJobResponse
+ */
+export type TrainingJobResponse = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+    /**
+     * Status
+     */
+    status: 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled';
+    /**
+     * Data Version
+     */
+    data_version: string;
+    /**
+     * Data Manifest Checksum
+     */
+    data_manifest_checksum: string;
+    /**
+     * Purpose
+     */
+    purpose: 'base_official' | 'systems_only' | 'quality_evaluation';
+    /**
+     * Evaluation Comparability
+     */
+    evaluation_comparability: 'non_comparable' | 'comparable';
+    /**
+     * Activation Eligible
+     */
+    activation_eligible: boolean;
+    /**
+     * Failure Reason
+     */
+    failure_reason: string | null;
+};
+
+/**
+ * UserDebugResponse
+ */
+export type UserDebugResponse = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    profile: UserProfileResponse;
+    /**
+     * Recent Request Ids
+     */
+    recent_request_ids: Array<string>;
+};
+
+/**
+ * UserProfileResponse
+ */
+export type UserProfileResponse = {
+    /**
+     * User Id
+     */
+    user_id: string;
+    /**
+     * Profile Version
+     */
+    profile_version: number;
+    /**
+     * Recent Interactions
+     */
+    recent_interactions: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * Positive Summary
+     */
+    positive_summary: {
+        [key: string]: unknown;
+    };
+    /**
+     * Negative Summary
+     */
+    negative_summary: {
+        [key: string]: unknown;
+    };
+    /**
+     * Dwell Summary
+     */
+    dwell_summary: {
+        [key: string]: unknown;
+    };
+    /**
+     * Revisit Summary
+     */
+    revisit_summary: {
+        [key: string]: unknown;
+    };
+    /**
+     * Share Summary
+     */
+    share_summary: {
+        [key: string]: unknown;
+    };
+    /**
+     * Title Preferences
+     */
+    title_preferences: {
+        [key: string]: unknown;
+    };
+    /**
+     * Updated At
+     */
+    updated_at: string;
+};
+
+/**
+ * ValidationError
+ */
+export type ValidationError = {
+    /**
+     * Location
+     */
+    loc: Array<string | number>;
+    /**
+     * Message
+     */
+    msg: string;
+    /**
+     * Error Type
+     */
+    type: string;
+    /**
+     * Input
+     */
+    input?: unknown;
+    /**
+     * Context
+     */
+    ctx?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * AdminItem
+ */
+export type AdminItem = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Heat
+     */
+    heat: number;
+    /**
+     * Online Status
+     */
+    online_status: 'online' | 'offline';
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * State Version
+     */
+    state_version: number;
+    /**
+     * Cover
+     */
+    cover: string | null;
+};
+
+/**
+ * AuditOperation
+ */
+export type AuditOperation = {
+    /**
+     * Operation Id
+     */
+    operation_id: string;
+    /**
+     * Batch Id
+     */
+    batch_id: string;
+    /**
+     * Operator Id
+     */
+    operator_id: string;
+    /**
+     * Operator Role
+     */
+    operator_role: 'user' | 'operator_readonly' | 'operator' | 'admin';
+    /**
+     * Operation Type
+     */
+    operation_type: 'promote' | 'offline' | 'restore';
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Targets
+     */
+    targets: Array<string>;
+    /**
+     * Target
+     */
+    target: string;
+    /**
+     * Before Value
+     */
+    before_value: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * After Value
+     */
+    after_value: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Result
+     */
+    result: 'succeeded' | 'failed';
+    /**
+     * Error
+     */
+    error: string | null;
+    /**
+     * Effective At
+     */
+    effective_at: string;
+};
+
+/**
+ * PersistedEvent
+ */
+export type PersistedEvent = {
+    /**
+     * Event Id
+     */
+    event_id: string;
+    /**
+     * Request Id
+     */
+    request_id: string;
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Position
+     */
+    position: number;
+    event_type: ServerEventType;
+    /**
+     * Client Timestamp
+     */
+    client_timestamp: string | null;
+    /**
+     * Server Timestamp
+     */
+    server_timestamp: string;
+    /**
+     * Duration Ms
+     */
+    duration_ms?: number | null;
+    /**
+     * Payload
+     */
+    payload?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * User
+ */
+export type User = {
+    /**
+     * Id
+     */
+    id: string;
+    /**
+     * Username
+     */
+    username: string;
+    role: Role;
+    status: AccountStatus;
+    /**
+     * Created At
+     */
+    created_at: string;
+};
+
+/**
+ * ServerEventType
+ */
+export type ServerEventType = 'impression' | 'click' | 'like' | 'not_interested' | 'dwell' | 'revisit' | 'share';
+
+/**
+ * ClientEventType
+ */
+export type ClientEventType = 'click' | 'like' | 'not_interested' | 'dwell' | 'revisit' | 'share';
 
 export type RegisterUserData = {
     body: RegisterRequest;
@@ -323,24 +1063,16 @@ export type RegisterUserData = {
 
 export type RegisterUserErrors = {
     /**
-     * Business error
+     * Validation Error
      */
-    409: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    422: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    429: ErrorEnvelope;
+    422: HttpValidationError;
 };
 
 export type RegisterUserError = RegisterUserErrors[keyof RegisterUserErrors];
 
 export type RegisterUserResponses = {
     /**
-     * User account created
+     * Successful Response
      */
     201: User;
 };
@@ -356,16 +1088,16 @@ export type LoginUserData = {
 
 export type LoginUserErrors = {
     /**
-     * Business error
+     * Validation Error
      */
-    401: ErrorEnvelope;
+    422: HttpValidationError;
 };
 
 export type LoginUserError = LoginUserErrors[keyof LoginUserErrors];
 
 export type LoginUserResponses = {
     /**
-     * Sets HttpOnly session cookie and readable CSRF cookie
+     * Successful Response
      */
     200: User;
 };
@@ -381,16 +1113,20 @@ export type GetCurrentUserData = {
 
 export type GetCurrentUserErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
 };
 
 export type GetCurrentUserError = GetCurrentUserErrors[keyof GetCurrentUserErrors];
 
 export type GetCurrentUserResponses = {
     /**
-     * Current user
+     * Successful Response
      */
     200: User;
 };
@@ -406,55 +1142,89 @@ export type LogoutUserData = {
 
 export type LogoutUserErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
 };
 
 export type LogoutUserError = LogoutUserErrors[keyof LogoutUserErrors];
 
 export type LogoutUserResponses = {
     /**
-     * Session jti revoked and cookie cleared
+     * Successful Response
      */
     204: void;
 };
 
 export type LogoutUserResponse = LogoutUserResponses[keyof LogoutUserResponses];
 
-export type GetFeedPageData = {
+export type ListAdminUsersData = {
     body?: never;
-    path: {
-        feed_type: FeedType;
-    };
-    query?: {
-        cursor?: string;
-        limit?: number;
-    };
-    url: '/api/feeds/{feed_type}';
+    path?: never;
+    query?: never;
+    url: '/api/admin/users';
 };
 
-export type GetFeedPageErrors = {
+export type ListAdminUsersErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
-    422: ErrorEnvelope;
+    403: ErrorEnvelope;
 };
 
-export type GetFeedPageError = GetFeedPageErrors[keyof GetFeedPageErrors];
+export type ListAdminUsersError = ListAdminUsersErrors[keyof ListAdminUsersErrors];
 
-export type GetFeedPageResponses = {
+export type ListAdminUsersResponses = {
     /**
-     * Stable snapshot page with a new per-page request_id
+     * Response Listadminusers
+     *
+     * Successful Response
      */
-    200: FeedPage;
+    200: Array<User>;
 };
 
-export type GetFeedPageResponse = GetFeedPageResponses[keyof GetFeedPageResponses];
+export type ListAdminUsersResponse = ListAdminUsersResponses[keyof ListAdminUsersResponses];
+
+export type UpdateUserRoleData = {
+    body: RoleUpdateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/roles';
+};
+
+export type UpdateUserRoleErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateUserRoleError = UpdateUserRoleErrors[keyof UpdateUserRoleErrors];
+
+export type UpdateUserRoleResponses = {
+    /**
+     * Successful Response
+     */
+    200: User;
+};
+
+export type UpdateUserRoleResponse = UpdateUserRoleResponses[keyof UpdateUserRoleResponses];
 
 export type CreateEventData = {
     body: EventRequest;
@@ -465,20 +1235,24 @@ export type CreateEventData = {
 
 export type CreateEventErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
-    422: ErrorEnvelope;
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type CreateEventError = CreateEventErrors[keyof CreateEventErrors];
 
 export type CreateEventResponses = {
     /**
-     * Accepted or duplicate event
+     * Successful Response
      */
     200: EventItemResult;
 };
@@ -494,20 +1268,24 @@ export type CreateEventBatchData = {
 
 export type CreateEventBatchErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
-    422: ErrorEnvelope;
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type CreateEventBatchError = CreateEventBatchErrors[keyof CreateEventBatchErrors];
 
 export type CreateEventBatchResponses = {
     /**
-     * Per-item atomic partial success
+     * Successful Response
      */
     200: EventBatchResponse;
 };
@@ -523,18 +1301,22 @@ export type GetMyProfileData = {
 
 export type GetMyProfileErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
 };
 
 export type GetMyProfileError = GetMyProfileErrors[keyof GetMyProfileErrors];
 
 export type GetMyProfileResponses = {
     /**
-     * Authenticated user's current profile
+     * Successful Response
      */
-    200: UserProfile;
+    200: UserProfileResponse;
 };
 
 export type GetMyProfileResponse = GetMyProfileResponses[keyof GetMyProfileResponses];
@@ -542,6 +1324,9 @@ export type GetMyProfileResponse = GetMyProfileResponses[keyof GetMyProfileRespo
 export type GetItemData = {
     body?: never;
     path: {
+        /**
+         * Item Id
+         */
         item_id: string;
     };
     query?: never;
@@ -550,330 +1335,70 @@ export type GetItemData = {
 
 export type GetItemErrors = {
     /**
-     * Business error
+     * Structured API error
      */
-    404: ErrorEnvelope;
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type GetItemError = GetItemErrors[keyof GetItemErrors];
 
 export type GetItemResponses = {
     /**
-     * Online item
+     * Successful Response
      */
-    200: FeedItem;
+    200: ItemDetailResponse;
 };
 
 export type GetItemResponse = GetItemResponses[keyof GetItemResponses];
 
-export type GetDashboardOverviewData = {
-    body?: never;
-    path?: never;
-    query: {
-        from_utc: string;
-        to_utc: string;
-    };
-    url: '/api/admin/dashboard/overview';
-};
-
-export type GetDashboardOverviewErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type GetDashboardOverviewError = GetDashboardOverviewErrors[keyof GetDashboardOverviewErrors];
-
-export type GetDashboardOverviewResponses = {
-    /**
-     * Database-derived metrics
-     */
-    200: DashboardOverview;
-};
-
-export type GetDashboardOverviewResponse = GetDashboardOverviewResponses[keyof GetDashboardOverviewResponses];
-
-export type GetDashboardTimeseriesData = {
-    body?: never;
-    path?: never;
-    query: {
-        from_utc: string;
-        to_utc: string;
-        feed_type?: FeedType;
-    };
-    url: '/api/admin/dashboard/timeseries';
-};
-
-export type GetDashboardTimeseriesErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type GetDashboardTimeseriesError = GetDashboardTimeseriesErrors[keyof GetDashboardTimeseriesErrors];
-
-export type GetDashboardTimeseriesResponses = {
-    /**
-     * UTC half-open buckets
-     */
-    200: Array<DashboardBucket>;
-};
-
-export type GetDashboardTimeseriesResponse = GetDashboardTimeseriesResponses[keyof GetDashboardTimeseriesResponses];
-
-export type GetDashboardFeedsData = {
-    body?: never;
-    path?: never;
-    query: {
-        from_utc: string;
-        to_utc: string;
-    };
-    url: '/api/admin/dashboard/feeds';
-};
-
-export type GetDashboardFeedsErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type GetDashboardFeedsError = GetDashboardFeedsErrors[keyof GetDashboardFeedsErrors];
-
-export type GetDashboardFeedsResponses = {
-    /**
-     * Feed-group diagnostics
-     */
-    200: DashboardFeedDiagnostics;
-};
-
-export type GetDashboardFeedsResponse = GetDashboardFeedsResponses[keyof GetDashboardFeedsResponses];
-
-export type ExportDashboardCsvData = {
-    body?: never;
-    path?: never;
-    query: {
-        from_utc: string;
-        to_utc: string;
-        feed_type?: FeedType;
-    };
-    url: '/api/admin/dashboard/export.csv';
-};
-
-export type ExportDashboardCsvErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type ExportDashboardCsvError = ExportDashboardCsvErrors[keyof ExportDashboardCsvErrors];
-
-export type ExportDashboardCsvResponses = {
-    /**
-     * UTF-8 BOM, RFC4180, stable-order, formula-safe CSV
-     */
-    200: string;
-};
-
-export type ExportDashboardCsvResponse = ExportDashboardCsvResponses[keyof ExportDashboardCsvResponses];
-
-export type DebugUserData = {
-    body?: never;
-    path: {
-        user_id: string;
-    };
-    query?: never;
-    url: '/api/admin/users/{user_id}/debug';
-};
-
-export type DebugUserErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type DebugUserError = DebugUserErrors[keyof DebugUserErrors];
-
-export type DebugUserResponses = {
-    /**
-     * Profile and recent recommendation trace
-     */
-    200: UserDebug;
-};
-
-export type DebugUserResponse = DebugUserResponses[keyof DebugUserResponses];
-
-export type DebugRecommendationRequestData = {
-    body?: never;
-    path: {
-        request_id: string;
-    };
-    query?: never;
-    url: '/api/admin/requests/{request_id}';
-};
-
-export type DebugRecommendationRequestErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    404: ErrorEnvelope;
-};
-
-export type DebugRecommendationRequestError = DebugRecommendationRequestErrors[keyof DebugRecommendationRequestErrors];
-
-export type DebugRecommendationRequestResponses = {
-    /**
-     * Candidate/filter/rank/exposure/event trace
-     */
-    200: RecommendationRequestDebug;
-};
-
-export type DebugRecommendationRequestResponse = DebugRecommendationRequestResponses[keyof DebugRecommendationRequestResponses];
-
-export type ListModelVersionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/admin/models';
-};
-
-export type ListModelVersionsErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type ListModelVersionsError = ListModelVersionsErrors[keyof ListModelVersionsErrors];
-
-export type ListModelVersionsResponses = {
-    /**
-     * Model versions
-     */
-    200: Array<ModelVersion>;
-};
-
-export type ListModelVersionsResponse = ListModelVersionsResponses[keyof ListModelVersionsResponses];
-
-export type CompareModelVersionsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/admin/models/compare';
-};
-
-export type CompareModelVersionsErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type CompareModelVersionsError = CompareModelVersionsErrors[keyof CompareModelVersionsErrors];
-
-export type CompareModelVersionsResponses = {
-    /**
-     * Comparable model metrics
-     */
-    200: ModelComparison;
-};
-
-export type CompareModelVersionsResponse = CompareModelVersionsResponses[keyof CompareModelVersionsResponses];
-
-export type ListTrainingJobsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/admin/training-jobs';
-};
-
-export type ListTrainingJobsErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type ListTrainingJobsError = ListTrainingJobsErrors[keyof ListTrainingJobsErrors];
-
-export type ListTrainingJobsResponses = {
-    /**
-     * Training jobs
-     */
-    200: Array<TrainingJob>;
-};
-
-export type ListTrainingJobsResponse = ListTrainingJobsResponses[keyof ListTrainingJobsResponses];
-
 export type SearchAdminItemsData = {
     body?: never;
     path?: never;
-    query?: never;
+    query?: {
+        /**
+         * Query
+         */
+        query?: string | null;
+        /**
+         * Online Status
+         */
+        online_status?: OnlineStatus | null;
+    };
     url: '/api/admin/items';
 };
 
 export type SearchAdminItemsErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
     403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
 };
 
 export type SearchAdminItemsError = SearchAdminItemsErrors[keyof SearchAdminItemsErrors];
 
 export type SearchAdminItemsResponses = {
     /**
-     * Searchable online/offline items
+     * Response Searchadminitems
+     *
+     * Successful Response
      */
-    200: Array<FeedItem>;
+    200: Array<AdminItem>;
 };
 
 export type SearchAdminItemsResponse = SearchAdminItemsResponses[keyof SearchAdminItemsResponses];
@@ -887,58 +1412,29 @@ export type CreatePromotionData = {
 
 export type CreatePromotionErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
     403: ErrorEnvelope;
     /**
-     * Business error
+     * Validation Error
      */
-    422: ErrorEnvelope;
+    422: HttpValidationError;
 };
 
 export type CreatePromotionError = CreatePromotionErrors[keyof CreatePromotionErrors];
 
 export type CreatePromotionResponses = {
     /**
-     * Promotion created
+     * Successful Response
      */
     201: OperationBatchResponse;
 };
 
 export type CreatePromotionResponse = CreatePromotionResponses[keyof CreatePromotionResponses];
-
-export type ListOperationsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/admin/operations';
-};
-
-export type ListOperationsErrors = {
-    /**
-     * Business error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Business error
-     */
-    403: ErrorEnvelope;
-};
-
-export type ListOperationsError = ListOperationsErrors[keyof ListOperationsErrors];
-
-export type ListOperationsResponses = {
-    /**
-     * Audited operation records
-     */
-    200: Array<AuditOperation>;
-};
-
-export type ListOperationsResponse = ListOperationsResponses[keyof ListOperationsResponses];
 
 export type CreateOperationBatchData = {
     body: OperationBatchRequest;
@@ -949,87 +1445,521 @@ export type CreateOperationBatchData = {
 
 export type CreateOperationBatchErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
     403: ErrorEnvelope;
     /**
-     * Business error
+     * Validation Error
      */
-    422: ErrorEnvelope;
+    422: HttpValidationError;
 };
 
 export type CreateOperationBatchError = CreateOperationBatchErrors[keyof CreateOperationBatchErrors];
 
 export type CreateOperationBatchResponses = {
     /**
-     * Preflighted all-or-nothing batch
+     * Successful Response
      */
     201: OperationBatchResponse;
 };
 
 export type CreateOperationBatchResponse = CreateOperationBatchResponses[keyof CreateOperationBatchResponses];
 
-export type ListAdminUsersData = {
+export type ListOperationsData = {
     body?: never;
     path?: never;
     query?: never;
-    url: '/api/admin/users';
+    url: '/api/admin/operations';
 };
 
-export type ListAdminUsersErrors = {
+export type ListOperationsErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
     403: ErrorEnvelope;
 };
 
-export type ListAdminUsersError = ListAdminUsersErrors[keyof ListAdminUsersErrors];
+export type ListOperationsError = ListOperationsErrors[keyof ListOperationsErrors];
 
-export type ListAdminUsersResponses = {
+export type ListOperationsResponses = {
     /**
-     * Admin-only user listing
+     * Response Listoperations
+     *
+     * Successful Response
      */
-    200: Array<User>;
+    200: Array<AuditOperation>;
 };
 
-export type ListAdminUsersResponse = ListAdminUsersResponses[keyof ListAdminUsersResponses];
+export type ListOperationsResponse = ListOperationsResponses[keyof ListOperationsResponses];
 
-export type UpdateUserRoleData = {
-    body: {
-        user_id: string;
-        role: Role;
+export type GetDashboardOverviewData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * From Utc
+         */
+        from_utc: string;
+        /**
+         * To Utc
+         */
+        to_utc: string;
     };
+    url: '/api/admin/dashboard/overview';
+};
+
+export type GetDashboardOverviewErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDashboardOverviewError = GetDashboardOverviewErrors[keyof GetDashboardOverviewErrors];
+
+export type GetDashboardOverviewResponses = {
+    /**
+     * Successful Response
+     */
+    200: DashboardOverview;
+};
+
+export type GetDashboardOverviewResponse = GetDashboardOverviewResponses[keyof GetDashboardOverviewResponses];
+
+export type GetDashboardTimeseriesData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * From Utc
+         */
+        from_utc: string;
+        /**
+         * To Utc
+         */
+        to_utc: string;
+        /**
+         * Feed Type
+         */
+        feed_type?: FeedType | null;
+    };
+    url: '/api/admin/dashboard/timeseries';
+};
+
+export type GetDashboardTimeseriesErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDashboardTimeseriesError = GetDashboardTimeseriesErrors[keyof GetDashboardTimeseriesErrors];
+
+export type GetDashboardTimeseriesResponses = {
+    /**
+     * Response Getdashboardtimeseries
+     *
+     * Successful Response
+     */
+    200: Array<DashboardBucket>;
+};
+
+export type GetDashboardTimeseriesResponse = GetDashboardTimeseriesResponses[keyof GetDashboardTimeseriesResponses];
+
+export type GetDashboardFeedsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * From Utc
+         */
+        from_utc: string;
+        /**
+         * To Utc
+         */
+        to_utc: string;
+    };
+    url: '/api/admin/dashboard/feeds';
+};
+
+export type GetDashboardFeedsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDashboardFeedsError = GetDashboardFeedsErrors[keyof GetDashboardFeedsErrors];
+
+export type GetDashboardFeedsResponses = {
+    /**
+     * Successful Response
+     */
+    200: DashboardFeedDiagnostics;
+};
+
+export type GetDashboardFeedsResponse = GetDashboardFeedsResponses[keyof GetDashboardFeedsResponses];
+
+export type ExportDashboardCsvData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * From Utc
+         */
+        from_utc: string;
+        /**
+         * To Utc
+         */
+        to_utc: string;
+        /**
+         * Feed Type
+         */
+        feed_type?: FeedType | null;
+    };
+    url: '/api/admin/dashboard/export.csv';
+};
+
+export type ExportDashboardCsvErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExportDashboardCsvError = ExportDashboardCsvErrors[keyof ExportDashboardCsvErrors];
+
+export type ExportDashboardCsvResponses = {
+    /**
+     * Successful Response
+     */
+    200: Blob | File;
+};
+
+export type ExportDashboardCsvResponse = ExportDashboardCsvResponses[keyof ExportDashboardCsvResponses];
+
+export type GetDashboardHotItemsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * From Utc
+         */
+        from_utc: string;
+        /**
+         * To Utc
+         */
+        to_utc: string;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/admin/dashboard/hot-items';
+};
+
+export type GetDashboardHotItemsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetDashboardHotItemsError = GetDashboardHotItemsErrors[keyof GetDashboardHotItemsErrors];
+
+export type GetDashboardHotItemsResponses = {
+    /**
+     * Response Getdashboardhotitems
+     *
+     * Successful Response
+     */
+    200: Array<HotItem>;
+};
+
+export type GetDashboardHotItemsResponse = GetDashboardHotItemsResponses[keyof GetDashboardHotItemsResponses];
+
+export type DebugUserData = {
+    body?: never;
+    path: {
+        /**
+         * User Id
+         */
+        user_id: string;
+    };
+    query?: never;
+    url: '/api/admin/users/{user_id}/debug';
+};
+
+export type DebugUserErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DebugUserError = DebugUserErrors[keyof DebugUserErrors];
+
+export type DebugUserResponses = {
+    /**
+     * Successful Response
+     */
+    200: UserDebugResponse;
+};
+
+export type DebugUserResponse = DebugUserResponses[keyof DebugUserResponses];
+
+export type DebugRecommendationRequestData = {
+    body?: never;
+    path: {
+        /**
+         * Request Id
+         */
+        request_id: string;
+    };
+    query?: never;
+    url: '/api/admin/requests/{request_id}';
+};
+
+export type DebugRecommendationRequestErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DebugRecommendationRequestError = DebugRecommendationRequestErrors[keyof DebugRecommendationRequestErrors];
+
+export type DebugRecommendationRequestResponses = {
+    /**
+     * Successful Response
+     */
+    200: RecommendationRequestDebugResponse;
+};
+
+export type DebugRecommendationRequestResponse = DebugRecommendationRequestResponses[keyof DebugRecommendationRequestResponses];
+
+export type ListModelVersionsData = {
+    body?: never;
     path?: never;
     query?: never;
-    url: '/api/admin/roles';
+    url: '/api/admin/models';
 };
 
-export type UpdateUserRoleErrors = {
+export type ListModelVersionsErrors = {
     /**
-     * Business error
+     * Structured API error
      */
     401: ErrorEnvelope;
     /**
-     * Business error
+     * Structured API error
      */
     403: ErrorEnvelope;
 };
 
-export type UpdateUserRoleError = UpdateUserRoleErrors[keyof UpdateUserRoleErrors];
+export type ListModelVersionsError = ListModelVersionsErrors[keyof ListModelVersionsErrors];
 
-export type UpdateUserRoleResponses = {
+export type ListModelVersionsResponses = {
     /**
-     * Role updated by admin
+     * Response Listmodelversions
+     *
+     * Successful Response
      */
-    200: User;
+    200: Array<ModelVersionResponse>;
 };
 
-export type UpdateUserRoleResponse = UpdateUserRoleResponses[keyof UpdateUserRoleResponses];
+export type ListModelVersionsResponse = ListModelVersionsResponses[keyof ListModelVersionsResponses];
+
+export type CompareModelVersionsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/models/compare';
+};
+
+export type CompareModelVersionsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+};
+
+export type CompareModelVersionsError = CompareModelVersionsErrors[keyof CompareModelVersionsErrors];
+
+export type CompareModelVersionsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ModelComparisonResponse;
+};
+
+export type CompareModelVersionsResponse = CompareModelVersionsResponses[keyof CompareModelVersionsResponses];
+
+export type ListTrainingJobsData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/training-jobs';
+};
+
+export type ListTrainingJobsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+};
+
+export type ListTrainingJobsError = ListTrainingJobsErrors[keyof ListTrainingJobsErrors];
+
+export type ListTrainingJobsResponses = {
+    /**
+     * Response Listtrainingjobs
+     *
+     * Successful Response
+     */
+    200: Array<TrainingJobResponse>;
+};
+
+export type ListTrainingJobsResponse = ListTrainingJobsResponses[keyof ListTrainingJobsResponses];
+
+export type GetHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/health';
+};
+
+export type GetHealthResponses = {
+    /**
+     * Successful Response
+     */
+    200: Health;
+};
+
+export type GetHealthResponse = GetHealthResponses[keyof GetHealthResponses];
+
+export type GetReadyData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/ready';
+};
+
+export type GetReadyResponses = {
+    /**
+     * Successful Response
+     */
+    200: Ready;
+};
+
+export type GetReadyResponse = GetReadyResponses[keyof GetReadyResponses];
+
+export type GetFeedPageData = {
+    body?: never;
+    path: {
+        feed_type: FeedType;
+    };
+    query?: never;
+    url: '/api/feeds/{feed_type}';
+};
+
+export type GetFeedPageErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+    /**
+     * Deferred to Phase 4
+     */
+    501: ErrorEnvelope;
+};
+
+export type GetFeedPageError = GetFeedPageErrors[keyof GetFeedPageErrors];
+
+export type GetFeedPageResponses = {
+    /**
+     * Successful Response
+     */
+    200: FeedPage;
+};
+
+export type GetFeedPageResponse = GetFeedPageResponses[keyof GetFeedPageResponses];

@@ -1,0 +1,18 @@
+{
+  "schema_version": "1.0",
+  "mapping_version": "systems-v1",
+  "positive_weights": {
+    "click": 1.0,
+    "like": 2.0,
+    "share": 3.0,
+    "revisit": 1.5
+  },
+  "negative_weights": {
+    "not_interested": 1.0
+  },
+  "dwell": {
+    "minimum_duration_ms": 3000,
+    "maximum_duration_ms": 60000,
+    "weight": 1.25
+  }
+}

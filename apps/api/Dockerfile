@@ -6,9 +6,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /workspace
-COPY requirements-api.lock ./
-RUN pip install --no-cache-dir --require-hashes --requirement requirements-api.lock
+COPY requirements-api.lock requirements-data.lock ./
+RUN pip install --no-cache-dir --require-hashes \
+    --requirement requirements-api.lock \
+    --requirement requirements-data.lock
 COPY apps ./apps
+COPY recsys ./recsys
+COPY configs ./configs
+COPY scripts/platform_commands.py ./scripts/platform_commands.py
 
-EXPOSE 8000
-CMD ["uvicorn", "apps.api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+EXPOSE 8000 8001
+CMD ["python", "-m", "apps.api.app.server"]
