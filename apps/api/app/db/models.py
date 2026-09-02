@@ -510,6 +510,7 @@ class ModelVersion(Base):
 
     model_version: Mapped[str] = mapped_column(String(255), primary_key=True)
     data_version: Mapped[str] = mapped_column(String(255), nullable=False)
+    data_manifest_checksum: Mapped[str | None] = mapped_column(String(64), nullable=True)
     config_checksum: Mapped[str] = mapped_column(String(64), nullable=False)
     metrics: Mapped[dict[str, float]] = mapped_column(JSON, nullable=False, default=dict)
     artifact_uri: Mapped[str] = mapped_column(Text, nullable=False)
@@ -530,6 +531,10 @@ class ModelVersion(Base):
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     __table_args__ = (
+        CheckConstraint(
+            "data_manifest_checksum IS NULL OR length(data_manifest_checksum) = 64",
+            name="data_manifest_checksum_length",
+        ),
         CheckConstraint("length(config_checksum) = 64", name="config_checksum_length"),
         CheckConstraint("length(artifact_checksum) = 64", name="artifact_checksum_length"),
         CheckConstraint("length(manifest_checksum) = 64", name="manifest_checksum_length"),

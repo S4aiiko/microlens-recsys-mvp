@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -38,6 +39,29 @@ def _exact_origin(value: str) -> str:
     return f"{parsed.scheme}://{parsed.netloc}"
 
 
+def _internal_http_url(name: str, value: str) -> str:
+    parsed = urlsplit(value)
+    if (
+        parsed.scheme not in {"http", "https"}
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in {"", "/"}
+    ):
+        raise ValueError(f"{name} must be a credential-free absolute HTTP origin")
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _search_alias(value: str) -> str:
+    if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,127}", value):
+        raise ValueError("SEARCH_READ_ALIAS must be a lowercase Elasticsearch alias")
+    if value != "microlens-items-read":
+        raise ValueError("SEARCH_READ_ALIAS is frozen to microlens-items-read")
+    return value
+
+
 @dataclass(frozen=True)
 class AppSettings:
     app_env: str
@@ -53,6 +77,10 @@ class AppSettings:
     registration_limit: int
     registration_window_seconds: int
     model_artifacts_dir: Path
+    processed_data_root: Path
+    analytics_exports_dir: Path
+    search_url: str
+    search_read_alias: str
     alembic_ini: Path
     configured: bool = True
 
@@ -94,11 +122,21 @@ class AppSettings:
                 seconds=_positive_integer("SESSION_LIFETIME_SECONDS", 28_800)
             ),
             registration_limit=_positive_integer("REGISTRATION_RATE_LIMIT", 5),
-            registration_window_seconds=_positive_integer(
-                "REGISTRATION_RATE_WINDOW_SECONDS", 300
-            ),
+            registration_window_seconds=_positive_integer("REGISTRATION_RATE_WINDOW_SECONDS", 300),
             model_artifacts_dir=Path(
                 os.environ.get("MODEL_ARTIFACTS_DIR", root / "artifacts" / "models")
+            ),
+            processed_data_root=Path(
+                os.environ.get("PROCESSED_DATA_ROOT", root / "artifacts" / "data")
+            ),
+            analytics_exports_dir=Path(
+                os.environ.get("ANALYTICS_EXPORTS_DIR", root / "artifacts" / "analytics_exports")
+            ),
+            search_url=_internal_http_url(
+                "SEARCH_URL", os.environ.get("SEARCH_URL", "http://search:9200")
+            ),
+            search_read_alias=_search_alias(
+                os.environ.get("SEARCH_READ_ALIAS", "microlens-items-read")
             ),
             alembic_ini=Path(
                 os.environ.get("ALEMBIC_INI", root / "apps" / "api" / "alembic" / "alembic.ini")

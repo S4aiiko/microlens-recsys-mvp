@@ -104,7 +104,7 @@ class PostgreSQLCoreIntegrationTests(unittest.TestCase):
 
         with self.factory.begin() as session:
             self.assertEqual(
-                session.scalar(text("SELECT version_num FROM alembic_version")), "20260901_0003"
+                session.scalar(text("SELECT version_num FROM alembic_version")), "20260902_0005"
             )
             first = seed_demo_users(
                 session,

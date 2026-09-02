@@ -25,9 +25,8 @@ do not claim the corresponding business logic is implemented.
 - `openapi.json` and `internal-openapi.json` are generated from the mounted runtime
   applications by `make generate-contracts`; `make check-contract-drift` fails on
   runtime drift. The browser client is generated only from `openapi.json`.
-- `/api/feeds/{feed_type}` authenticates every supported browser role but returns a
-  structured 501 with `x-implementation-phase: phase_4_deferred`. Phase 2D does not
-  claim the recommendation-feed acceptance loop is complete.
+- `/api/feeds/{feed_type}` authenticates every supported browser role and serves the
+  Phase 4 recommendation flow with signed-cursor pagination and per-page request IDs.
 
 Install the declared `.[dev,api,data]` extras for the complete suite. A base host without
 those extras may explicitly skip dependency-backed checks. Run `make test` for JSON

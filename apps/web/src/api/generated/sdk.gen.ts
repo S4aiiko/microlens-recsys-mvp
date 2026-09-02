@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { CompareModelVersionsData, CompareModelVersionsErrors, CompareModelVersionsResponses, CreateEventBatchData, CreateEventBatchErrors, CreateEventBatchResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateOperationBatchData, CreateOperationBatchErrors, CreateOperationBatchResponses, CreatePromotionData, CreatePromotionErrors, CreatePromotionResponses, DebugRecommendationRequestData, DebugRecommendationRequestErrors, DebugRecommendationRequestResponses, DebugUserData, DebugUserErrors, DebugUserResponses, ExportDashboardCsvData, ExportDashboardCsvErrors, ExportDashboardCsvResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDashboardFeedsData, GetDashboardFeedsErrors, GetDashboardFeedsResponses, GetDashboardHotItemsData, GetDashboardHotItemsErrors, GetDashboardHotItemsResponses, GetDashboardOverviewData, GetDashboardOverviewErrors, GetDashboardOverviewResponses, GetDashboardTimeseriesData, GetDashboardTimeseriesErrors, GetDashboardTimeseriesResponses, GetFeedPageData, GetFeedPageErrors, GetFeedPageResponses, GetHealthData, GetHealthResponses, GetItemData, GetItemErrors, GetItemResponses, GetMyProfileData, GetMyProfileErrors, GetMyProfileResponses, GetReadyData, GetReadyResponses, ListAdminUsersData, ListAdminUsersErrors, ListAdminUsersResponses, ListModelVersionsData, ListModelVersionsErrors, ListModelVersionsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTrainingJobsData, ListTrainingJobsErrors, ListTrainingJobsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, SearchAdminItemsData, SearchAdminItemsErrors, SearchAdminItemsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
+import type { AcknowledgeAlertData, AcknowledgeAlertErrors, AcknowledgeAlertResponses, CancelAsyncJobData, CancelAsyncJobErrors, CancelAsyncJobResponses, CancelOperationJobData, CancelOperationJobErrors, CancelOperationJobResponses, CompareModelVersionsData, CompareModelVersionsErrors, CompareModelVersionsResponses, CreateAsyncJobData, CreateAsyncJobErrors, CreateAsyncJobResponses, CreateEventBatchData, CreateEventBatchErrors, CreateEventBatchResponses, CreateEventData, CreateEventErrors, CreateEventResponses, CreateOperationBatchData, CreateOperationBatchErrors, CreateOperationBatchResponses, CreateOperationJobData, CreateOperationJobErrors, CreateOperationJobResponses, CreatePromotionData, CreatePromotionErrors, CreatePromotionResponses, DebugRecommendationRequestData, DebugRecommendationRequestErrors, DebugRecommendationRequestResponses, DebugUserData, DebugUserErrors, DebugUserResponses, ExportDashboardCsvData, ExportDashboardCsvErrors, ExportDashboardCsvResponses, GetAsyncJobData, GetAsyncJobErrors, GetAsyncJobResponses, GetCurrentUserData, GetCurrentUserErrors, GetCurrentUserResponses, GetDashboardFeedsData, GetDashboardFeedsErrors, GetDashboardFeedsResponses, GetDashboardHotItemsData, GetDashboardHotItemsErrors, GetDashboardHotItemsResponses, GetDashboardOverviewData, GetDashboardOverviewErrors, GetDashboardOverviewResponses, GetDashboardTimeseriesData, GetDashboardTimeseriesErrors, GetDashboardTimeseriesResponses, GetFeedPageData, GetFeedPageErrors, GetFeedPageResponses, GetHealthData, GetHealthResponses, GetItemData, GetItemErrors, GetItemResponses, GetMyProfileData, GetMyProfileErrors, GetMyProfileResponses, GetOperationJobData, GetOperationJobErrors, GetOperationJobResponses, GetReadyData, GetReadyResponses, GetSearchHealthData, GetSearchHealthErrors, GetSearchHealthResponses, ListAdminUsersData, ListAdminUsersErrors, ListAdminUsersResponses, ListAlertsData, ListAlertsErrors, ListAlertsResponses, ListModelVersionsData, ListModelVersionsErrors, ListModelVersionsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTrainingJobsData, ListTrainingJobsErrors, ListTrainingJobsResponses, LoginUserData, LoginUserErrors, LoginUserResponses, LogoutUserData, LogoutUserErrors, LogoutUserResponses, RegisterUserData, RegisterUserErrors, RegisterUserResponses, RetryAsyncJobData, RetryAsyncJobErrors, RetryAsyncJobResponses, SearchAdminItemsData, SearchAdminItemsErrors, SearchAdminItemsResponses, SearchItemsData, SearchItemsErrors, SearchItemsResponses, UpdateUserRoleData, UpdateUserRoleErrors, UpdateUserRoleResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -146,6 +146,45 @@ export const getMyProfile = <ThrowOnError extends boolean = false>(options?: Opt
 });
 
 /**
+ * Get Feed Page
+ */
+export const getFeedPage = <ThrowOnError extends boolean = false>(options: Options<GetFeedPageData, ThrowOnError>): RequestResult<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError> => (options.client ?? client).get<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/feeds/{feed_type}',
+    ...options
+});
+
+/**
+ * Search Items
+ */
+export const searchItems = <ThrowOnError extends boolean = false>(options: Options<SearchItemsData, ThrowOnError>): RequestResult<SearchItemsResponses, SearchItemsErrors, ThrowOnError> => (options.client ?? client).get<SearchItemsResponses, SearchItemsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/items/search',
+    ...options
+});
+
+/**
+ * Search Health
+ */
+export const getSearchHealth = <ThrowOnError extends boolean = false>(options?: Options<GetSearchHealthData, ThrowOnError>): RequestResult<GetSearchHealthResponses, GetSearchHealthErrors, ThrowOnError> => (options?.client ?? client).get<GetSearchHealthResponses, GetSearchHealthErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/search/health',
+    ...options
+});
+
+/**
  * Get Item
  */
 export const getItem = <ThrowOnError extends boolean = false>(options: Options<GetItemData, ThrowOnError>): RequestResult<GetItemResponses, GetItemErrors, ThrowOnError> => (options.client ?? client).get<GetItemResponses, GetItemErrors, ThrowOnError>({
@@ -215,6 +254,135 @@ export const listOperations = <ThrowOnError extends boolean = false>(options?: O
             type: 'apiKey'
         }],
     url: '/api/admin/operations',
+    ...options
+});
+
+/**
+ * Create Job
+ */
+export const createAsyncJob = <ThrowOnError extends boolean = false>(options: Options<CreateAsyncJobData, ThrowOnError>): RequestResult<CreateAsyncJobResponses, CreateAsyncJobErrors, ThrowOnError> => (options.client ?? client).post<CreateAsyncJobResponses, CreateAsyncJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/async-jobs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Job
+ */
+export const getAsyncJob = <ThrowOnError extends boolean = false>(options: Options<GetAsyncJobData, ThrowOnError>): RequestResult<GetAsyncJobResponses, GetAsyncJobErrors, ThrowOnError> => (options.client ?? client).get<GetAsyncJobResponses, GetAsyncJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/async-jobs/{job_id}',
+    ...options
+});
+
+/**
+ * Cancel Job
+ */
+export const cancelAsyncJob = <ThrowOnError extends boolean = false>(options: Options<CancelAsyncJobData, ThrowOnError>): RequestResult<CancelAsyncJobResponses, CancelAsyncJobErrors, ThrowOnError> => (options.client ?? client).post<CancelAsyncJobResponses, CancelAsyncJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/async-jobs/{job_id}/cancel',
+    ...options
+});
+
+/**
+ * Retry Job
+ */
+export const retryAsyncJob = <ThrowOnError extends boolean = false>(options: Options<RetryAsyncJobData, ThrowOnError>): RequestResult<RetryAsyncJobResponses, RetryAsyncJobErrors, ThrowOnError> => (options.client ?? client).post<RetryAsyncJobResponses, RetryAsyncJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/async-jobs/{job_id}/retry',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Create Operation Job
+ */
+export const createOperationJob = <ThrowOnError extends boolean = false>(options: Options<CreateOperationJobData, ThrowOnError>): RequestResult<CreateOperationJobResponses, CreateOperationJobErrors, ThrowOnError> => (options.client ?? client).post<CreateOperationJobResponses, CreateOperationJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/operation-jobs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Operation Job
+ */
+export const getOperationJob = <ThrowOnError extends boolean = false>(options: Options<GetOperationJobData, ThrowOnError>): RequestResult<GetOperationJobResponses, GetOperationJobErrors, ThrowOnError> => (options.client ?? client).get<GetOperationJobResponses, GetOperationJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/operation-jobs/{operation_id}',
+    ...options
+});
+
+/**
+ * Cancel Operation Job
+ */
+export const cancelOperationJob = <ThrowOnError extends boolean = false>(options: Options<CancelOperationJobData, ThrowOnError>): RequestResult<CancelOperationJobResponses, CancelOperationJobErrors, ThrowOnError> => (options.client ?? client).post<CancelOperationJobResponses, CancelOperationJobErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/operation-jobs/{operation_id}/cancel',
+    ...options
+});
+
+/**
+ * List Alerts
+ */
+export const listAlerts = <ThrowOnError extends boolean = false>(options?: Options<ListAlertsData, ThrowOnError>): RequestResult<ListAlertsResponses, ListAlertsErrors, ThrowOnError> => (options?.client ?? client).get<ListAlertsResponses, ListAlertsErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }],
+    url: '/api/admin/alerts',
+    ...options
+});
+
+/**
+ * Acknowledge Alert
+ */
+export const acknowledgeAlert = <ThrowOnError extends boolean = false>(options: Options<AcknowledgeAlertData, ThrowOnError>): RequestResult<AcknowledgeAlertResponses, AcknowledgeAlertErrors, ThrowOnError> => (options.client ?? client).post<AcknowledgeAlertResponses, AcknowledgeAlertErrors, ThrowOnError>({
+    security: [{
+            in: 'cookie',
+            name: 'microlens_session',
+            type: 'apiKey'
+        }, { name: 'X-CSRF-Token', type: 'apiKey' }],
+    url: '/api/admin/alerts/{occurrence_id}/ack',
     ...options
 });
 
@@ -357,16 +525,3 @@ export const getHealth = <ThrowOnError extends boolean = false>(options?: Option
  * Ready
  */
 export const getReady = <ThrowOnError extends boolean = false>(options?: Options<GetReadyData, ThrowOnError>): RequestResult<GetReadyResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetReadyResponses, unknown, ThrowOnError>({ url: '/ready', ...options });
-
-/**
- * Deferred Feed
- */
-export const getFeedPage = <ThrowOnError extends boolean = false>(options: Options<GetFeedPageData, ThrowOnError>): RequestResult<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError> => (options.client ?? client).get<GetFeedPageResponses, GetFeedPageErrors, ThrowOnError>({
-    security: [{
-            in: 'cookie',
-            name: 'microlens_session',
-            type: 'apiKey'
-        }],
-    url: '/api/feeds/{feed_type}',
-    ...options
-});

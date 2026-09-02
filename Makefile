@@ -4,9 +4,10 @@ DOCKER_COMPOSE ?= docker compose
 .DEFAULT_GOAL := help
 
 .PHONY: help doctor init-env data-inspect data-download smoke-all up up-core ps logs test down \
-	full-data train-full export-events build-training-data train-async worker-run-once \
+	full-data train-full train-sync export-events build-training-data train-async worker-run-once \
 	job-status cache-stats publish prepare-7b-fixture covers generate-client check-client-drift \
-	migrate seed generate-contracts check-contract-drift test-api test-integration
+	migrate seed generate-contracts check-contract-drift test-api test-integration \
+	scheduler-run-once search-reindex register-model
 
 help:
 	@$(PYTHON) scripts/foundation.py help
@@ -29,7 +30,7 @@ covers:
 
 smoke-all:
 	@$(DOCKER_COMPOSE) version >/dev/null
-	$(DOCKER_COMPOSE) up -d --build --wait db redis api worker web
+	$(DOCKER_COMPOSE) up -d --build --wait db redis search api scheduler worker web
 
 up:
 	@$(DOCKER_COMPOSE) version >/dev/null
@@ -88,8 +89,20 @@ full-data:
 		--raw-dir "$${MICROLENS_DATA_DIR:-dataset}" \
 		--output-root "$${PROCESSED_DATA_DIR:-data/processed}"
 
-train-full:
-	@$(PYTHON) scripts/foundation.py placeholder train-full
+train-full: train-sync
+
+train-sync:
+	@test -n "$(DATA_VERSION)" || (echo "DATA_VERSION is required" >&2; exit 2)
+	@test "$(DATA_VERSION)" != "latest" || (echo "DATA_VERSION must not be latest" >&2; exit 2)
+	@test -n "$(DATA_MANIFEST_CHECKSUM)" || (echo "DATA_MANIFEST_CHECKSUM is required" >&2; exit 2)
+	@test -n "$(MODEL_CONFIG)" || (echo "MODEL_CONFIG is required" >&2; exit 2)
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) exec -T worker python -m recsys.cli.train_model \
+		--processed-root /artifacts/processed \
+		--data-version "$(DATA_VERSION)" \
+		--data-manifest-checksum "$(DATA_MANIFEST_CHECKSUM)" \
+		--config "$(MODEL_CONFIG)" \
+		--output-root /artifacts/models
 
 export-events:
 	@$(DOCKER_COMPOSE) version >/dev/null
@@ -108,11 +121,48 @@ build-training-data:
 		--purpose "$(PURPOSE)"
 
 train-async:
-	@$(PYTHON) scripts/foundation.py placeholder train-async
+	@test -n "$(IDEMPOTENCY_KEY)" || (echo "IDEMPOTENCY_KEY is required" >&2; exit 2)
+	@test -n "$(DATA_VERSION)" || (echo "DATA_VERSION is required" >&2; exit 2)
+	@test "$(DATA_VERSION)" != "latest" || (echo "DATA_VERSION must not be latest" >&2; exit 2)
+	@test -n "$(DATA_MANIFEST_CHECKSUM)" || (echo "DATA_MANIFEST_CHECKSUM is required" >&2; exit 2)
+	@test -n "$(CONFIG_CHECKSUM)" || (echo "CONFIG_CHECKSUM is required" >&2; exit 2)
+	@test -n "$(PURPOSE)" || (echo "PURPOSE is required" >&2; exit 2)
+	@test -n "$(COMPARABILITY)" || (echo "COMPARABILITY is required" >&2; exit 2)
+	@test -n "$(ACTIVATION_ELIGIBLE)" || (echo "ACTIVATION_ELIGIBLE is required" >&2; exit 2)
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) exec -T api python -m apps.api.app.cli.enqueue_training \
+		--idempotency-key "$(IDEMPOTENCY_KEY)" \
+		--data-version "$(DATA_VERSION)" \
+		--data-manifest-checksum "$(DATA_MANIFEST_CHECKSUM)" \
+		--config-checksum "$(CONFIG_CHECKSUM)" \
+		--purpose "$(PURPOSE)" \
+		--evaluation-comparability "$(COMPARABILITY)" \
+		--activation-eligible "$(ACTIVATION_ELIGIBLE)"
+
+register-model:
+	@test -n "$(MODEL_BUNDLE)" || (echo "MODEL_BUNDLE is required" >&2; exit 2)
+	@test -n "$(MANIFEST_CHECKSUM)" || (echo "MANIFEST_CHECKSUM is required" >&2; exit 2)
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) exec -T api python -m apps.api.app.cli.register_model \
+		--artifact-uri "$(MODEL_BUNDLE)" \
+		--manifest-checksum "$(MANIFEST_CHECKSUM)"
 
 worker-run-once:
 	@$(DOCKER_COMPOSE) version >/dev/null
 	$(DOCKER_COMPOSE) exec -T worker python -m apps.worker.app run-once
+
+scheduler-run-once:
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) exec -T scheduler python -m apps.worker.scheduler run-once
+
+search-reindex:
+	@test -n "$(INDEX_VERSION)" || (echo "INDEX_VERSION is required" >&2; exit 2)
+	@test -n "$(SOURCE_VERSION)" || (echo "SOURCE_VERSION is required" >&2; exit 2)
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) exec -T scheduler python -m apps.api.app.cli.search_reindex \
+		--index-version "$(INDEX_VERSION)" \
+		--source-version "$(SOURCE_VERSION)" \
+		$(if $(EXPECTED_CURRENT_INDEX),--expected-current-index "$(EXPECTED_CURRENT_INDEX)",)
 
 job-status:
 	@$(PYTHON) scripts/foundation.py placeholder job-status

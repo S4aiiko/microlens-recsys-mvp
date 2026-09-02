@@ -1,5 +1,6 @@
 """Versioned, authority-safe short-lived cache primitives."""
 
+from .redis_adapter import RedisPyCacheBackend
 from .runtime import (
     AuthorityDenied,
     CacheAuthority,
@@ -15,5 +16,6 @@ __all__ = [
     "CacheMetrics",
     "CachePolicy",
     "InMemoryCacheBackend",
+    "RedisPyCacheBackend",
     "VersionedCache",
 ]

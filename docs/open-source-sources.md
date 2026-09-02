@@ -12,6 +12,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 
 | Name | Version/revision | Ecosystem | Relation | License | Source | Scope | Vendored/copied source |
 |---|---|---|---|---|---|---|---|
+| `elasticsearch` | `9.4.1@sha256:e1e791f34c85ee79b1fee2f458acf4c19e7f1d47f78efe8805a8a302754f0f9f` | `container` | `direct` | `UNKNOWN` | [official/package source](https://github.com/elastic/elasticsearch) | `search` | no |
 | `node` | `22-alpine@sha256:c610fcdfb1d5b4740dd70c284ed3cb16bb857e0f7166196e36a5501df7a3aa32` | `container` | `direct` | `UNKNOWN` | [official/package source](https://github.com/nodejs/docker-node) | `web` | no |
 | `postgres` | `16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685` | `container` | `direct` | `UNKNOWN` | [official/package source](https://github.com/docker-library/postgres) | `db` | no |
 | `python` | `3.12-slim@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc` | `container` | `direct` | `UNKNOWN` | [official/package source](https://github.com/docker-library/python) | `api,model,worker` | no |

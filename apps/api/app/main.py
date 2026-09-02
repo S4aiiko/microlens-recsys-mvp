@@ -4,53 +4,41 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel
 
+from apps.api.app.alerts.router import build_alerts_router
+from apps.api.app.alerts.service import SqlAlchemyAlertRepository
 from apps.api.app.api.admin.queries import DashboardQueryService
 from apps.api.app.api.admin.router import build_dashboard_router
+from apps.api.app.async_runtime.router import build_async_jobs_router
+from apps.api.app.async_runtime.runtime import create_async_runtime
 from apps.api.app.auth.dependencies import build_auth_dependencies
 from apps.api.app.auth.errors import ErrorEnvelope, install_api_error_handlers
 from apps.api.app.auth.rate_limit import RedisRegistrationLimiter
 from apps.api.app.auth.router import build_auth_router, build_role_admin_router
 from apps.api.app.auth.security import CookieSettings, JWTService, JWTSettings, PasswordService
-from apps.api.app.auth.service import AuthenticatedUser, AuthService
-from apps.api.app.db.models import FeedType
+from apps.api.app.auth.service import AuthService
 from apps.api.app.db.session import session_dependency
 from apps.api.app.events.router import build_events_router
 from apps.api.app.events.service import EventService
+from apps.api.app.feeds.cursor import CursorCodec
+from apps.api.app.feeds.resources import derive_feed_cursor_secret
+from apps.api.app.feeds.router import build_feeds_router
+from apps.api.app.feeds.service import RecommendationService
 from apps.api.app.models_registry.repository import ModelRegistryRepository
 from apps.api.app.models_registry.router import build_model_admin_router
+from apps.api.app.operation_jobs.router import build_operation_jobs_router
+from apps.api.app.operation_jobs.service import OperationJobService
 from apps.api.app.operations.router import build_items_router, build_operations_router
 from apps.api.app.operations.service import OperationService
 from apps.api.app.runtime import RuntimeContext, create_runtime
+from apps.api.app.search.router import build_search_router
+from apps.api.app.search.runtime import SearchRuntime, build_search_runtime
 from apps.api.app.settings import AppSettings
-
-
-class FeedItem(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    item_id: str
-    title: str
-    cover: str | None
-    position: int = Field(ge=0)
-    source: str
-    score: float
-    reason: str
-    model_version: str
-
-
-class FeedPage(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-    snapshot_id: uuid.UUID
-    request_id: uuid.UUID
-    model_version: str
-    items: list[FeedItem]
-    next_cursor: str | None
 
 
 class Health(BaseModel):
@@ -95,7 +83,7 @@ def _install_openapi_metadata(app: FastAPI) -> None:
                 "host_published": False,
             },
         }
-        schema["info"]["x-implementation-status"] = "phase_2d_public_runtime"
+        schema["info"]["x-implementation-status"] = "phase_4_feed_runtime"
         schemes = schema.setdefault("components", {}).setdefault("securitySchemes", {})
         schemes.update(
             {
@@ -175,12 +163,8 @@ def _install_openapi_metadata(app: FastAPI) -> None:
                 for field in schemas["PersistedEvent"].get("required", [])
                 if field not in {"duration_ms", "payload"}
             ]
-        csv_success = schema["paths"]["/api/admin/dashboard/export.csv"]["get"][
-            "responses"
-        ]["200"]
-        csv_success["content"] = {
-            "text/csv": {"schema": {"type": "string", "format": "binary"}}
-        }
+        csv_success = schema["paths"]["/api/admin/dashboard/export.csv"]["get"]["responses"]["200"]
+        csv_success["content"] = {"text/csv": {"schema": {"type": "string", "format": "binary"}}}
         for path_item in schema["paths"].values():
             for operation in path_item.values():
                 if not isinstance(operation, dict) or not operation.get("security"):
@@ -188,9 +172,7 @@ def _install_openapi_metadata(app: FastAPI) -> None:
                 operation.setdefault("responses", {}).setdefault(
                     "401", {"$ref": "#/components/responses/Error"}
                 )
-                operation["responses"].setdefault(
-                    "403", {"$ref": "#/components/responses/Error"}
-                )
+                operation["responses"].setdefault("403", {"$ref": "#/components/responses/Error"})
         app.openapi_schema = schema
         return schema
 
@@ -200,15 +182,14 @@ def _install_openapi_metadata(app: FastAPI) -> None:
 def create_public_app(
     settings: AppSettings | None = None,
     runtime: RuntimeContext | None = None,
+    search_runtime: SearchRuntime | None = None,
 ) -> FastAPI:
     settings = settings or AppSettings.from_environment(allow_unconfigured=True)
     runtime = runtime or create_runtime(settings)
     app = FastAPI(
         title="MicroLens Recommendation MVP API",
-        version="0.2.0-phase2d",
-        description=(
-            "Phase 2D public runtime. Feed orchestration remains explicitly deferred to Phase 4."
-        ),
+        version="0.4.0-phase4",
+        description="Public runtime with Phase 4 online recommendation orchestration.",
     )
     app.state.runtime = runtime
     app.add_middleware(
@@ -245,6 +226,21 @@ def create_public_app(
         JWTService(JWTSettings(secret=settings.jwt_secret, lifetime=settings.session_lifetime)),
     )
     auth_dependencies = build_auth_dependencies(get_session, auth_service)
+    recommendation_service = RecommendationService(
+        model_provider=runtime.model_slot.snapshot,
+        cache=runtime.recommendation_cache,
+        cursor_codec=CursorCodec(derive_feed_cursor_secret(settings.jwt_secret)),
+    )
+    async_runtime = create_async_runtime(
+        runtime.sessions,
+        redis_url=settings.redis_url if settings.configured else None,
+    )
+    search_runtime = search_runtime or build_search_runtime(
+        engine=runtime.engine,
+        sessions=runtime.sessions,
+        search_url=settings.search_url,
+        search_read_alias=settings.search_read_alias,
+    )
     if settings.configured and runtime.redis is not None:
         limiter = RedisRegistrationLimiter(
             runtime.redis,
@@ -281,13 +277,48 @@ def create_public_app(
         )
     )
     app.include_router(
-        build_items_router(get_session=get_session, dependencies=auth_dependencies)
+        build_feeds_router(
+            get_session=get_session,
+            dependencies=auth_dependencies,
+            service=recommendation_service,
+        )
     )
+    # Static search must precede the dynamic /api/items/{item_id} route.
+    app.include_router(
+        build_search_router(
+            dependencies=auth_dependencies,
+            service=search_runtime.service,
+            health_service=search_runtime.health_service,
+        )
+    )
+    app.include_router(build_items_router(get_session=get_session, dependencies=auth_dependencies))
     app.include_router(
         build_operations_router(
             get_session=get_session,
             dependencies=auth_dependencies,
             service=OperationService(),
+        )
+    )
+    app.include_router(
+        build_async_jobs_router(
+            dependencies=auth_dependencies,
+            jobs=async_runtime.jobs,
+            repository=async_runtime.repository,
+            allowed_task_names={"search.full_reindex", "search.incremental_index"},
+        )
+    )
+    app.include_router(
+        build_operation_jobs_router(
+            dependencies=auth_dependencies,
+            service=OperationJobService(async_runtime.jobs, async_runtime.repository),
+            repository=async_runtime.repository,
+        )
+    )
+    app.include_router(
+        build_alerts_router(
+            dependencies=auth_dependencies,
+            sessions=runtime.sessions,
+            repository=SqlAlchemyAlertRepository(runtime.sessions),
         )
     )
     app.include_router(
@@ -307,7 +338,7 @@ def create_public_app(
 
     @app.get("/health", response_model=Health, tags=["system"], operation_id="getHealth")
     def health() -> Health:
-        return Health(status="ok", service="api", phase="phase_2d")
+        return Health(status="ok", service="api", phase="phase_4")
 
     @app.get("/ready", response_model=Ready, tags=["system"], operation_id="getReady")
     async def ready() -> JSONResponse:
@@ -323,39 +354,12 @@ def create_public_app(
         payload = {
             "status": "ready" if is_ready else "not_ready",
             "service": "api",
-            "phase": "phase_2d",
+            "phase": "phase_4",
             "checks": checks,
             "business_routes_ready": is_ready,
         }
         status_code = 200 if is_ready or not settings.configured else 503
         return JSONResponse(status_code=status_code, content=payload)
-
-    @app.get(
-        "/api/feeds/{feed_type}",
-        response_model=FeedPage,
-        tags=["feeds"],
-        operation_id="getFeedPage",
-        openapi_extra={
-            "security": [{"cookieAuth": []}],
-            "x-required-roles": ["user", "operator_readonly", "operator", "admin"],
-            "x-implementation-phase": "phase_4_deferred",
-        },
-        responses={501: {"model": ErrorEnvelope, "description": "Deferred to Phase 4"}},
-    )
-    def deferred_feed(
-        feed_type: FeedType,
-        _authenticated: AuthenticatedUser = Depends(auth_dependencies.current_user),  # noqa: B008
-    ) -> JSONResponse:
-        del feed_type, _authenticated
-        return JSONResponse(
-            status_code=501,
-            content={
-                "code": "feed_deferred_to_phase_4",
-                "message": "Online feed orchestration is not implemented in Phase 2D",
-                "request_id": None,
-                "details": {"implementation_phase": "phase_4_deferred"},
-            },
-        )
 
     _install_openapi_metadata(app)
     return app

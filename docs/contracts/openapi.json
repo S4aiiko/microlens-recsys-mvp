@@ -2,9 +2,9 @@
   "openapi": "3.1.0",
   "info": {
     "title": "MicroLens Recommendation MVP API",
-    "description": "Phase 2D public runtime. Feed orchestration remains explicitly deferred to Phase 4.",
-    "version": "0.2.0-phase2d",
-    "x-implementation-status": "phase_2d_public_runtime"
+    "description": "Public runtime with Phase 4 online recommendation orchestration.",
+    "version": "0.4.0-phase4",
+    "x-implementation-status": "phase_4_feed_runtime"
   },
   "paths": {
     "/api/auth/register": {
@@ -410,6 +410,230 @@
         ]
       }
     },
+    "/api/feeds/{feed_type}": {
+      "get": {
+        "tags": [
+          "feeds"
+        ],
+        "summary": "Get Feed Page",
+        "operationId": "getFeedPage",
+        "parameters": [
+          {
+            "name": "feed_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FeedType"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Feed authority denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Feed generation conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid feed request or cursor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ],
+        "x-implementation-phase": "phase_4"
+      }
+    },
+    "/api/items/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Items",
+        "operationId": "searchItems",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200,
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemSearchResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "user",
+          "operator_readonly",
+          "operator",
+          "admin"
+        ],
+        "x-postgresql-authoritative": true
+      }
+    },
+    "/api/admin/search/health": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Health",
+        "operationId": "getSearchHealth",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchHealthResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
     "/api/items/{item_id}": {
       "get": {
         "tags": [
@@ -705,6 +929,574 @@
         ],
         "x-required-roles": [
           "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/async-jobs": {
+      "post": {
+        "tags": [
+          "admin",
+          "async-jobs"
+        ],
+        "summary": "Create Job",
+        "operationId": "createAsyncJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobMutationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/async-jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "admin",
+          "async-jobs"
+        ],
+        "summary": "Get Job",
+        "operationId": "getAsyncJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DurableJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/async-jobs/{job_id}/cancel": {
+      "post": {
+        "tags": [
+          "admin",
+          "async-jobs"
+        ],
+        "summary": "Cancel Job",
+        "operationId": "cancelAsyncJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobMutationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/async-jobs/{job_id}/retry": {
+      "post": {
+        "tags": [
+          "admin",
+          "async-jobs"
+        ],
+        "summary": "Retry Job",
+        "operationId": "retryAsyncJob",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobRetryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobMutationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/operation-jobs": {
+      "post": {
+        "tags": [
+          "admin",
+          "operations"
+        ],
+        "summary": "Create Operation Job",
+        "operationId": "createOperationJob",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperationJobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/operation-jobs/{operation_id}": {
+      "get": {
+        "tags": [
+          "admin",
+          "operations"
+        ],
+        "summary": "Get Operation Job",
+        "operationId": "getOperationJob",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Operation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DurableJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/operation-jobs/{operation_id}/cancel": {
+      "post": {
+        "tags": [
+          "admin",
+          "operations"
+        ],
+        "summary": "Cancel Operation Job",
+        "operationId": "cancelOperationJob",
+        "parameters": [
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Operation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationJobResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/alerts": {
+      "get": {
+        "tags": [
+          "admin",
+          "alerts"
+        ],
+        "summary": "List Alerts",
+        "operationId": "listAlerts",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AlertStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertOccurrenceResponse"
+                  },
+                  "title": "Response Listalerts"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-required-roles": [
+          "operator_readonly",
+          "operator",
+          "admin"
+        ]
+      }
+    },
+    "/api/admin/alerts/{occurrence_id}/ack": {
+      "post": {
+        "tags": [
+          "admin",
+          "alerts"
+        ],
+        "summary": "Acknowledge Alert",
+        "operationId": "acknowledgeAlert",
+        "parameters": [
+          {
+            "name": "occurrence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Occurrence Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertAckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfHeader": []
+          }
+        ],
+        "x-required-roles": [
           "operator",
           "admin"
         ]
@@ -1386,75 +2178,6 @@
           }
         }
       }
-    },
-    "/api/feeds/{feed_type}": {
-      "get": {
-        "tags": [
-          "feeds"
-        ],
-        "summary": "Deferred Feed",
-        "operationId": "getFeedPage",
-        "parameters": [
-          {
-            "name": "feed_type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/FeedType"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FeedPage"
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "Deferred to Phase 4",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "$ref": "#/components/responses/Error"
-          },
-          "403": {
-            "$ref": "#/components/responses/Error"
-          }
-        },
-        "security": [
-          {
-            "cookieAuth": []
-          }
-        ],
-        "x-required-roles": [
-          "user",
-          "operator_readonly",
-          "operator",
-          "admin"
-        ],
-        "x-implementation-phase": "phase_4_deferred"
-      }
     }
   },
   "components": {
@@ -1466,6 +2189,159 @@
           "disabled"
         ],
         "title": "AccountStatus"
+      },
+      "AlertAckResponse": {
+        "properties": {
+          "duplicate": {
+            "type": "boolean",
+            "title": "Duplicate"
+          },
+          "alert": {
+            "$ref": "#/components/schemas/AlertOccurrenceResponse"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "duplicate",
+          "alert"
+        ],
+        "title": "AlertAckResponse"
+      },
+      "AlertOccurrenceResponse": {
+        "properties": {
+          "occurrence_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Occurrence Id"
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Rule Id"
+          },
+          "rule_name": {
+            "type": "string",
+            "title": "Rule Name"
+          },
+          "metric_name": {
+            "type": "string",
+            "title": "Metric Name"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "firing",
+              "acknowledged",
+              "resolved"
+            ],
+            "title": "Status"
+          },
+          "observed_value": {
+            "type": "number",
+            "title": "Observed Value"
+          },
+          "sample_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Sample Count"
+          },
+          "window_start": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Window Start"
+          },
+          "window_end": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Window End"
+          },
+          "fired_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fired At"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version"
+          },
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          },
+          "acknowledged_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolve_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolve Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "occurrence_id",
+          "rule_id",
+          "rule_name",
+          "metric_name",
+          "status",
+          "observed_value",
+          "sample_count",
+          "window_start",
+          "window_end",
+          "fired_at",
+          "version",
+          "acknowledged_at",
+          "acknowledged_by",
+          "resolved_at",
+          "resolve_reason"
+        ],
+        "title": "AlertOccurrenceResponse"
+      },
+      "AlertStatus": {
+        "type": "string",
+        "enum": [
+          "firing",
+          "acknowledged",
+          "resolved"
+        ],
+        "title": "AlertStatus"
       },
       "DashboardBucket": {
         "properties": {
@@ -1711,6 +2587,105 @@
           "active_model_version"
         ],
         "title": "DashboardOverview"
+      },
+      "DurableJobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "task_name": {
+            "type": "string",
+            "title": "Task Name"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Due At"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Attempts"
+          },
+          "attempt_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Attempt Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job_id",
+          "idempotency_key",
+          "task_name",
+          "state",
+          "due_at",
+          "max_attempts",
+          "attempt_count",
+          "created_at",
+          "updated_at",
+          "completed_at",
+          "result",
+          "last_error"
+        ],
+        "title": "DurableJobResponse"
       },
       "ErrorEnvelope": {
         "properties": {
@@ -2239,6 +3214,155 @@
         ],
         "title": "ItemDetailResponse"
       },
+      "ItemSearchResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "elasticsearch_verified",
+              "elasticsearch_with_postgresql_backfill",
+              "postgresql_fallback"
+            ],
+            "title": "Source"
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded"
+          },
+          "projection_index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Index"
+          },
+          "stale_hits_filtered": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Stale Hits Filtered"
+          },
+          "permission_hits_filtered": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Permission Hits Filtered"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "items",
+          "source",
+          "degraded",
+          "projection_index",
+          "stale_hits_filtered",
+          "permission_hits_filtered"
+        ],
+        "title": "ItemSearchResponse"
+      },
+      "JobCreateRequest": {
+        "properties": {
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Idempotency Key"
+          },
+          "task_name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9_.-]*$",
+            "title": "Task Name"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Due At"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Attempts",
+            "default": 3
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "idempotency_key",
+          "task_name",
+          "payload",
+          "due_at"
+        ],
+        "title": "JobCreateRequest"
+      },
+      "JobMutationResponse": {
+        "properties": {
+          "created": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "duplicate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate"
+          },
+          "job": {
+            "$ref": "#/components/schemas/DurableJobResponse"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "JobMutationResponse"
+      },
+      "JobRetryRequest": {
+        "properties": {
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Due At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "due_at"
+        ],
+        "title": "JobRetryRequest"
+      },
       "LoginRequest": {
         "properties": {
           "username": {
@@ -2583,6 +3707,177 @@
         ],
         "title": "OperationBatchResponse"
       },
+      "OperationJobCreateRequest": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Operation Id"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 220,
+            "minLength": 1,
+            "title": "Idempotency Key"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "promote",
+              "offline",
+              "restore"
+            ],
+            "title": "Kind"
+          },
+          "targets": {
+            "items": {
+              "$ref": "#/components/schemas/OperationTargetRequest"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Targets"
+          },
+          "due_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Due At"
+          },
+          "ends_at_utc": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At Utc"
+          },
+          "scope_type": {
+            "type": "string",
+            "enum": [
+              "all",
+              "user",
+              "feed"
+            ],
+            "title": "Scope Type",
+            "default": "all"
+          },
+          "scope_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Value"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Priority",
+            "default": 0
+          },
+          "target_position": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Position"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "max_attempts": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Attempts",
+            "default": 3
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "operation_id",
+          "idempotency_key",
+          "kind",
+          "targets",
+          "due_at",
+          "reason"
+        ],
+        "title": "OperationJobCreateRequest"
+      },
+      "OperationJobResponse": {
+        "properties": {
+          "created": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created"
+          },
+          "duplicate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duplicate"
+          },
+          "job": {
+            "$ref": "#/components/schemas/DurableJobResponse"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job"
+        ],
+        "title": "OperationJobResponse"
+      },
+      "OperationTargetRequest": {
+        "properties": {
+          "target_id": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Target Id"
+          },
+          "state_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "State Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "target_id",
+          "state_version"
+        ],
+        "title": "OperationTargetRequest"
+      },
       "Ready": {
         "properties": {
           "status": {
@@ -2715,6 +4010,151 @@
           "role"
         ],
         "title": "RoleUpdateRequest"
+      },
+      "SearchHealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "healthy",
+              "degraded",
+              "unavailable"
+            ],
+            "title": "Status"
+          },
+          "projection_reachable": {
+            "type": "boolean",
+            "title": "Projection Reachable"
+          },
+          "fallback_ready": {
+            "type": "boolean",
+            "title": "Fallback Ready"
+          },
+          "alias": {
+            "type": "string",
+            "title": "Alias"
+          },
+          "physical_index": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Physical Index"
+          },
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "last_source_watermark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Source Watermark"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "status",
+          "projection_reachable",
+          "fallback_ready",
+          "alias",
+          "physical_index",
+          "reasons",
+          "last_source_watermark"
+        ],
+        "title": "SearchHealthResponse"
+      },
+      "SearchItemResponse": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Item Id"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Title"
+          },
+          "likes_snapshot": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likes Snapshot"
+          },
+          "views_snapshot": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Views Snapshot"
+          },
+          "state_version": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "State Version"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "retrieval_source": {
+            "type": "string",
+            "enum": [
+              "elasticsearch_verified",
+              "postgresql_backfill",
+              "postgresql"
+            ],
+            "title": "Retrieval Source"
+          },
+          "projection_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projection Score"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "title",
+          "state_version",
+          "updated_at",
+          "retrieval_source"
+        ],
+        "title": "SearchItemResponse"
       },
       "TrainingJobResponse": {
         "properties": {

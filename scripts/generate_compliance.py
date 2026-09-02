@@ -92,6 +92,7 @@ BASE_IMAGE_SOURCES = {
     "node": "https://github.com/nodejs/docker-node",
     "postgres": "https://github.com/docker-library/postgres",
     "redis": "https://github.com/redis/docker-library-redis",
+    "elasticsearch": "https://github.com/elastic/elasticsearch",
 }
 
 PYTHON_PACKAGE_SOURCES = {
@@ -234,7 +235,7 @@ def _base_images() -> list[tuple[str, str, str, str, str]]:
         observed.setdefault(parsed, set()).add(service)
 
     compose = (ROOT / "compose.yaml").read_text(encoding="utf-8")
-    for service in ("db", "redis"):
+    for service in ("db", "redis", "search"):
         match = re.search(rf"(?ms)^  {service}:\n.*?^    image:\s*(\S+)", compose)
         if not match:
             raise ValueError(f"missing digest-pinned image for Compose service {service}")

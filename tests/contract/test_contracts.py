@@ -87,7 +87,18 @@ class ContractFilesTest(unittest.TestCase):
             "/api/admin/operation-batches",
             "/api/admin/users",
             "/api/admin/roles",
+            "/api/items/search",
             "/api/items/{item_id}",
+            "/api/admin/search/health",
+            "/api/admin/async-jobs",
+            "/api/admin/async-jobs/{job_id}",
+            "/api/admin/async-jobs/{job_id}/cancel",
+            "/api/admin/async-jobs/{job_id}/retry",
+            "/api/admin/operation-jobs",
+            "/api/admin/operation-jobs/{operation_id}",
+            "/api/admin/operation-jobs/{operation_id}/cancel",
+            "/api/admin/alerts",
+            "/api/admin/alerts/{occurrence_id}/ack",
             "/health",
             "/ready",
         }
@@ -116,7 +127,21 @@ class ContractFilesTest(unittest.TestCase):
             ("/api/events", "post"): all_roles,
             ("/api/events/batch", "post"): all_roles,
             ("/api/profile/me", "get"): all_roles,
+            ("/api/items/search", "get"): all_roles,
             ("/api/items/{item_id}", "get"): all_roles,
+            ("/api/admin/search/health", "get"): readonly_roles,
+            ("/api/admin/async-jobs", "post"): ["operator", "admin"],
+            ("/api/admin/async-jobs/{job_id}", "get"): readonly_roles,
+            ("/api/admin/async-jobs/{job_id}/cancel", "post"): ["operator", "admin"],
+            ("/api/admin/async-jobs/{job_id}/retry", "post"): ["operator", "admin"],
+            ("/api/admin/operation-jobs", "post"): ["operator", "admin"],
+            ("/api/admin/operation-jobs/{operation_id}", "get"): readonly_roles,
+            ("/api/admin/operation-jobs/{operation_id}/cancel", "post"): [
+                "operator",
+                "admin",
+            ],
+            ("/api/admin/alerts", "get"): readonly_roles,
+            ("/api/admin/alerts/{occurrence_id}/ack", "post"): ["operator", "admin"],
             ("/api/admin/dashboard/overview", "get"): readonly_roles,
             ("/api/admin/dashboard/timeseries", "get"): readonly_roles,
             ("/api/admin/dashboard/feeds", "get"): readonly_roles,
@@ -175,23 +200,17 @@ class ContractFilesTest(unittest.TestCase):
             self.assertNotIn(forbidden, public_text)
 
     def test_internal_openapi_is_self_contained_and_internal_only(self) -> None:
-        document = json.loads(
-            (CONTRACTS / "internal-openapi.json").read_text(encoding="utf-8")
-        )
+        document = json.loads((CONTRACTS / "internal-openapi.json").read_text(encoding="utf-8"))
         self.assertEqual(document["openapi"], "3.1.0")
         self.assertEqual(document["servers"][0]["url"], "http://api:8001")
-        self.assertEqual(
-            set(document["paths"]), {"/internal/model-versions/{version}/activate"}
-        )
+        self.assertEqual(set(document["paths"]), {"/internal/model-versions/{version}/activate"})
         operation = document["paths"]["/internal/model-versions/{version}/activate"]["post"]
         self.assertEqual(operation["operationId"], "activateModelVersion")
         self.assertEqual(operation["security"], [{"publishToken": []}])
         scheme = document["components"]["securitySchemes"]["publishToken"]
         self.assertEqual(scheme, {"type": "apiKey", "in": "header", "name": "X-Publish-Token"})
         self.assertFalse(document["x-listener-contract"]["host_published"])
-        self.assertEqual(
-            document["x-listener-contract"]["network_scope"], "compose-internal-only"
-        )
+        self.assertEqual(document["x-listener-contract"]["network_scope"], "compose-internal-only")
         self.assertEqual(
             set(document["components"]["schemas"]),
             {"ActivationRequest", "ModelVersion", "ErrorEnvelope"},
@@ -252,15 +271,34 @@ class ContractFilesTest(unittest.TestCase):
 
     def test_generated_admin_sdk_preserves_security_and_response_types(self) -> None:
         sdk = (ROOT / "apps/web/src/api/generated/sdk.gen.ts").read_text(encoding="utf-8")
-        types = (ROOT / "apps/web/src/api/generated/types.gen.ts").read_text(
-            encoding="utf-8"
-        )
+        types = (ROOT / "apps/web/src/api/generated/types.gen.ts").read_text(encoding="utf-8")
         operations = [
-            "getDashboardOverview", "getDashboardTimeseries", "getDashboardFeeds",
-            "exportDashboardCsv", "debugUser", "debugRecommendationRequest",
-            "listModelVersions", "compareModelVersions", "listTrainingJobs",
-            "searchAdminItems", "createPromotion", "listOperations",
-            "createOperationBatch", "listAdminUsers", "updateUserRole",
+            "getDashboardOverview",
+            "getDashboardTimeseries",
+            "getDashboardFeeds",
+            "exportDashboardCsv",
+            "debugUser",
+            "debugRecommendationRequest",
+            "listModelVersions",
+            "compareModelVersions",
+            "listTrainingJobs",
+            "searchAdminItems",
+            "createPromotion",
+            "listOperations",
+            "createOperationBatch",
+            "listAdminUsers",
+            "updateUserRole",
+            "searchItems",
+            "getSearchHealth",
+            "createAsyncJob",
+            "getAsyncJob",
+            "cancelAsyncJob",
+            "retryAsyncJob",
+            "createOperationJob",
+            "getOperationJob",
+            "cancelOperationJob",
+            "listAlerts",
+            "acknowledgeAlert",
         ]
         for operation_id in operations:
             with self.subTest(operation_id=operation_id):
@@ -297,9 +335,19 @@ class ContractFilesTest(unittest.TestCase):
         if yaml is None:
             self.skipTest("PyYAML is not installed; complete tests require project[dev]")
         compose = yaml.safe_load((ROOT / "compose.yaml").read_text(encoding="utf-8"))
-        self.assertEqual(set(compose["services"]), {"web", "api", "db", "redis", "worker"})
+        self.assertEqual(
+            set(compose["services"]),
+            {"web", "api", "db", "redis", "search", "worker", "scheduler"},
+        )
         self.assertTrue(compose["networks"]["backend"]["internal"])
-        required_volumes = {"postgres_data", "redis_data", "model_artifacts", "training_exports"}
+        required_volumes = {
+            "postgres_data",
+            "redis_data",
+            "search_data",
+            "model_artifacts",
+            "training_exports",
+            "analytics_exports",
+        }
         self.assertTrue(required_volumes.issubset(compose["volumes"]))
         self.assertIn("model_artifacts", compose["services"]["api"]["volumes"][0])
         self.assertIn("model_artifacts", compose["services"]["worker"]["volumes"][0])
@@ -313,10 +361,27 @@ class ContractFilesTest(unittest.TestCase):
     def test_stable_make_targets_are_present(self) -> None:
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
         targets = {
-            "doctor", "data-inspect", "data-download", "smoke-all", "up", "up-core", "ps",
-            "logs", "test", "down", "full-data", "train-full", "export-events",
-            "build-training-data", "train-async", "worker-run-once", "job-status",
-            "cache-stats", "publish", "prepare-7b-fixture", "covers",
+            "doctor",
+            "data-inspect",
+            "data-download",
+            "smoke-all",
+            "up",
+            "up-core",
+            "ps",
+            "logs",
+            "test",
+            "down",
+            "full-data",
+            "train-full",
+            "export-events",
+            "build-training-data",
+            "train-async",
+            "worker-run-once",
+            "job-status",
+            "cache-stats",
+            "publish",
+            "prepare-7b-fixture",
+            "covers",
         }
         for target in targets:
             with self.subTest(target=target):

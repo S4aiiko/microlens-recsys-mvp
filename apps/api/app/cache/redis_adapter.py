@@ -45,3 +45,6 @@ class RedisPyCacheBackend:
 
     def ping(self) -> bool:
         return bool(self._client.ping())
+
+    def close(self) -> None:
+        self._client.close()

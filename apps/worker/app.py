@@ -141,13 +141,21 @@ def main(argv: list[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     if arguments == ["--healthcheck"]:
         return healthcheck()
+    if arguments == ["durable-run-once"]:
+        # Durable/search jobs have a separate PostgreSQL-authoritative process.
+        # Keeping this explicit preserves the existing training job state machine.
+        from .scheduler import main as scheduler_main
+
+        return scheduler_main(["run-once"])
     runtime = build_runtime()
     if arguments == ["run-once"]:
         result = runtime.run_once()
         print(json.dumps(result, sort_keys=True))
         return 2 if result["job"] == "training_handler_unconfigured" else 0
     if arguments:
-        raise SystemExit("usage: python -m apps.worker.app [run-once|--healthcheck]")
+        raise SystemExit(
+            "usage: python -m apps.worker.app [run-once|durable-run-once|--healthcheck]"
+        )
     serve(runtime)
     return 0
 

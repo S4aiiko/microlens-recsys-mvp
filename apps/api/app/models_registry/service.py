@@ -66,11 +66,18 @@ class ActivationPlan:
 
 
 class ActivationService:
-    def __init__(self, *, publish_token: str, loader: StagingLoader) -> None:
+    def __init__(
+        self,
+        *,
+        publish_token: str,
+        loader: StagingLoader,
+        resource_integrator: Callable[[Session, object], object] | None = None,
+    ) -> None:
         if len(publish_token.encode("utf-8")) < 24:
             raise ValueError("publish token must contain at least 24 bytes")
         self._publish_token = publish_token
         self.loader = loader
+        self.resource_integrator = resource_integrator
 
     def authenticate_publish_token(self, provided: str | None) -> None:
         if provided is None or not hmac.compare_digest(provided, self._publish_token):
@@ -146,11 +153,24 @@ class ActivationService:
             raise ApiError(422, "model_not_found", "Model version does not exist")
         self._validate_target(model, manifest_checksum)
         try:
-            staged = self.loader.stage(
-                artifact_uri=model.artifact_uri,
-                artifact_checksum=model.artifact_checksum,
-                manifest_checksum=manifest_checksum,
-            )
+            stage_activation = getattr(self.loader, "stage_activation", None)
+            if callable(stage_activation):
+                if model.data_manifest_checksum is None:
+                    raise ValueError("active model is missing its processed-data checksum")
+                staged = stage_activation(
+                    model_version=model.model_version,
+                    data_version=model.data_version,
+                    data_manifest_checksum=model.data_manifest_checksum,
+                    artifact_uri=model.artifact_uri,
+                    artifact_checksum=model.artifact_checksum,
+                    manifest_checksum=manifest_checksum,
+                )
+            else:
+                staged = self.loader.stage(
+                    artifact_uri=model.artifact_uri,
+                    artifact_checksum=model.artifact_checksum,
+                    manifest_checksum=manifest_checksum,
+                )
         except Exception as exc:
             raise ApiError(422, "staging_load_failed", "Model staging validation failed") from exc
         return PreparedActivation(
@@ -189,9 +209,24 @@ class ActivationService:
                 "Current active model does not match expected_current_version",
                 details={"expected": expected_current_version, "actual": current},
             )
+        if self.resource_integrator is not None:
+            try:
+                self.resource_integrator(session, prepared.staged_bundle)
+            except ApiError:
+                raise
+            except Exception as exc:
+                raise ApiError(
+                    422,
+                    "serving_resource_integration_failed",
+                    "Serving resource integration failed",
+                ) from exc
         event_time = (now or datetime.now(UTC)).astimezone(UTC)
         if active is not None and active.model_version != target.model_version:
             active.status = ModelStatus.ARCHIVED
+            # PostgreSQL enforces a partial unique index for ACTIVE. Flush the
+            # archive first so ORM update ordering can never create two ACTIVE
+            # rows, while both writes remain inside the same transaction.
+            session.flush([active])
         target.status = ModelStatus.ACTIVE
         target.published_at = event_time
         target.failure_reason = None

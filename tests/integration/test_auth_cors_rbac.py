@@ -43,18 +43,21 @@ def test_six_seed_accounts_cookie_csrf_logout_and_four_role_matrix() -> None:
     try:
         for username, client in clients.items():
             assert client.get("/api/auth/me").json()["username"] == username
-            deferred = client.get("/api/feeds/popular")
-            assert deferred.status_code == 501
-            assert deferred.json()["details"]["implementation_phase"] == "phase_4_deferred"
+            feed = client.get("/api/feeds/popular", params={"limit": 2})
+            assert feed.status_code == 200, feed.text
+            assert feed.json()["items"]
+            assert feed.json()["model_version"]
 
         window = {"from_utc": "2026-08-31T00:00:00Z", "to_utc": "2026-09-02T00:00:00Z"}
-        assert clients["demo_user_a"].get(
-            "/api/admin/dashboard/overview", params=window
-        ).status_code == 403
+        assert (
+            clients["demo_user_a"].get("/api/admin/dashboard/overview", params=window).status_code
+            == 403
+        )
         for username in ("operator_readonly", "operator", "admin"):
-            assert clients[username].get(
-                "/api/admin/dashboard/overview", params=window
-            ).status_code == 200
+            assert (
+                clients[username].get("/api/admin/dashboard/overview", params=window).status_code
+                == 200
+            )
         for username in ("demo_user_a", "operator_readonly", "operator"):
             assert clients[username].get("/api/admin/users").status_code == 403
         assert clients["admin"].get("/api/admin/users").status_code == 200
@@ -63,9 +66,9 @@ def test_six_seed_accounts_cookie_csrf_logout_and_four_role_matrix() -> None:
         stale_session = client.cookies.get("microlens_session")
         stale_csrf = client.cookies.get("microlens_csrf")
         assert client.post("/api/auth/logout").status_code == 403
-        assert client.post(
-            "/api/auth/logout", headers={"X-CSRF-Token": stale_csrf}
-        ).status_code == 204
+        assert (
+            client.post("/api/auth/logout", headers={"X-CSRF-Token": stale_csrf}).status_code == 204
+        )
         stale = httpx.Client(
             base_url=PUBLIC_URL,
             cookies={"microlens_session": stale_session, "microlens_csrf": stale_csrf},

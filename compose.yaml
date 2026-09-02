@@ -1,7 +1,8 @@
 name: ${COMPOSE_PROJECT_NAME:-microlens-mvp}
 
-# Base-image digests were frozen after a successful linux/arm64 Phase 1 build.
-# PyTorch is intentionally deferred until its first real model-stage CPU build.
+# Image digests were frozen after successful linux/arm64 builds/pulls. The
+# Elasticsearch server keeps its own Elastic/AGPL/SSPL distribution boundary;
+# this repository's application code remains MIT.
 x-listener-contract:
   public:
     url: http://api:8000
@@ -48,6 +49,8 @@ services:
       APP_ENV: ${APP_ENV:-development}
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SEARCH_URL: ${SEARCH_URL:-http://search:9200}
+      SEARCH_READ_ALIAS: ${SEARCH_READ_ALIAS:-microlens-items-read}
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       PUBLISH_TOKEN: ${PUBLISH_TOKEN:?Set PUBLISH_TOKEN in .env}
       MICROLENS_SEED_PASSWORD: ${MICROLENS_SEED_PASSWORD:?Set MICROLENS_SEED_PASSWORD in .env}
@@ -64,7 +67,9 @@ services:
       INTERNAL_ACTIVATION_IMPLEMENTED: "true"
       ALEMBIC_INI: /workspace/apps/api/alembic/alembic.ini
       MODEL_ARTIFACTS_DIR: /artifacts/models
+      PROCESSED_DATA_ROOT: /artifacts/processed
       TRAINING_EXPORTS_DIR: /artifacts/training_exports
+      ANALYTICS_EXPORTS_DIR: /artifacts/analytics_exports
     ports:
       - "${API_PORT:-8000}:8000"
     expose:
@@ -76,7 +81,9 @@ services:
         condition: service_healthy
     volumes:
       - model_artifacts:/artifacts/models
+      - ${PROCESSED_DATA_DIR:-./data/processed}:/artifacts/processed:ro
       - training_exports:/artifacts/training_exports
+      - analytics_exports:/artifacts/analytics_exports
     healthcheck:
       test:
         - CMD
@@ -122,6 +129,29 @@ services:
     networks:
       - backend
 
+  search:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.4.1@sha256:e1e791f34c85ee79b1fee2f458acf4c19e7f1d47f78efe8805a8a302754f0f9f
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      xpack.security.http.ssl.enabled: "false"
+      bootstrap.memory_lock: "true"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - search_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+    networks:
+      - backend
+
   worker:
     build:
       context: .
@@ -130,12 +160,17 @@ services:
       APP_ENV: foundation
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SEARCH_URL: ${SEARCH_URL:-http://search:9200}
+      SEARCH_READ_ALIAS: ${SEARCH_READ_ALIAS:-microlens-items-read}
       MODEL_ARTIFACTS_DIR: /artifacts/models
+      MODEL_ARTIFACT_ROOT: /artifacts/models
+      PROCESSED_DATA_ROOT: /artifacts/processed
+      WORKER_MODEL_CONFIG: ${WORKER_MODEL_CONFIG:-/workspace/configs/models/smoke-a.json}
+      WORKER_TRAINING_HANDLER: apps.worker.model_training:registered_worker_training_handler
       TRAINING_EXPORTS_DIR: /artifacts/training_exports
+      ANALYTICS_EXPORTS_DIR: /artifacts/analytics_exports
       WORKER_PORT: "8081"
-      # Phase 2D runs in an explicit ready_degraded mode until Phase 3 supplies
-      # a real model-training plugin. The worker must not claim queued jobs.
-      WORKER_REQUIRE_TRAINING_HANDLER: ${WORKER_REQUIRE_TRAINING_HANDLER:-false}
+      WORKER_REQUIRE_TRAINING_HANDLER: "true"
     depends_on:
       api:
         condition: service_healthy
@@ -143,7 +178,11 @@ services:
         condition: service_healthy
     volumes:
       - model_artifacts:/artifacts/models
+      # This bind is intentionally explicit. Compose does not claim that a named
+      # volume already contains official processed data or trained models.
+      - ${PROCESSED_DATA_DIR:-./data/processed}:/artifacts/processed:ro
       - training_exports:/artifacts/training_exports
+      - analytics_exports:/artifacts/analytics_exports
     healthcheck:
       test: ["CMD", "python", "-m", "apps.worker.app", "--healthcheck"]
       interval: 10s
@@ -153,11 +192,38 @@ services:
     networks:
       - backend
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ["python", "-m", "apps.worker.scheduler", "serve"]
+    restart: unless-stopped
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SEARCH_URL: ${SEARCH_URL:-http://search:9200}
+      SEARCH_READ_ALIAS: ${SEARCH_READ_ALIAS:-microlens-items-read}
+      SCHEDULER_POLL_SECONDS: ${SCHEDULER_POLL_SECONDS:-2}
+      SCHEDULER_LEASE_SECONDS: ${SCHEDULER_LEASE_SECONDS:-60}
+      SCHEDULER_RETRY_DELAY_SECONDS: ${SCHEDULER_RETRY_DELAY_SECONDS:-5}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      search:
+        condition: service_healthy
+    networks:
+      - backend
+
 volumes:
   postgres_data:
   redis_data:
   model_artifacts:
   training_exports:
+  analytics_exports:
+  search_data:
 
 networks:
   edge:

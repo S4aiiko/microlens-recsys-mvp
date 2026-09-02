@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import event, select
 from sqlalchemy.exc import IntegrityError
 
 from apps.api.app.auth.errors import ApiError
@@ -104,6 +104,39 @@ class ModelRegistryTests(unittest.TestCase):
         with self.factory() as session:
             self.assertEqual(session.get(ModelVersion, "v2").status, ModelStatus.ACTIVE)
             self.assertEqual(session.get(ModelVersion, "v3").status, ModelStatus.READY)
+
+    def test_active_switch_flushes_archive_before_activation(self) -> None:
+        service = ActivationService(publish_token="p" * 32, loader=Loader())
+        self._activate(service, "v1", None)
+        flush_states: list[dict[str, ModelStatus]] = []
+        with self.factory() as session:
+            prepared = service.prepare(session, version="v2", manifest_checksum="c" * 64)
+            session.rollback()
+
+            def capture_flush(current_session, _context, _instances) -> None:
+                flush_states.append(
+                    {
+                        model_row.model_version: model_row.status
+                        for model_row in current_session.dirty
+                        if isinstance(model_row, ModelVersion)
+                    }
+                )
+
+            event.listen(session, "before_flush", capture_flush)
+            try:
+                with session.begin():
+                    service.activate_prepared(
+                        session,
+                        prepared=prepared,
+                        expected_current_version="v1",
+                        now=NOW,
+                    )
+            finally:
+                event.remove(session, "before_flush", capture_flush)
+
+        self.assertGreaterEqual(len(flush_states), 2)
+        self.assertEqual(flush_states[0], {"v1": ModelStatus.ARCHIVED})
+        self.assertEqual(flush_states[1], {"v2": ModelStatus.ACTIVE})
 
     def test_staging_failure_and_systems_only_invariant_preserve_active(self) -> None:
         good = ActivationService(publish_token="p" * 32, loader=Loader())

@@ -190,6 +190,10 @@ class VersionedCache:
                 self.metrics.increment("misses")
                 self.invalidate(resource=resource, authority=current)
             else:
+                confirmed = authority()
+                confirmed.validate()
+                if confirmed != current:
+                    raise ValueError("cache authority changed during lookup; retry")
                 self.metrics.increment("hits")
                 return value
         else:
@@ -197,6 +201,10 @@ class VersionedCache:
 
         value = loader()
         self.metrics.increment("loads")
+        confirmed = authority()
+        confirmed.validate()
+        if confirmed != current:
+            raise ValueError("cache authority changed during load; retry")
         payload = json.dumps(
             value,
             ensure_ascii=False,

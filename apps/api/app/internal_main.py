@@ -10,6 +10,11 @@ from fastapi import FastAPI, Request
 
 from apps.api.app.auth.errors import install_api_error_handlers
 from apps.api.app.db.session import session_dependency
+from apps.api.app.feeds.resources import (
+    ProcessedRecommendationLoader,
+    RecommendationResourceStagingLoader,
+    sync_serving_resource,
+)
 from apps.api.app.models_registry.router import build_internal_activation_router
 from apps.api.app.models_registry.service import ActivationService
 from apps.api.app.runtime import RuntimeContext, SecureJsonStagingLoader, create_runtime
@@ -38,9 +43,11 @@ def _install_internal_openapi_metadata(app: FastAPI) -> None:
             "public_listener_rejects": ["/internal/"],
         }
         schema["info"]["x-implementation-status"] = "phase_2d_internal_runtime"
-        schema.setdefault("components", {}).setdefault("securitySchemes", {})[
-            "publishToken"
-        ] = {"type": "apiKey", "in": "header", "name": "X-Publish-Token"}
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})["publishToken"] = {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-Publish-Token",
+        }
         components = schema["components"]
         components.setdefault("responses", {})["Error"] = {
             "description": "Internal publishing error",
@@ -114,7 +121,11 @@ def create_internal_app(
 
     service = ActivationService(
         publish_token=settings.publish_token,
-        loader=SecureJsonStagingLoader(settings.model_artifacts_dir),
+        loader=RecommendationResourceStagingLoader(
+            model_loader=SecureJsonStagingLoader(settings.model_artifacts_dir),
+            processed_loader=ProcessedRecommendationLoader(settings.processed_data_root),
+        ),
+        resource_integrator=sync_serving_resource,
     )
     app.include_router(
         build_internal_activation_router(

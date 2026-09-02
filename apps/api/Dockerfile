@@ -6,10 +6,20 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 WORKDIR /workspace
-COPY requirements-api.lock requirements-data.lock ./
+# Keep this block byte-for-byte aligned with docker/model.Dockerfile so the
+# validated linux/arm64 CPU PyTorch layer is reusable across images.
+COPY requirements-model.lock requirements-data.lock ./
+RUN pip install --no-cache-dir --require-hashes \
+    --index-url https://download.pytorch.org/whl/cpu \
+    --extra-index-url https://pypi.org/simple \
+    --requirement requirements-model.lock \
+    --requirement requirements-data.lock
+
+COPY requirements-api.lock requirements-search.lock requirements-analytics.lock ./
 RUN pip install --no-cache-dir --require-hashes \
     --requirement requirements-api.lock \
-    --requirement requirements-data.lock
+    --requirement requirements-search.lock \
+    --requirement requirements-analytics.lock
 COPY apps ./apps
 COPY recsys ./recsys
 COPY configs ./configs

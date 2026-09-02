@@ -10,6 +10,88 @@ export type ClientOptions = {
 export type AccountStatus = 'enabled' | 'disabled';
 
 /**
+ * AlertAckResponse
+ */
+export type AlertAckResponse = {
+    /**
+     * Duplicate
+     */
+    duplicate: boolean;
+    alert: AlertOccurrenceResponse;
+};
+
+/**
+ * AlertOccurrenceResponse
+ */
+export type AlertOccurrenceResponse = {
+    /**
+     * Occurrence Id
+     */
+    occurrence_id: string;
+    /**
+     * Rule Id
+     */
+    rule_id: string;
+    /**
+     * Rule Name
+     */
+    rule_name: string;
+    /**
+     * Metric Name
+     */
+    metric_name: string;
+    /**
+     * Status
+     */
+    status: 'firing' | 'acknowledged' | 'resolved';
+    /**
+     * Observed Value
+     */
+    observed_value: number;
+    /**
+     * Sample Count
+     */
+    sample_count: number;
+    /**
+     * Window Start
+     */
+    window_start: string;
+    /**
+     * Window End
+     */
+    window_end: string;
+    /**
+     * Fired At
+     */
+    fired_at: string;
+    /**
+     * Version
+     */
+    version: number;
+    /**
+     * Acknowledged At
+     */
+    acknowledged_at: string | null;
+    /**
+     * Acknowledged By
+     */
+    acknowledged_by: string | null;
+    /**
+     * Resolved At
+     */
+    resolved_at: string | null;
+    /**
+     * Resolve Reason
+     */
+    resolve_reason: string | null;
+};
+
+/**
+ * AlertStatus
+ */
+export type AlertStatus = 'firing' | 'acknowledged' | 'resolved';
+
+/**
  * DashboardBucket
  */
 export type DashboardBucket = {
@@ -159,6 +241,62 @@ export type DashboardOverview = {
      * Active Model Version
      */
     active_model_version: string | null;
+};
+
+/**
+ * DurableJobResponse
+ */
+export type DurableJobResponse = {
+    /**
+     * Job Id
+     */
+    job_id: string;
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+    /**
+     * Task Name
+     */
+    task_name: string;
+    /**
+     * State
+     */
+    state: string;
+    /**
+     * Due At
+     */
+    due_at: string;
+    /**
+     * Max Attempts
+     */
+    max_attempts: number;
+    /**
+     * Attempt Count
+     */
+    attempt_count: number;
+    /**
+     * Created At
+     */
+    created_at: string;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Completed At
+     */
+    completed_at: string | null;
+    /**
+     * Result
+     */
+    result: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * Last Error
+     */
+    last_error: string | null;
 };
 
 /**
@@ -488,6 +626,89 @@ export type ItemDetailResponse = {
 };
 
 /**
+ * ItemSearchResponse
+ */
+export type ItemSearchResponse = {
+    /**
+     * Items
+     */
+    items: Array<SearchItemResponse>;
+    /**
+     * Source
+     */
+    source: 'elasticsearch_verified' | 'elasticsearch_with_postgresql_backfill' | 'postgresql_fallback';
+    /**
+     * Degraded
+     */
+    degraded: boolean;
+    /**
+     * Projection Index
+     */
+    projection_index: string | null;
+    /**
+     * Stale Hits Filtered
+     */
+    stale_hits_filtered: number;
+    /**
+     * Permission Hits Filtered
+     */
+    permission_hits_filtered: number;
+};
+
+/**
+ * JobCreateRequest
+ */
+export type JobCreateRequest = {
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+    /**
+     * Task Name
+     */
+    task_name: string;
+    /**
+     * Payload
+     */
+    payload: {
+        [key: string]: unknown;
+    };
+    /**
+     * Due At
+     */
+    due_at: string;
+    /**
+     * Max Attempts
+     */
+    max_attempts?: number;
+};
+
+/**
+ * JobMutationResponse
+ */
+export type JobMutationResponse = {
+    /**
+     * Created
+     */
+    created?: boolean | null;
+    /**
+     * Duplicate
+     */
+    duplicate?: boolean | null;
+    job: DurableJobResponse;
+};
+
+/**
+ * JobRetryRequest
+ */
+export type JobRetryRequest = {
+    /**
+     * Due At
+     */
+    due_at: string;
+};
+
+/**
  * LoginRequest
  */
 export type LoginRequest = {
@@ -659,6 +880,89 @@ export type OperationBatchResponse = {
 };
 
 /**
+ * OperationJobCreateRequest
+ */
+export type OperationJobCreateRequest = {
+    /**
+     * Operation Id
+     */
+    operation_id: string;
+    /**
+     * Idempotency Key
+     */
+    idempotency_key: string;
+    /**
+     * Kind
+     */
+    kind: 'promote' | 'offline' | 'restore';
+    /**
+     * Targets
+     */
+    targets: Array<OperationTargetRequest>;
+    /**
+     * Due At
+     */
+    due_at: string;
+    /**
+     * Ends At Utc
+     */
+    ends_at_utc?: string | null;
+    /**
+     * Scope Type
+     */
+    scope_type?: 'all' | 'user' | 'feed';
+    /**
+     * Scope Value
+     */
+    scope_value?: string | null;
+    /**
+     * Priority
+     */
+    priority?: number;
+    /**
+     * Target Position
+     */
+    target_position?: number | null;
+    /**
+     * Reason
+     */
+    reason: string;
+    /**
+     * Max Attempts
+     */
+    max_attempts?: number;
+};
+
+/**
+ * OperationJobResponse
+ */
+export type OperationJobResponse = {
+    /**
+     * Created
+     */
+    created?: boolean | null;
+    /**
+     * Duplicate
+     */
+    duplicate?: boolean | null;
+    job: DurableJobResponse;
+};
+
+/**
+ * OperationTargetRequest
+ */
+export type OperationTargetRequest = {
+    /**
+     * Target Id
+     */
+    target_id: string;
+    /**
+     * State Version
+     */
+    state_version: number;
+};
+
+/**
  * Ready
  */
 export type Ready = {
@@ -740,6 +1044,78 @@ export type RoleUpdateRequest = {
      */
     user_id: string;
     role: Role;
+};
+
+/**
+ * SearchHealthResponse
+ */
+export type SearchHealthResponse = {
+    /**
+     * Status
+     */
+    status: 'healthy' | 'degraded' | 'unavailable';
+    /**
+     * Projection Reachable
+     */
+    projection_reachable: boolean;
+    /**
+     * Fallback Ready
+     */
+    fallback_ready: boolean;
+    /**
+     * Alias
+     */
+    alias: string;
+    /**
+     * Physical Index
+     */
+    physical_index: string | null;
+    /**
+     * Reasons
+     */
+    reasons: Array<string>;
+    /**
+     * Last Source Watermark
+     */
+    last_source_watermark: string | null;
+};
+
+/**
+ * SearchItemResponse
+ */
+export type SearchItemResponse = {
+    /**
+     * Item Id
+     */
+    item_id: string;
+    /**
+     * Title
+     */
+    title: string;
+    /**
+     * Likes Snapshot
+     */
+    likes_snapshot?: number | null;
+    /**
+     * Views Snapshot
+     */
+    views_snapshot?: number | null;
+    /**
+     * State Version
+     */
+    state_version: number;
+    /**
+     * Updated At
+     */
+    updated_at: string;
+    /**
+     * Retrieval Source
+     */
+    retrieval_source: 'elasticsearch_verified' | 'postgresql_backfill' | 'postgresql';
+    /**
+     * Projection Score
+     */
+    projection_score?: number | null;
 };
 
 /**
@@ -1321,6 +1697,125 @@ export type GetMyProfileResponses = {
 
 export type GetMyProfileResponse = GetMyProfileResponses[keyof GetMyProfileResponses];
 
+export type GetFeedPageData = {
+    body?: never;
+    path: {
+        feed_type: FeedType;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+    };
+    url: '/api/feeds/{feed_type}';
+};
+
+export type GetFeedPageErrors = {
+    /**
+     * Authentication required
+     */
+    401: ErrorEnvelope;
+    /**
+     * Feed authority denied
+     */
+    403: ErrorEnvelope;
+    /**
+     * Feed generation conflict
+     */
+    409: ErrorEnvelope;
+    /**
+     * Invalid feed request or cursor
+     */
+    422: ErrorEnvelope;
+};
+
+export type GetFeedPageError = GetFeedPageErrors[keyof GetFeedPageErrors];
+
+export type GetFeedPageResponses = {
+    /**
+     * Successful Response
+     */
+    200: FeedPage;
+};
+
+export type GetFeedPageResponse = GetFeedPageResponses[keyof GetFeedPageResponses];
+
+export type SearchItemsData = {
+    body?: never;
+    path?: never;
+    query: {
+        /**
+         * Q
+         */
+        q: string;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/items/search';
+};
+
+export type SearchItemsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SearchItemsError = SearchItemsErrors[keyof SearchItemsErrors];
+
+export type SearchItemsResponses = {
+    /**
+     * Successful Response
+     */
+    200: ItemSearchResponse;
+};
+
+export type SearchItemsResponse = SearchItemsResponses[keyof SearchItemsResponses];
+
+export type GetSearchHealthData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/api/admin/search/health';
+};
+
+export type GetSearchHealthErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+};
+
+export type GetSearchHealthError = GetSearchHealthErrors[keyof GetSearchHealthErrors];
+
+export type GetSearchHealthResponses = {
+    /**
+     * Successful Response
+     */
+    200: SearchHealthResponse;
+};
+
+export type GetSearchHealthResponse = GetSearchHealthResponses[keyof GetSearchHealthResponses];
+
 export type GetItemData = {
     body?: never;
     path: {
@@ -1499,6 +1994,344 @@ export type ListOperationsResponses = {
 };
 
 export type ListOperationsResponse = ListOperationsResponses[keyof ListOperationsResponses];
+
+export type CreateAsyncJobData = {
+    body: JobCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/async-jobs';
+};
+
+export type CreateAsyncJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateAsyncJobError = CreateAsyncJobErrors[keyof CreateAsyncJobErrors];
+
+export type CreateAsyncJobResponses = {
+    /**
+     * Successful Response
+     */
+    201: JobMutationResponse;
+};
+
+export type CreateAsyncJobResponse = CreateAsyncJobResponses[keyof CreateAsyncJobResponses];
+
+export type GetAsyncJobData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/admin/async-jobs/{job_id}';
+};
+
+export type GetAsyncJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAsyncJobError = GetAsyncJobErrors[keyof GetAsyncJobErrors];
+
+export type GetAsyncJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: DurableJobResponse;
+};
+
+export type GetAsyncJobResponse = GetAsyncJobResponses[keyof GetAsyncJobResponses];
+
+export type CancelAsyncJobData = {
+    body?: never;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/admin/async-jobs/{job_id}/cancel';
+};
+
+export type CancelAsyncJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CancelAsyncJobError = CancelAsyncJobErrors[keyof CancelAsyncJobErrors];
+
+export type CancelAsyncJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobMutationResponse;
+};
+
+export type CancelAsyncJobResponse = CancelAsyncJobResponses[keyof CancelAsyncJobResponses];
+
+export type RetryAsyncJobData = {
+    body: JobRetryRequest;
+    path: {
+        /**
+         * Job Id
+         */
+        job_id: string;
+    };
+    query?: never;
+    url: '/api/admin/async-jobs/{job_id}/retry';
+};
+
+export type RetryAsyncJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetryAsyncJobError = RetryAsyncJobErrors[keyof RetryAsyncJobErrors];
+
+export type RetryAsyncJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: JobMutationResponse;
+};
+
+export type RetryAsyncJobResponse = RetryAsyncJobResponses[keyof RetryAsyncJobResponses];
+
+export type CreateOperationJobData = {
+    body: OperationJobCreateRequest;
+    path?: never;
+    query?: never;
+    url: '/api/admin/operation-jobs';
+};
+
+export type CreateOperationJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateOperationJobError = CreateOperationJobErrors[keyof CreateOperationJobErrors];
+
+export type CreateOperationJobResponses = {
+    /**
+     * Successful Response
+     */
+    201: OperationJobResponse;
+};
+
+export type CreateOperationJobResponse = CreateOperationJobResponses[keyof CreateOperationJobResponses];
+
+export type GetOperationJobData = {
+    body?: never;
+    path: {
+        /**
+         * Operation Id
+         */
+        operation_id: string;
+    };
+    query?: never;
+    url: '/api/admin/operation-jobs/{operation_id}';
+};
+
+export type GetOperationJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetOperationJobError = GetOperationJobErrors[keyof GetOperationJobErrors];
+
+export type GetOperationJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: DurableJobResponse;
+};
+
+export type GetOperationJobResponse = GetOperationJobResponses[keyof GetOperationJobResponses];
+
+export type CancelOperationJobData = {
+    body?: never;
+    path: {
+        /**
+         * Operation Id
+         */
+        operation_id: string;
+    };
+    query?: never;
+    url: '/api/admin/operation-jobs/{operation_id}/cancel';
+};
+
+export type CancelOperationJobErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CancelOperationJobError = CancelOperationJobErrors[keyof CancelOperationJobErrors];
+
+export type CancelOperationJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: OperationJobResponse;
+};
+
+export type CancelOperationJobResponse = CancelOperationJobResponses[keyof CancelOperationJobResponses];
+
+export type ListAlertsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Status
+         */
+        status?: AlertStatus | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/api/admin/alerts';
+};
+
+export type ListAlertsErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListAlertsError = ListAlertsErrors[keyof ListAlertsErrors];
+
+export type ListAlertsResponses = {
+    /**
+     * Response Listalerts
+     *
+     * Successful Response
+     */
+    200: Array<AlertOccurrenceResponse>;
+};
+
+export type ListAlertsResponse = ListAlertsResponses[keyof ListAlertsResponses];
+
+export type AcknowledgeAlertData = {
+    body?: never;
+    path: {
+        /**
+         * Occurrence Id
+         */
+        occurrence_id: string;
+    };
+    query?: never;
+    url: '/api/admin/alerts/{occurrence_id}/ack';
+};
+
+export type AcknowledgeAlertErrors = {
+    /**
+     * Structured API error
+     */
+    401: ErrorEnvelope;
+    /**
+     * Structured API error
+     */
+    403: ErrorEnvelope;
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AcknowledgeAlertError = AcknowledgeAlertErrors[keyof AcknowledgeAlertErrors];
+
+export type AcknowledgeAlertResponses = {
+    /**
+     * Successful Response
+     */
+    200: AlertAckResponse;
+};
+
+export type AcknowledgeAlertResponse = AcknowledgeAlertResponses[keyof AcknowledgeAlertResponses];
 
 export type GetDashboardOverviewData = {
     body?: never;
@@ -1924,42 +2757,3 @@ export type GetReadyResponses = {
 };
 
 export type GetReadyResponse = GetReadyResponses[keyof GetReadyResponses];
-
-export type GetFeedPageData = {
-    body?: never;
-    path: {
-        feed_type: FeedType;
-    };
-    query?: never;
-    url: '/api/feeds/{feed_type}';
-};
-
-export type GetFeedPageErrors = {
-    /**
-     * Structured API error
-     */
-    401: ErrorEnvelope;
-    /**
-     * Structured API error
-     */
-    403: ErrorEnvelope;
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-    /**
-     * Deferred to Phase 4
-     */
-    501: ErrorEnvelope;
-};
-
-export type GetFeedPageError = GetFeedPageErrors[keyof GetFeedPageErrors];
-
-export type GetFeedPageResponses = {
-    /**
-     * Successful Response
-     */
-    200: FeedPage;
-};
-
-export type GetFeedPageResponse = GetFeedPageResponses[keyof GetFeedPageResponses];

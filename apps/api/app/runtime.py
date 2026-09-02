@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-import json
+import hmac
 import os
 import stat
+import tempfile
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
@@ -15,6 +16,7 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import Engine, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from apps.api.app.cache import InMemoryCacheBackend, RedisPyCacheBackend, VersionedCache
 from apps.api.app.db.models import ModelStatus, ModelVersion
 from apps.api.app.db.session import create_database_engine, create_session_factory
 from apps.api.app.settings import AppSettings
@@ -23,33 +25,51 @@ MAX_BUNDLE_BYTES = 16 * 1024 * 1024
 
 
 class AtomicRuntimeModelSlot:
-    """A process-local atomic bundle reference shared by both API listeners."""
+    """A process-local atomic serving-generation reference shared by both listeners."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._model_version: str | None = None
-        self._bundle: object | None = None
+        self._resource: object | None = None
 
     def swap(self, *, model_version: str, staged_bundle: object) -> None:
         # All validation and I/O happen before this bounded assignment section.
         with self._lock:
-            self._model_version, self._bundle = model_version, staged_bundle
+            self._model_version, self._resource = model_version, staged_bundle
 
     def snapshot(self) -> tuple[str | None, object | None]:
         with self._lock:
-            return self._model_version, self._bundle
+            return self._model_version, self._resource
 
 
 @dataclass(frozen=True)
 class SecureJsonStagingLoader:
-    """Stage a bounded immutable JSON bundle without following symlinks."""
+    """Capture and validate a bounded immutable ModelBundle without symlink races."""
 
     artifact_root: Path
 
     def stage(self, *, artifact_uri: str, artifact_checksum: str, manifest_checksum: str) -> object:
+        payload = self._capture(artifact_uri)
+        actual_checksum = hashlib.sha256(payload).hexdigest()
+        if not hmac.compare_digest(actual_checksum, artifact_checksum):
+            raise ValueError("artifact checksum mismatch")
+        return self._load_captured(payload, manifest_checksum)
+
+    def stage_for_registration(
+        self, *, artifact_uri: str, manifest_checksum: str
+    ) -> tuple[object, str]:
+        """Validate an unregistered bundle and return its captured external checksum."""
+
+        payload = self._capture(artifact_uri)
+        artifact_checksum = hashlib.sha256(payload).hexdigest()
+        return self._load_captured(payload, manifest_checksum), artifact_checksum
+
+    def _capture(self, artifact_uri: str) -> bytes:
         relative = PurePosixPath(artifact_uri)
-        if relative.is_absolute() or not relative.parts or any(
-            part in {"", ".", ".."} for part in relative.parts
+        if (
+            relative.is_absolute()
+            or not relative.parts
+            or any(part in {"", ".", ".."} for part in relative.parts)
         ):
             raise ValueError("artifact_uri must be a safe relative path")
         root = self.artifact_root.resolve(strict=True)
@@ -76,14 +96,34 @@ class SecureJsonStagingLoader:
             os.close(descriptor)
         if len(payload) > MAX_BUNDLE_BYTES:
             raise ValueError("artifact bundle exceeds the safe staging bound")
-        if hashlib.sha256(payload).hexdigest() != artifact_checksum:
-            raise ValueError("artifact checksum mismatch")
-        document = json.loads(payload)
-        if not isinstance(document, dict):
-            raise ValueError("artifact bundle must be a JSON object")
-        if document.get("manifest_checksum") != manifest_checksum:
-            raise ValueError("staged bundle manifest checksum mismatch")
-        return document
+        return bytes(payload)
+
+    @staticmethod
+    def _load_captured(payload: bytes, manifest_checksum: str) -> object:
+        # The source path can change after capture. load_bundle must inspect only the
+        # checksum-verified bytes held by this process, never reopen the source path.
+        from recsys.models.bundle import load_bundle
+
+        with tempfile.TemporaryDirectory(prefix="microlens-model-stage-") as temporary:
+            staged_path = Path(temporary) / "bundle.json"
+            descriptor = os.open(
+                staged_path,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            try:
+                view = memoryview(payload)
+                while view:
+                    written = os.write(descriptor, view)
+                    if written <= 0:
+                        raise OSError("failed to write captured model bundle")
+                    view = view[written:]
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+            bundle = load_bundle(staged_path, manifest_checksum)
+            bundle.smoke()
+            return bundle
 
 
 @dataclass
@@ -92,9 +132,15 @@ class RuntimeContext:
     engine: Engine
     sessions: sessionmaker[Session]
     redis: Any | None
+    recommendation_cache: VersionedCache = field(
+        default_factory=lambda: VersionedCache(InMemoryCacheBackend())
+    )
+    redis_cache_backend: RedisPyCacheBackend | None = None
     model_slot: AtomicRuntimeModelSlot = field(default_factory=AtomicRuntimeModelSlot)
     active_restore_status: str = "not_checked"
     active_restore_error: str | None = None
+    _closed: bool = field(default=False, init=False, repr=False)
+    _close_lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
     def readiness(self) -> tuple[bool, dict[str, object]]:
         if not self.settings.configured:
@@ -137,27 +183,48 @@ class RuntimeContext:
         return ready, checks
 
     def restore_active_model(self) -> None:
-        """Reload DB ACTIVE at process start; fail readiness if the bundle is invalid."""
+        """Reload and integrate the exact DB ACTIVE serving generation at process start."""
 
         if not self.settings.configured:
             self.active_restore_status = "not_configured"
             return
-        loader = SecureJsonStagingLoader(self.settings.model_artifacts_dir)
+        from apps.api.app.feeds.resources import (
+            ProcessedRecommendationLoader,
+            RecommendationResourceStagingLoader,
+            sync_serving_resource,
+        )
+
+        loader = RecommendationResourceStagingLoader(
+            model_loader=SecureJsonStagingLoader(self.settings.model_artifacts_dir),
+            processed_loader=ProcessedRecommendationLoader(self.settings.processed_data_root),
+        )
         try:
-            with self.sessions() as session:
+            resource: object | None = None
+            active_version: str | None = None
+            with self.sessions.begin() as session:
                 active = session.scalar(
                     select(ModelVersion).where(ModelVersion.status == ModelStatus.ACTIVE)
                 )
                 if active is None:
                     self.active_restore_status = "no_active_model"
                     return
-                bundle = loader.stage(
+                if active.data_manifest_checksum is None:
+                    raise ValueError("ACTIVE model is missing a processed-data checksum")
+                resource = loader.stage_activation(
+                    model_version=active.model_version,
+                    data_version=active.data_version,
+                    data_manifest_checksum=active.data_manifest_checksum,
                     artifact_uri=active.artifact_uri,
                     artifact_checksum=active.artifact_checksum,
                     manifest_checksum=active.manifest_checksum,
                 )
-                self.model_slot.swap(model_version=active.model_version, staged_bundle=bundle)
-                self.active_restore_status = "restored"
+                sync_serving_resource(session, resource)
+                active_version = active.model_version
+            if resource is None or active_version is None:
+                raise RuntimeError("ACTIVE serving resource staging produced no generation")
+            self.model_slot.swap(model_version=active_version, staged_bundle=resource)
+            self.active_restore_status = "restored"
+            self.active_restore_error = None
         except Exception as exc:
             self.active_restore_status = "failed"
             self.active_restore_error = type(exc).__name__
@@ -168,14 +235,25 @@ class RuntimeContext:
         return bool(await self.redis.ping())
 
     async def close(self) -> None:
-        if self.redis is not None:
-            await self.redis.aclose()
-        self.engine.dispose()
+        with self._close_lock:
+            if self._closed:
+                return
+            self._closed = True
+        try:
+            if self.redis_cache_backend is not None:
+                self.redis_cache_backend.close()
+        finally:
+            try:
+                if self.redis is not None:
+                    await self.redis.aclose()
+            finally:
+                self.engine.dispose()
 
 
 def create_runtime(settings: AppSettings) -> RuntimeContext:
     engine = create_database_engine(settings.database_url)
     redis_client = None
+    redis_cache_backend = None
     if settings.configured:
         from redis.asyncio import Redis
 
@@ -186,9 +264,13 @@ def create_runtime(settings: AppSettings) -> RuntimeContext:
             socket_timeout=2.0,
             health_check_interval=15,
         )
+        redis_cache_backend = RedisPyCacheBackend.from_url(settings.redis_url)
+    recommendation_cache = VersionedCache(redis_cache_backend or InMemoryCacheBackend())
     return RuntimeContext(
         settings=settings,
         engine=engine,
         sessions=create_session_factory(engine),
         redis=redis_client,
+        recommendation_cache=recommendation_cache,
+        redis_cache_backend=redis_cache_backend,
     )
