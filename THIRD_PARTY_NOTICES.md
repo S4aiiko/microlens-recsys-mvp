@@ -49,6 +49,7 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `@csstools/css-parser-algorithms` | `4.0.0` | `MIT` | `transitive` |
 | `@csstools/css-syntax-patches-for-csstree` | `1.1.12` | `MIT-0` | `transitive` |
 | `@csstools/css-tokenizer` | `4.0.0` | `MIT` | `transitive` |
+| `@date-fns/tz` | `1.4.0` | `MIT` | `direct` |
 | `@exodus/bytes` | `1.15.1` | `MIT` | `transitive` |
 | `@hey-api/codegen-core` | `0.9.1` | `MIT` | `transitive` |
 | `@hey-api/json-schema-ref-parser` | `1.4.4` | `MIT` | `transitive` |
@@ -60,6 +61,7 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `@jsdevtools/ono` | `7.1.3` | `MIT` | `transitive` |
 | `@lukeed/ms` | `2.0.2` | `MIT` | `transitive` |
 | `@oxc-project/types` | `0.147.0` | `MIT` | `transitive` |
+| `@reduxjs/toolkit` | `2.12.0` | `MIT` | `transitive` |
 | `@rolldown/binding-android-arm-eabi` | `1.2.6` | `MIT` | `transitive` |
 | `@rolldown/binding-android-arm64` | `1.2.6` | `MIT` | `transitive` |
 | `@rolldown/binding-darwin-arm64` | `1.2.6` | `MIT` | `transitive` |
@@ -77,6 +79,7 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `@rolldown/binding-win32-x64-msvc` | `1.2.6` | `MIT` | `transitive` |
 | `@rolldown/pluginutils` | `1.0.1` | `MIT` | `transitive` |
 | `@standard-schema/spec` | `1.1.0` | `MIT` | `transitive` |
+| `@standard-schema/utils` | `0.3.0` | `MIT` | `transitive` |
 | `@swc/core-darwin-arm64` | `1.16.1` | `Apache-2.0 AND MIT` | `transitive` |
 | `@swc/core-darwin-x64` | `1.16.1` | `Apache-2.0 AND MIT` | `transitive` |
 | `@swc/core-linux-arm-gnueabihf` | `1.16.1` | `Apache-2.0` | `transitive` |
@@ -96,11 +99,21 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `@testing-library/react` | `16.3.3` | `MIT` | `direct` |
 | `@types/aria-query` | `5.0.4` | `MIT` | `transitive` |
 | `@types/chai` | `5.2.3` | `MIT` | `transitive` |
+| `@types/d3-array` | `3.2.2` | `MIT` | `transitive` |
+| `@types/d3-color` | `3.1.3` | `MIT` | `transitive` |
+| `@types/d3-ease` | `3.0.2` | `MIT` | `transitive` |
+| `@types/d3-interpolate` | `3.0.4` | `MIT` | `transitive` |
+| `@types/d3-path` | `3.1.1` | `MIT` | `transitive` |
+| `@types/d3-scale` | `4.0.9` | `MIT` | `transitive` |
+| `@types/d3-shape` | `3.2.0` | `MIT` | `transitive` |
+| `@types/d3-time` | `3.0.4` | `MIT` | `transitive` |
+| `@types/d3-timer` | `3.0.2` | `MIT` | `transitive` |
 | `@types/deep-eql` | `4.0.2` | `MIT` | `transitive` |
 | `@types/estree` | `1.0.9` | `MIT` | `transitive` |
 | `@types/json-schema` | `7.0.15` | `MIT` | `transitive` |
 | `@types/react-dom` | `19.2.4` | `MIT` | `direct` |
 | `@types/react` | `19.2.18` | `MIT` | `direct` |
+| `@types/use-sync-external-store` | `0.0.6` | `MIT` | `transitive` |
 | `@vitejs/plugin-react-swc` | `4.3.3` | `MIT` | `direct` |
 | `@vitest/expect` | `4.1.11` | `MIT` | `transitive` |
 | `@vitest/mocker` | `4.1.11` | `MIT` | `transitive` |
@@ -120,6 +133,7 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `c12` | `3.3.4` | `MIT` | `transitive` |
 | `chai` | `6.2.2` | `MIT` | `transitive` |
 | `chokidar` | `5.0.0` | `MIT` | `transitive` |
+| `clsx` | `2.1.1` | `MIT` | `transitive` |
 | `color-support` | `1.1.3` | `ISC` | `transitive` |
 | `commander` | `15.0.0` | `MIT` | `transitive` |
 | `confbox` | `0.2.4` | `MIT` | `transitive` |
@@ -128,7 +142,19 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `cross-spawn` | `7.0.6` | `MIT` | `transitive` |
 | `css-tree` | `3.2.1` | `MIT` | `transitive` |
 | `csstype` | `3.2.3` | `MIT` | `transitive` |
+| `d3-array` | `3.2.4` | `ISC` | `transitive` |
+| `d3-color` | `3.1.0` | `ISC` | `transitive` |
+| `d3-ease` | `3.0.1` | `BSD-3-Clause` | `transitive` |
+| `d3-format` | `3.1.2` | `ISC` | `transitive` |
+| `d3-interpolate` | `3.0.1` | `ISC` | `transitive` |
+| `d3-path` | `3.1.0` | `ISC` | `transitive` |
+| `d3-scale` | `4.0.2` | `ISC` | `transitive` |
+| `d3-shape` | `3.2.0` | `ISC` | `transitive` |
+| `d3-time-format` | `4.1.0` | `ISC` | `transitive` |
+| `d3-time` | `3.1.0` | `ISC` | `transitive` |
+| `d3-timer` | `3.0.1` | `ISC` | `transitive` |
 | `data-urls` | `7.0.0` | `MIT` | `transitive` |
+| `decimal.js-light` | `2.5.1` | `MIT` | `transitive` |
 | `decimal.js` | `10.6.0` | `MIT` | `transitive` |
 | `default-browser-id` | `5.0.1` | `MIT` | `transitive` |
 | `default-browser` | `5.5.1` | `MIT` | `transitive` |
@@ -141,7 +167,9 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `dotenv` | `17.4.2` | `BSD-2-Clause` | `transitive` |
 | `entities` | `8.0.0` | `BSD-2-Clause` | `transitive` |
 | `es-module-lexer` | `2.3.2` | `MIT` | `transitive` |
+| `es-toolkit` | `1.52.0` | `MIT` | `transitive` |
 | `estree-walker` | `3.0.3` | `MIT` | `transitive` |
+| `eventemitter3` | `5.0.4` | `MIT` | `transitive` |
 | `expect-type` | `1.4.0` | `Apache-2.0` | `transitive` |
 | `exsolve` | `1.1.1` | `MIT` | `transitive` |
 | `fdir` | `6.5.0` | `MIT` | `transitive` |
@@ -149,6 +177,8 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `get-tsconfig` | `4.14.0` | `MIT` | `transitive` |
 | `giget` | `3.3.1` | `MIT` | `transitive` |
 | `html-encoding-sniffer` | `6.0.0` | `MIT` | `transitive` |
+| `immer` | `11.1.18` | `MIT` | `transitive` |
+| `internmap` | `2.0.3` | `ISC` | `transitive` |
 | `is-docker` | `3.0.0` | `MIT` | `transitive` |
 | `is-in-ssh` | `1.0.0` | `MIT` | `transitive` |
 | `is-inside-container` | `1.0.0` | `MIT` | `transitive` |
@@ -193,10 +223,15 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `rc9` | `3.0.1` | `MIT` | `transitive` |
 | `react-dom` | `19.2.8` | `MIT` | `direct` |
 | `react-is` | `17.0.2` | `MIT` | `transitive` |
+| `react-redux` | `9.3.0` | `MIT` | `transitive` |
 | `react-router` | `7.18.3` | `MIT` | `direct` |
 | `react` | `19.2.8` | `MIT` | `direct` |
 | `readdirp` | `5.1.1` | `MIT` | `transitive` |
+| `recharts` | `3.10.1` | `MIT` | `direct` |
+| `redux-thunk` | `3.1.0` | `MIT` | `transitive` |
+| `redux` | `5.0.1` | `MIT` | `transitive` |
 | `require-from-string` | `2.0.2` | `MIT` | `transitive` |
+| `reselect` | `5.2.0` | `MIT` | `transitive` |
 | `resolve-pkg-maps` | `1.0.0` | `MIT` | `transitive` |
 | `rolldown` | `1.2.6` | `MIT` | `transitive` |
 | `run-applescript` | `7.1.0` | `MIT` | `transitive` |
@@ -211,6 +246,7 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `stackback` | `0.0.2` | `MIT` | `transitive` |
 | `std-env` | `4.2.0` | `MIT` | `transitive` |
 | `symbol-tree` | `3.2.4` | `MIT` | `transitive` |
+| `tiny-invariant` | `1.3.3` | `MIT` | `transitive` |
 | `tinybench` | `2.9.0` | `MIT` | `transitive` |
 | `tinyexec` | `1.3.0` | `MIT` | `transitive` |
 | `tinyglobby` | `0.2.17` | `MIT` | `transitive` |
@@ -221,6 +257,8 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `tr46` | `6.0.0` | `MIT` | `transitive` |
 | `typescript` | `6.0.3` | `Apache-2.0` | `direct` |
 | `undici` | `7.29.0` | `MIT` | `transitive` |
+| `use-sync-external-store` | `1.6.0` | `MIT` | `transitive` |
+| `victory-vendor` | `37.3.6` | `MIT AND ISC` | `transitive` |
 | `vite` | `8.2.0` | `MIT` | `direct` |
 | `vitest` | `4.1.11` | `MIT` | `direct` |
 | `w3c-xmlserializer` | `5.0.0` | `MIT` | `transitive` |

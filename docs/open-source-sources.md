@@ -52,6 +52,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `@csstools/css-parser-algorithms` | `4.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@csstools/css-parser-algorithms/-/css-parser-algorithms-4.0.0.tgz) | `transitive` | no |
 | `@csstools/css-syntax-patches-for-csstree` | `1.1.12` | `npm` | `transitive` | `MIT-0` | [official/package source](https://registry.npmjs.org/@csstools/css-syntax-patches-for-csstree/-/css-syntax-patches-for-csstree-1.1.12.tgz) | `transitive` | no |
 | `@csstools/css-tokenizer` | `4.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@csstools/css-tokenizer/-/css-tokenizer-4.0.0.tgz) | `transitive` | no |
+| `@date-fns/tz` | `1.4.0` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/@date-fns/tz/-/tz-1.4.0.tgz) | `runtime` | no |
 | `@exodus/bytes` | `1.15.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@exodus/bytes/-/bytes-1.15.1.tgz) | `transitive` | no |
 | `@hey-api/codegen-core` | `0.9.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@hey-api/codegen-core/-/codegen-core-0.9.1.tgz) | `transitive` | no |
 | `@hey-api/json-schema-ref-parser` | `1.4.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@hey-api/json-schema-ref-parser/-/json-schema-ref-parser-1.4.4.tgz) | `transitive` | no |
@@ -63,6 +64,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `@jsdevtools/ono` | `7.1.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@jsdevtools/ono/-/ono-7.1.3.tgz) | `transitive` | no |
 | `@lukeed/ms` | `2.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@lukeed/ms/-/ms-2.0.2.tgz) | `transitive` | no |
 | `@oxc-project/types` | `0.147.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@oxc-project/types/-/types-0.147.0.tgz) | `transitive` | no |
+| `@reduxjs/toolkit` | `2.12.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@reduxjs/toolkit/-/toolkit-2.12.0.tgz) | `transitive` | no |
 | `@rolldown/binding-android-arm-eabi` | `1.2.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.6.tgz) | `transitive` | no |
 | `@rolldown/binding-android-arm64` | `1.2.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.2.6.tgz) | `transitive` | no |
 | `@rolldown/binding-darwin-arm64` | `1.2.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.6.tgz) | `transitive` | no |
@@ -80,6 +82,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `@rolldown/binding-win32-x64-msvc` | `1.2.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.6.tgz) | `transitive` | no |
 | `@rolldown/pluginutils` | `1.0.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz) | `transitive` | no |
 | `@standard-schema/spec` | `1.1.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@standard-schema/spec/-/spec-1.1.0.tgz) | `transitive` | no |
+| `@standard-schema/utils` | `0.3.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@standard-schema/utils/-/utils-0.3.0.tgz) | `transitive` | no |
 | `@swc/core-darwin-arm64` | `1.16.1` | `npm` | `transitive` | `Apache-2.0 AND MIT` | [official/package source](https://registry.npmjs.org/@swc/core-darwin-arm64/-/core-darwin-arm64-1.16.1.tgz) | `transitive` | no |
 | `@swc/core-darwin-x64` | `1.16.1` | `npm` | `transitive` | `Apache-2.0 AND MIT` | [official/package source](https://registry.npmjs.org/@swc/core-darwin-x64/-/core-darwin-x64-1.16.1.tgz) | `transitive` | no |
 | `@swc/core-linux-arm-gnueabihf` | `1.16.1` | `npm` | `transitive` | `Apache-2.0` | [official/package source](https://registry.npmjs.org/@swc/core-linux-arm-gnueabihf/-/core-linux-arm-gnueabihf-1.16.1.tgz) | `transitive` | no |
@@ -99,11 +102,21 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `@testing-library/react` | `16.3.3` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/@testing-library/react/-/react-16.3.3.tgz) | `dev` | no |
 | `@types/aria-query` | `5.0.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/aria-query/-/aria-query-5.0.4.tgz) | `transitive` | no |
 | `@types/chai` | `5.2.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/chai/-/chai-5.2.3.tgz) | `transitive` | no |
+| `@types/d3-array` | `3.2.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-array/-/d3-array-3.2.2.tgz) | `transitive` | no |
+| `@types/d3-color` | `3.1.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-color/-/d3-color-3.1.3.tgz) | `transitive` | no |
+| `@types/d3-ease` | `3.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-ease/-/d3-ease-3.0.2.tgz) | `transitive` | no |
+| `@types/d3-interpolate` | `3.0.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-interpolate/-/d3-interpolate-3.0.4.tgz) | `transitive` | no |
+| `@types/d3-path` | `3.1.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-path/-/d3-path-3.1.1.tgz) | `transitive` | no |
+| `@types/d3-scale` | `4.0.9` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-scale/-/d3-scale-4.0.9.tgz) | `transitive` | no |
+| `@types/d3-shape` | `3.2.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-shape/-/d3-shape-3.2.0.tgz) | `transitive` | no |
+| `@types/d3-time` | `3.0.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-time/-/d3-time-3.0.4.tgz) | `transitive` | no |
+| `@types/d3-timer` | `3.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/d3-timer/-/d3-timer-3.0.2.tgz) | `transitive` | no |
 | `@types/deep-eql` | `4.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/deep-eql/-/deep-eql-4.0.2.tgz) | `transitive` | no |
 | `@types/estree` | `1.0.9` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/estree/-/estree-1.0.9.tgz) | `transitive` | no |
 | `@types/json-schema` | `7.0.15` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz) | `transitive` | no |
 | `@types/react-dom` | `19.2.4` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/@types/react-dom/-/react-dom-19.2.4.tgz) | `dev` | no |
 | `@types/react` | `19.2.18` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/@types/react/-/react-19.2.18.tgz) | `dev` | no |
+| `@types/use-sync-external-store` | `0.0.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@types/use-sync-external-store/-/use-sync-external-store-0.0.6.tgz) | `transitive` | no |
 | `@vitejs/plugin-react-swc` | `4.3.3` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/@vitejs/plugin-react-swc/-/plugin-react-swc-4.3.3.tgz) | `dev` | no |
 | `@vitest/expect` | `4.1.11` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@vitest/expect/-/expect-4.1.11.tgz) | `transitive` | no |
 | `@vitest/mocker` | `4.1.11` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/@vitest/mocker/-/mocker-4.1.11.tgz) | `transitive` | no |
@@ -123,6 +136,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `c12` | `3.3.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/c12/-/c12-3.3.4.tgz) | `transitive` | no |
 | `chai` | `6.2.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/chai/-/chai-6.2.2.tgz) | `transitive` | no |
 | `chokidar` | `5.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/chokidar/-/chokidar-5.0.0.tgz) | `transitive` | no |
+| `clsx` | `2.1.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/clsx/-/clsx-2.1.1.tgz) | `transitive` | no |
 | `color-support` | `1.1.3` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/color-support/-/color-support-1.1.3.tgz) | `transitive` | no |
 | `commander` | `15.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/commander/-/commander-15.0.0.tgz) | `transitive` | no |
 | `confbox` | `0.2.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/confbox/-/confbox-0.2.4.tgz) | `transitive` | no |
@@ -131,7 +145,19 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `cross-spawn` | `7.0.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz) | `transitive` | no |
 | `css-tree` | `3.2.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/css-tree/-/css-tree-3.2.1.tgz) | `transitive` | no |
 | `csstype` | `3.2.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz) | `transitive` | no |
+| `d3-array` | `3.2.4` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-array/-/d3-array-3.2.4.tgz) | `transitive` | no |
+| `d3-color` | `3.1.0` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-color/-/d3-color-3.1.0.tgz) | `transitive` | no |
+| `d3-ease` | `3.0.1` | `npm` | `transitive` | `BSD-3-Clause` | [official/package source](https://registry.npmjs.org/d3-ease/-/d3-ease-3.0.1.tgz) | `transitive` | no |
+| `d3-format` | `3.1.2` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-format/-/d3-format-3.1.2.tgz) | `transitive` | no |
+| `d3-interpolate` | `3.0.1` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-interpolate/-/d3-interpolate-3.0.1.tgz) | `transitive` | no |
+| `d3-path` | `3.1.0` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-path/-/d3-path-3.1.0.tgz) | `transitive` | no |
+| `d3-scale` | `4.0.2` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-scale/-/d3-scale-4.0.2.tgz) | `transitive` | no |
+| `d3-shape` | `3.2.0` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-shape/-/d3-shape-3.2.0.tgz) | `transitive` | no |
+| `d3-time-format` | `4.1.0` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-time-format/-/d3-time-format-4.1.0.tgz) | `transitive` | no |
+| `d3-time` | `3.1.0` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-time/-/d3-time-3.1.0.tgz) | `transitive` | no |
+| `d3-timer` | `3.0.1` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/d3-timer/-/d3-timer-3.0.1.tgz) | `transitive` | no |
 | `data-urls` | `7.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/data-urls/-/data-urls-7.0.0.tgz) | `transitive` | no |
+| `decimal.js-light` | `2.5.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/decimal.js-light/-/decimal.js-light-2.5.1.tgz) | `transitive` | no |
 | `decimal.js` | `10.6.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz) | `transitive` | no |
 | `default-browser-id` | `5.0.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/default-browser-id/-/default-browser-id-5.0.1.tgz) | `transitive` | no |
 | `default-browser` | `5.5.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/default-browser/-/default-browser-5.5.1.tgz) | `transitive` | no |
@@ -144,7 +170,9 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `dotenv` | `17.4.2` | `npm` | `transitive` | `BSD-2-Clause` | [official/package source](https://registry.npmjs.org/dotenv/-/dotenv-17.4.2.tgz) | `transitive` | no |
 | `entities` | `8.0.0` | `npm` | `transitive` | `BSD-2-Clause` | [official/package source](https://registry.npmjs.org/entities/-/entities-8.0.0.tgz) | `transitive` | no |
 | `es-module-lexer` | `2.3.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-2.3.2.tgz) | `transitive` | no |
+| `es-toolkit` | `1.52.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/es-toolkit/-/es-toolkit-1.52.0.tgz) | `transitive` | no |
 | `estree-walker` | `3.0.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/estree-walker/-/estree-walker-3.0.3.tgz) | `transitive` | no |
+| `eventemitter3` | `5.0.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/eventemitter3/-/eventemitter3-5.0.4.tgz) | `transitive` | no |
 | `expect-type` | `1.4.0` | `npm` | `transitive` | `Apache-2.0` | [official/package source](https://registry.npmjs.org/expect-type/-/expect-type-1.4.0.tgz) | `transitive` | no |
 | `exsolve` | `1.1.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/exsolve/-/exsolve-1.1.1.tgz) | `transitive` | no |
 | `fdir` | `6.5.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz) | `transitive` | no |
@@ -152,6 +180,8 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `get-tsconfig` | `4.14.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/get-tsconfig/-/get-tsconfig-4.14.0.tgz) | `transitive` | no |
 | `giget` | `3.3.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/giget/-/giget-3.3.1.tgz) | `transitive` | no |
 | `html-encoding-sniffer` | `6.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/html-encoding-sniffer/-/html-encoding-sniffer-6.0.0.tgz) | `transitive` | no |
+| `immer` | `11.1.18` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/immer/-/immer-11.1.18.tgz) | `transitive` | no |
+| `internmap` | `2.0.3` | `npm` | `transitive` | `ISC` | [official/package source](https://registry.npmjs.org/internmap/-/internmap-2.0.3.tgz) | `transitive` | no |
 | `is-docker` | `3.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/is-docker/-/is-docker-3.0.0.tgz) | `transitive` | no |
 | `is-in-ssh` | `1.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/is-in-ssh/-/is-in-ssh-1.0.0.tgz) | `transitive` | no |
 | `is-inside-container` | `1.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/is-inside-container/-/is-inside-container-1.0.0.tgz) | `transitive` | no |
@@ -196,10 +226,15 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `rc9` | `3.0.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/rc9/-/rc9-3.0.1.tgz) | `transitive` | no |
 | `react-dom` | `19.2.8` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/react-dom/-/react-dom-19.2.8.tgz) | `runtime` | no |
 | `react-is` | `17.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/react-is/-/react-is-17.0.2.tgz) | `transitive` | no |
+| `react-redux` | `9.3.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/react-redux/-/react-redux-9.3.0.tgz) | `transitive` | no |
 | `react-router` | `7.18.3` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/react-router/-/react-router-7.18.3.tgz) | `runtime` | no |
 | `react` | `19.2.8` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/react/-/react-19.2.8.tgz) | `runtime` | no |
 | `readdirp` | `5.1.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/readdirp/-/readdirp-5.1.1.tgz) | `transitive` | no |
+| `recharts` | `3.10.1` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/recharts/-/recharts-3.10.1.tgz) | `runtime` | no |
+| `redux-thunk` | `3.1.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/redux-thunk/-/redux-thunk-3.1.0.tgz) | `transitive` | no |
+| `redux` | `5.0.1` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/redux/-/redux-5.0.1.tgz) | `transitive` | no |
 | `require-from-string` | `2.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/require-from-string/-/require-from-string-2.0.2.tgz) | `transitive` | no |
+| `reselect` | `5.2.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/reselect/-/reselect-5.2.0.tgz) | `transitive` | no |
 | `resolve-pkg-maps` | `1.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/resolve-pkg-maps/-/resolve-pkg-maps-1.0.0.tgz) | `transitive` | no |
 | `rolldown` | `1.2.6` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/rolldown/-/rolldown-1.2.6.tgz) | `transitive` | no |
 | `run-applescript` | `7.1.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/run-applescript/-/run-applescript-7.1.0.tgz) | `transitive` | no |
@@ -214,6 +249,7 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `stackback` | `0.0.2` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/stackback/-/stackback-0.0.2.tgz) | `transitive` | no |
 | `std-env` | `4.2.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/std-env/-/std-env-4.2.0.tgz) | `transitive` | no |
 | `symbol-tree` | `3.2.4` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/symbol-tree/-/symbol-tree-3.2.4.tgz) | `transitive` | no |
+| `tiny-invariant` | `1.3.3` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/tiny-invariant/-/tiny-invariant-1.3.3.tgz) | `transitive` | no |
 | `tinybench` | `2.9.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/tinybench/-/tinybench-2.9.0.tgz) | `transitive` | no |
 | `tinyexec` | `1.3.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/tinyexec/-/tinyexec-1.3.0.tgz) | `transitive` | no |
 | `tinyglobby` | `0.2.17` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/tinyglobby/-/tinyglobby-0.2.17.tgz) | `transitive` | no |
@@ -224,6 +260,8 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `tr46` | `6.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/tr46/-/tr46-6.0.0.tgz) | `transitive` | no |
 | `typescript` | `6.0.3` | `npm` | `direct` | `Apache-2.0` | [official/package source](https://registry.npmjs.org/typescript/-/typescript-6.0.3.tgz) | `dev` | no |
 | `undici` | `7.29.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/undici/-/undici-7.29.0.tgz) | `transitive` | no |
+| `use-sync-external-store` | `1.6.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz) | `transitive` | no |
+| `victory-vendor` | `37.3.6` | `npm` | `transitive` | `MIT AND ISC` | [official/package source](https://registry.npmjs.org/victory-vendor/-/victory-vendor-37.3.6.tgz) | `transitive` | no |
 | `vite` | `8.2.0` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/vite/-/vite-8.2.0.tgz) | `dev` | no |
 | `vitest` | `4.1.11` | `npm` | `direct` | `MIT` | [official/package source](https://registry.npmjs.org/vitest/-/vitest-4.1.11.tgz) | `dev` | no |
 | `w3c-xmlserializer` | `5.0.0` | `npm` | `transitive` | `MIT` | [official/package source](https://registry.npmjs.org/w3c-xmlserializer/-/w3c-xmlserializer-5.0.0.tgz) | `transitive` | no |

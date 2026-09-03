@@ -36,21 +36,8 @@ export function AnonymousLayout() {
   }
 
   return (
-    <main className="auth-shell">
-      <section className="auth-intro" aria-labelledby="product-name">
-        <Link className="brand" id="product-name" to="/login">
-          MicroLens
-        </Link>
-        <p className="eyebrow">Recommendation MVP</p>
-        <h1>One secure session for discovery and operations.</h1>
-        <p>
-          The browser carries the HttpOnly session cookie. Credentials are never copied into web
-          storage.
-        </p>
-      </section>
-      <section className="auth-card">
-        <Outlet />
-      </section>
+    <main className="anonymous-route">
+      <Outlet />
     </main>
   );
 }
@@ -111,7 +98,7 @@ export function UserLayout() {
           {hasCapability(user.role, "dashboardRead") ? (
             <NavLink to="/dashboard">Dashboard</NavLink>
           ) : null}
-          {hasCapability(user.role, "operationsWrite") ? (
+          {hasCapability(user.role, "dashboardRead") ? (
             <NavLink to="/operations">Operations</NavLink>
           ) : null}
           {hasCapability(user.role, "roleManagement") ? (
@@ -140,17 +127,4 @@ export function RequireCapability({ capability }: { capability: Capability }) {
   const { state } = useSession();
   if (state.status !== "authenticated") return null;
   return hasCapability(state.user.role, capability) ? <Outlet /> : <ForbiddenState />;
-}
-
-export function OperationsLayout() {
-  return (
-    <section aria-labelledby="operations-title" className="workspace-stack">
-      <div className="page-heading">
-        <p className="eyebrow">Protected workspace</p>
-        <h1 id="operations-title">Operations</h1>
-        <p>Write controls require an operator or administrator role and server authorization.</p>
-      </div>
-      <Outlet />
-    </section>
-  );
 }

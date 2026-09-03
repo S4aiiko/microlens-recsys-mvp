@@ -16,9 +16,11 @@
     "check-client-drift": "sh ./scripts/check-client-drift.sh"
   },
   "dependencies": {
+    "@date-fns/tz": "1.4.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-router": "7.18.3"
+    "react-router": "7.18.3",
+    "recharts": "3.10.1"
   },
   "devDependencies": {
     "@hey-api/openapi-ts": "0.99.0",

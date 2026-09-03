@@ -50,6 +50,7 @@ data/covers/
 
 # Generated models, training exports, reports and runtime state
 artifacts/
+/output/
 /models/
 /checkpoints/
 /training_exports/

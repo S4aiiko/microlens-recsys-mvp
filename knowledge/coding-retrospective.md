@@ -58,3 +58,20 @@
 - **Next check**: record the fallback TTL and run the complete outage sequence inside one
   orchestrator process; require the live trace to say `process_fallback_hit`.
 - **Triage**: `append-retrospective`; reusable project reliability rule, no skill change needed.
+
+## 2026-09-03
+
+### Task: Phase 5C scheduled operations JSON boundary
+
+- **Bug** (`type/API misuse`, `test gap`): `OperationJobCreateRequest` used model-wide Pydantic
+  `strict=True`, so valid browser JSON UUID and timezone-aware datetime strings were rejected with
+  422 even though object-level service tests passed.
+- **Root cause**: strictness was applied to the transport model rather than the fields that must
+  reject coercion, and no authenticated HTTP JSON regression exercised the generated-client shape.
+- **Rule**: for JSON request models, validate UUID/datetime through real HTTP JSON and use
+  field-level strict types for numeric/boolean coercion boundaries; do not infer JSON compatibility
+  from direct Python model construction or service tests.
+- **Next check**: submit one OpenAPI-shaped payload through auth + CSRF, then assert valid UUID/
+  timezone strings succeed while string/boolean numerics and naive datetimes return 422 with no
+  durable job created.
+- **Triage**: `append-retrospective`; project API-boundary rule, no skill change needed.

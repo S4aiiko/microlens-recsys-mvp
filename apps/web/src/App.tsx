@@ -1,24 +1,37 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router";
 import type { AuthApi } from "./api/auth-api";
 import { SessionProvider } from "./auth/session";
-import { NotFoundState } from "./components/AsyncStates";
+import { LoadingState, NotFoundState } from "./components/AsyncStates";
+import type { AdminApi, AdminView } from "./features/admin";
 import {
   AnonymousLayout,
   AuthenticatedLayout,
-  OperationsLayout,
   RequireCapability,
   UserLayout,
 } from "./router/layouts";
 import {
-  DashboardFoundationPage,
   FeedFoundationPage,
   LoginPage,
-  OperationsFoundationPage,
   RegisterPage,
-  RoleManagementFoundationPage,
 } from "./router/pages";
 
-export function AppRoutes() {
+const AdminExperience = lazy(async () => {
+  const module = await import("./features/admin");
+  return { default: module.AdminExperience };
+});
+
+function AdminRoutePage({ adminApi, view }: { adminApi?: AdminApi; view: AdminView }) {
+  return (
+    <div className="workspace-stack">
+      <Suspense fallback={<LoadingState label="Loading administration workspace" />}>
+        <AdminExperience api={adminApi} view={view} />
+      </Suspense>
+    </div>
+  );
+}
+
+export function AppRoutes({ adminApi }: { adminApi?: AdminApi } = {}) {
   return (
     <Routes>
       <Route element={<AnonymousLayout />}>
@@ -29,15 +42,20 @@ export function AppRoutes() {
         <Route element={<UserLayout />}>
           <Route index element={<FeedFoundationPage />} />
           <Route element={<RequireCapability capability="dashboardRead" />}>
-            <Route path="dashboard" element={<DashboardFoundationPage />} />
-          </Route>
-          <Route element={<RequireCapability capability="operationsWrite" />}>
-            <Route path="operations" element={<OperationsLayout />}>
-              <Route index element={<OperationsFoundationPage />} />
-            </Route>
+            <Route
+              path="dashboard"
+              element={<AdminRoutePage adminApi={adminApi} view="dashboard" />}
+            />
+            <Route
+              path="operations"
+              element={<AdminRoutePage adminApi={adminApi} view="operations" />}
+            />
           </Route>
           <Route element={<RequireCapability capability="roleManagement" />}>
-            <Route path="admin/users" element={<RoleManagementFoundationPage />} />
+            <Route
+              path="admin/users"
+              element={<AdminRoutePage adminApi={adminApi} view="roles" />}
+            />
           </Route>
         </Route>
       </Route>
@@ -46,11 +64,11 @@ export function AppRoutes() {
   );
 }
 
-export function App({ authApi }: { authApi?: AuthApi }) {
+export function App({ adminApi, authApi }: { adminApi?: AdminApi; authApi?: AuthApi }) {
   return (
     <SessionProvider api={authApi}>
       <BrowserRouter>
-        <AppRoutes />
+        <AppRoutes adminApi={adminApi} />
       </BrowserRouter>
     </SessionProvider>
   );

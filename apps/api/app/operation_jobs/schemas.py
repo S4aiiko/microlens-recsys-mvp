@@ -17,7 +17,7 @@ class OperationTargetRequest(BaseModel):
 
 
 class OperationJobCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+    model_config = ConfigDict(extra="forbid")
 
     operation_id: uuid.UUID
     idempotency_key: str = Field(min_length=1, max_length=220)

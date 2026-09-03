@@ -30,7 +30,18 @@ class ComplianceContractTest(unittest.TestCase):
         self.assertIn("pkg:pypi/redis@7.3.1", refs)
         self.assertIn("pkg:pypi/pyarrow@25.0.1", refs)
         self.assertTrue(any(ref.startswith("pkg:npm/react@19.2.8") for ref in refs))
-        self.assertEqual(sum(ref.startswith("pkg:docker/") for ref in refs), 4)
+        container_refs = {
+            component["name"]: component["bom-ref"]
+            for component in components
+            if component["bom-ref"].startswith("pkg:docker/")
+        }
+        self.assertEqual(
+            set(container_refs),
+            {"elasticsearch", "node", "postgres", "python", "redis"},
+        )
+        for name, reference in container_refs.items():
+            with self.subTest(container=name):
+                self.assertRegex(reference, rf"^pkg:docker/{name}@sha256:[0-9a-f]{{64}}$")
         reference = next(c for c in components if c["name"] == "oasdiff/oasdiff")
         properties = {prop["name"]: prop["value"] for prop in reference["properties"]}
         self.assertEqual(reference["scope"], "excluded")
