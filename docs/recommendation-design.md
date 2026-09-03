@@ -92,9 +92,9 @@ state.
 
 ## Integration boundary
 
-The owned router is a factory and is not mounted yet because `apps/api/app/main.py`, the
-checked-in OpenAPI document and generated client are integration-owned. The service also
-accepts an injected immutable `ItemItemIndex`; current shared contracts do not expose a
-checksum-verified active-data train-history artifact to the API process. These two
-integration requests are recorded in the Phase 4 handoff. Until both are completed and
-their acceptance tests pass, Phase 4 is ready for integration rather than fully PASS.
+The feed router is mounted by `apps/api/app/main.py`, represented in the checked-in OpenAPI
+document and consumed by the generated web client. Model activation stages the immutable
+bundle together with its checksum-verified processed-data version, builds the item-item
+index from the active train history and atomically swaps the complete serving resource.
+API restart restores the same ACTIVE model and processed-data identity before serving
+personalized traffic.

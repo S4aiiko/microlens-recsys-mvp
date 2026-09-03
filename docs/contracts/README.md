@@ -2,9 +2,10 @@
 
 Status: Phase 2D runtime-aligned boundary.
 
-These files are the machine-readable boundary between Data, Backend, Frontend,
-Worker, Model and Recommendation work packages. They define capabilities; they
-do not claim the corresponding business logic is implemented.
+These files are the machine-readable boundary between the data pipeline, API,
+web client, worker, model runtime and recommendation service. Runtime OpenAPI
+documents are generated from the implemented applications; the remaining
+schemas define persisted and cross-component contracts.
 
 - All timestamps are RFC 3339 UTC and aggregation windows are half-open `[from,to)`.
 - IDs are opaque strings unless a schema states otherwise.

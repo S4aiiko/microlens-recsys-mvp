@@ -61,8 +61,8 @@ three feed types with the PostgreSQL counts.
 
 `DuckDBCountReader` is a narrow optional adapter. The integration dependency is pinned as
 `duckdb==1.5.5`; its Linux ARM64 runtime and the real Parquet reconciliation path were validated.
-Project Integration must still run
-a separate OSS/dependency gate, exact lock and ARM64 test before enabling it.
+The adapter remains opt-in and should only be enabled with the exact lockfile and platform
+compatibility checks used by the analytics test suite.
 
 ## DDL templates
 
