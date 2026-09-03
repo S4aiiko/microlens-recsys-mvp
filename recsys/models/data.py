@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -36,6 +36,7 @@ class ModelData:
     train: tuple[dict[str, Any], ...]
     validation: tuple[dict[str, Any], ...]
     test: tuple[dict[str, Any], ...]
+    test_loaded: bool
     train_popularity: Mapping[str, float]
     user_train_items: Mapping[str, tuple[str, ...]]
     user_history_titles: Mapping[str, EncodedTitle]
@@ -63,6 +64,25 @@ def _read_manifest(version_path: Path, expected_checksum: str) -> tuple[dict[str
     if manifest.get("data_version") != version_path.name:
         raise ModelInputError("data manifest version/path mismatch")
     return manifest, actual_checksum
+
+
+def validate_data_manifest_identity(
+    *, processed_root: str | Path, data_version: str, data_manifest_checksum: str
+) -> dict[str, Any]:
+    """Validate only immutable version/manifest identity before any output is claimed."""
+
+    try:
+        safe_version = validate_relative_file_name(data_version)
+    except ValueError as exc:
+        raise ModelInputError("data_version must be one explicit immutable name") from exc
+    if safe_version.lower() == "latest":
+        raise ModelInputError("data_version must never be latest")
+    if not SHA256_PATTERN.fullmatch(data_manifest_checksum):
+        raise ModelInputError("data_manifest_checksum must be lowercase SHA-256")
+    manifest, _actual_checksum = _read_manifest(
+        Path(processed_root) / safe_version, data_manifest_checksum
+    )
+    return manifest
 
 
 def _artifact_map(version_path: Path, manifest: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -125,6 +145,7 @@ def load_model_data(
     data_manifest_checksum: str,
     title_config: Mapping[str, Any],
     codec: TableCodec | None = None,
+    include_test: bool = True,
 ) -> ModelData:
     try:
         safe_version = validate_relative_file_name(data_version)
@@ -145,7 +166,7 @@ def load_model_data(
     items = _read_table(version_path, artifacts, codec, "items")
     train = _read_table(version_path, artifacts, codec, "train")
     validation = _read_table(version_path, artifacts, codec, "validation")
-    test = _read_table(version_path, artifacts, codec, "test")
+    test = _read_table(version_path, artifacts, codec, "test") if include_test else []
     popularity_rows = _read_table(version_path, artifacts, codec, "train_popularity")
     title_rows = _read_table(version_path, artifacts, codec, "title_corpus")
     event_signals = _read_table(
@@ -154,7 +175,7 @@ def load_model_data(
     purpose = str(manifest.get("purpose", "base_official"))
     if not train:
         raise ModelInputError("model training requires a non-empty train split")
-    if purpose != "systems_only" and (not validation or not test):
+    if purpose != "systems_only" and (not validation or (include_test and not test)):
         raise ModelInputError("model quality training requires non-empty validation/test splits")
     item_ids = tuple(str(row["item_id"]) for row in items)
     if len(item_ids) != len(set(item_ids)):
@@ -221,12 +242,12 @@ def load_model_data(
             not validation_start <= int(row["timestamp"]) < validation_end for row in validation
         ):
             raise ModelInputError("validation interactions fall outside the frozen later window")
-        if any(not test_start <= int(row["timestamp"]) < test_end for row in test):
+        if include_test and any(not test_start <= int(row["timestamp"]) < test_end for row in test):
             raise ModelInputError("test interactions fall outside the frozen latest window")
         if (
             not isinstance(holdout_counts, dict)
             or int(holdout_counts.get("validation", -1)) != len(validation)
-            or int(holdout_counts.get("test", -1)) != len(test)
+            or (include_test and int(holdout_counts.get("test", -1)) != len(test))
         ):
             raise ModelInputError("quality_evaluation holdout counts do not match artifacts")
     users = tuple(sorted(user_train_items))
@@ -246,6 +267,7 @@ def load_model_data(
         train=tuple(train),
         validation=tuple(validation),
         test=tuple(test),
+        test_loaded=include_test,
         train_popularity=popularity,
         user_train_items=user_train_items,
         user_history_titles=user_history_titles,
@@ -253,6 +275,46 @@ def load_model_data(
         title_encoder=encoder,
         event_training_signals=tuple(event_signals),
     )
+
+
+def load_model_test_split(
+    data: ModelData,
+    *,
+    processed_root: str | Path,
+    codec: TableCodec | None = None,
+) -> ModelData:
+    """Attach the immutable test split once after validation selection is frozen."""
+
+    if data.test_loaded:
+        raise ModelInputError("model test split is already loaded")
+    if codec is None:
+        codec = ParquetCodec()
+        codec.validate_runtime()
+    version_path = Path(processed_root) / data.data_version
+    manifest, manifest_checksum = _read_manifest(version_path, data.manifest_checksum)
+    if manifest_checksum != data.manifest_checksum or manifest != data.manifest:
+        raise ModelInputError("data manifest changed before the final test load")
+    if manifest.get("output_schema", {}).get("storage_format") != codec.format_name:
+        raise ModelInputError("data storage codec does not match the requested runtime")
+    artifacts = _artifact_map(version_path, manifest)
+    test = _read_table(version_path, artifacts, codec, "test")
+    if data.purpose != "systems_only" and not test:
+        raise ModelInputError("model quality training requires a non-empty test split")
+    if data.purpose == "quality_evaluation":
+        try:
+            test_window = manifest["test_window_utc"]
+            test_start = utc_to_epoch_ms(str(test_window["from_utc"]))
+            test_end = utc_to_epoch_ms(str(test_window["to_utc"]))
+            expected_count = int(manifest["holdout_counts"]["test"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ModelInputError("quality_evaluation requires a valid frozen test window") from exc
+        if any(not test_start <= int(row["timestamp"]) < test_end for row in test):
+            raise ModelInputError("test interactions fall outside the frozen latest window")
+        if expected_count != len(test):
+            raise ModelInputError("quality_evaluation test count does not match its artifact")
+    if not {str(row["user_id"]) for row in test} <= set(data.user_ids):
+        raise ModelInputError("test users must have train history")
+    return replace(data, test=tuple(test), test_loaded=True)
 
 
 def data_lineage(data: ModelData) -> dict[str, Any]:

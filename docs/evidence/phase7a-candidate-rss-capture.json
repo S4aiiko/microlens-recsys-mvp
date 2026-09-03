@@ -1,0 +1,29 @@
+{
+  "captured_at_utc": "2026-09-03T17:18:21Z",
+  "docker_argv": [
+    "docker",
+    "run",
+    "--rm",
+    "--pull=never",
+    "--network=none",
+    "--read-only",
+    "--memory=512m",
+    "--memory-swap=512m",
+    "--cpus=4",
+    "--pids-limit=128",
+    "--tmpfs",
+    "/tmp:rw,noexec,nosuid,nodev,size=64m",
+    "--mount",
+    "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/推荐系统MVP/scripts/phase7a_candidate_rss_probe.py,dst=/probe.py,readonly",
+    "--mount",
+    "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/推荐系统MVP/docs/evidence/phase7a-candidate-rss-capture.json,dst=/probe-capture.json,readonly",
+    "python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+    "python",
+    "/probe.py",
+    "--capture-metadata",
+    "/probe-capture.json"
+  ],
+  "image_id": "sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+  "image_reference": "python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+  "probe_sha256": "364eefe111a0779a11111116551f638168652532a94c0461f81cfa170fe1d3b1"
+}

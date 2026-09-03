@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,7 +12,7 @@ from jsonschema import Draft202012Validator
 
 from recsys.data.artifacts import JsonLinesCodec
 from recsys.data.common import canonical_json_bytes, sha256_file
-from recsys.models.artifacts import candidate_peak_memory_bounds
+from recsys.models.artifacts import candidate_memory_budget, candidate_peak_memory_bounds
 from recsys.models.bundle import load_bundle
 from recsys.models.data import load_model_data
 from recsys.models.entrypoint import train_model
@@ -23,7 +24,7 @@ from ._support import model_config, write_data_version
 
 
 class EntrypointBundleTests(unittest.TestCase):
-    def test_full_candidate_artifact_has_a_conservative_sub_8_gib_peak_budget(self) -> None:
+    def test_full_candidate_artifact_fits_5_gib_with_explicit_headroom(self) -> None:
         lower, upper = candidate_peak_memory_bounds(
             user_count=50_000,
             top_n=200,
@@ -31,7 +32,25 @@ class EntrypointBundleTests(unittest.TestCase):
         )
         self.assertEqual(lower, 240_000_000)
         self.assertLess(lower, upper)
-        self.assertLess(upper, 8 * 1024**3)
+        self.assertLess(upper, 5 * 1024**3)
+        self.assertGreater(5 * 1024**3 - upper, 1536 * 1024**2)
+
+    def test_cpython_candidate_structure_fits_reviewed_per_slot_budget(self) -> None:
+        items = [f"item-{index:05d}" for index in range(200)]
+        candidates = list(items)
+        scores = {item_id: float(index) for index, item_id in enumerate(items)}
+        reranked = list(items)
+        retained_bytes = (
+            sys.getsizeof(candidates)
+            + sys.getsizeof(scores)
+            + sys.getsizeof(reranked)
+            + sum(sys.getsizeof(value) for value in scores.values())
+        )
+        budget = candidate_memory_budget(user_count=1, top_n=200, catalog_items=19_220)
+        self.assertLessEqual(
+            retained_bytes,
+            budget["retained_candidate_slots"] + budget["per_user_containers"],
+        )
 
     def test_real_two_stage_bundle_roundtrip_and_schema(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

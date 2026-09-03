@@ -6,6 +6,7 @@ import os
 import platform
 import re
 import shutil
+import socket
 import tempfile
 import time
 from collections.abc import Mapping, Sequence
@@ -16,6 +17,7 @@ from typing import TYPE_CHECKING, Any
 from recsys.data.common import (
     SHA256_PATTERN,
     canonical_json_bytes,
+    fsync_directory,
     sha256_bytes,
     sha256_file,
     validate_relative_file_name,
@@ -23,6 +25,8 @@ from recsys.data.common import (
 from recsys.models.config import load_model_config
 from recsys.models.errors import ModelInputError
 from recsys.models.metrics import ACTIVITY_SEGMENTS, RankingMetricAccumulator, activity_segment
+
+from .source_identity import load_attestation, source_checksum
 
 if TYPE_CHECKING:
     from recsys.models.entrypoint import TrainedModelStages
@@ -117,6 +121,8 @@ _ABLATION_CONTRACT = {
     "mmr-on": ({"dssm", "item_item_cf", "profile_title"}, False, True),
 }
 _GIT_SHA_PATTERN = re.compile(r"^[a-f0-9]{40}$")
+_IMAGE_PATTERN = re.compile(r"^[^@\s]+@sha256:[a-f0-9]{64}$")
+_NAMESPACE_MARKER = ".phase7a-namespace.json"
 
 
 @dataclass(frozen=True, slots=True)
@@ -441,6 +447,8 @@ def evaluate_serving_ablations(
     from recsys.serving.runtime import LoadedRecommendationModel
 
     data = trained.data
+    if not data.test_loaded:
+        raise ModelInputError("serving ablations require the explicitly loaded test cohort")
     ablation = matrix.serving_ablation
     cohort = ablation["cohort"]
     k_values = [int(value) for value in cohort["k"]]
@@ -590,6 +598,316 @@ def _write_json_atomic(path: Path, document: Mapping[str, Any]) -> None:
         raise
 
 
+def _verify_runtime_identity(
+    *,
+    matrix: ResolvedMatrix,
+    repo_root: str | Path,
+    git_revision: str,
+    image_digest: str,
+    requested_source_checksum: str,
+    attestation_path: str | Path,
+) -> dict[str, Any]:
+    if not _GIT_SHA_PATTERN.fullmatch(git_revision):
+        raise ModelInputError("git_revision must be an explicit lowercase 40-character SHA")
+    if not _IMAGE_PATTERN.fullmatch(image_digest):
+        raise ModelInputError("image_digest must be an exact name@sha256:<64> reference")
+    if not SHA256_PATTERN.fullmatch(requested_source_checksum):
+        raise ModelInputError("source_checksum must be lowercase SHA-256")
+    attestation = load_attestation(attestation_path)
+    recomputed_source_checksum = source_checksum(repo_root)
+    if attestation["git_revision"] != git_revision:
+        raise ModelInputError("requested Git revision does not match the baked attestation")
+    if attestation["source_checksum"] != requested_source_checksum:
+        raise ModelInputError("requested source checksum does not match the baked attestation")
+    if recomputed_source_checksum != requested_source_checksum:
+        raise ModelInputError("requested source checksum does not match the container source")
+    environment_revision = os.environ.get("GIT_REVISION")
+    if environment_revision is not None and environment_revision != git_revision:
+        raise ModelInputError("GIT_REVISION environment does not match the requested revision")
+    return {
+        "git_revision": git_revision,
+        "image_reference": image_digest,
+        "image_digest": image_digest.rsplit("@", 1)[1],
+        "source_checksum": requested_source_checksum,
+        "baked_git_revision": attestation["git_revision"],
+        "baked_source_checksum": attestation["source_checksum"],
+        "recomputed_source_checksum": recomputed_source_checksum,
+        "matrix_checksum": matrix.matrix_checksum,
+        "base_config_checksum": matrix.base_config_checksum,
+    }
+
+
+def _namespace_identity(
+    *,
+    runtime_identity: Mapping[str, Any],
+    data_version: str,
+    data_manifest_checksum: str,
+) -> dict[str, Any]:
+    return {
+        "schema_version": "1.0",
+        "git_revision": runtime_identity["git_revision"],
+        "image_reference": runtime_identity["image_reference"],
+        "image_digest": runtime_identity["image_digest"],
+        "source_checksum": runtime_identity["source_checksum"],
+        "matrix_checksum": runtime_identity["matrix_checksum"],
+        "base_config_checksum": runtime_identity["base_config_checksum"],
+        "data_version": data_version,
+        "data_manifest_checksum": data_manifest_checksum,
+    }
+
+
+def _ensure_namespace(output_root: str | Path, identity: Mapping[str, Any]) -> Path:
+    root = Path(output_root)
+    if root.is_symlink():
+        raise ModelInputError("Phase 7A output namespace must not be a symlink")
+    if not root.exists():
+        root.mkdir(parents=True)
+    if not root.is_dir():
+        raise ModelInputError("Phase 7A output namespace must be a directory")
+    marker = root / _NAMESPACE_MARKER
+    entries = tuple(root.iterdir())
+    if marker in entries:
+        raise ModelInputError("Phase 7A namespace is already claimed")
+    if entries:
+        raise ModelInputError("non-empty unmarked Phase 7A namespace is refused")
+    payload = canonical_json_bytes(identity) + b"\n"
+    try:
+        descriptor = os.open(marker, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError as exc:
+        raise ModelInputError("Phase 7A namespace is already claimed") from exc
+    try:
+        try:
+            remaining = memoryview(payload)
+            while remaining:
+                written = os.write(descriptor, remaining)
+                if written <= 0:
+                    raise OSError("Phase 7A namespace marker write made no progress")
+                remaining = remaining[written:]
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        fsync_directory(root)
+    except Exception:
+        marker.unlink(missing_ok=True)
+        try:
+            fsync_directory(root)
+        except OSError:
+            pass
+        raise
+    return root
+
+
+def _decode_mount_path(value: str) -> str:
+    return (
+        value.replace("\\040", " ")
+        .replace("\\011", "\t")
+        .replace("\\012", "\n")
+        .replace("\\134", "\\")
+    )
+
+
+def _mount_table() -> dict[str, dict[str, Any]]:
+    mounts: dict[str, dict[str, Any]] = {}
+    for line in Path("/proc/self/mountinfo").read_text().splitlines():
+        left, right = line.split(" - ", 1)
+        fields = left.split()
+        trailing = right.split()
+        mount_point = _decode_mount_path(fields[4])
+        mounts[mount_point] = {
+            "mount_options": sorted(fields[5].split(",")),
+            "optional_fields": fields[6:],
+            "filesystem": trailing[0],
+            "source": trailing[1],
+            "super_options": sorted(trailing[2].split(",")),
+        }
+    return mounts
+
+
+def _read_cgroup_value(name: str) -> str:
+    path = Path("/sys/fs/cgroup") / name
+    if not path.is_file():
+        raise ModelInputError("Phase 7A requires a cgroup v2 runtime")
+    return path.read_text().strip()
+
+
+def _has_default_route() -> bool:
+    ipv4 = Path("/proc/net/route")
+    if ipv4.is_file():
+        for line in ipv4.read_text().splitlines()[1:]:
+            fields = line.split()
+            if len(fields) >= 2 and fields[0] != "lo" and fields[1] == "00000000":
+                return True
+    ipv6 = Path("/proc/net/ipv6_route")
+    if ipv6.is_file():
+        for line in ipv6.read_text().splitlines():
+            fields = line.split()
+            if (
+                len(fields) >= 2
+                and fields[-1] != "lo"
+                and fields[0] == "0" * 32
+                and fields[1] == "00"
+            ):
+                return True
+    return False
+
+
+def _runtime_envelope() -> dict[str, Any]:
+    mounts = _mount_table()
+    try:
+        root_mount = mounts["/"]
+        temporary_mount = mounts["/tmp"]
+        processed_mount = mounts["/artifacts/processed"]
+        output_mount = mounts["/phase7a"]
+    except KeyError as exc:
+        raise ModelInputError(f"required Phase 7A mount is absent: {exc.args[0]}") from exc
+    temporary_options = set(temporary_mount["mount_options"]) | set(
+        temporary_mount["super_options"]
+    )
+    required_temporary_options = {"rw", "noexec", "nosuid", "nodev"}
+    size_is_256m = bool({"size=256m", "size=262144k", "size=268435456"} & temporary_options)
+    memory_max = _read_cgroup_value("memory.max")
+    memory_swap_max = _read_cgroup_value("memory.swap.max")
+    cpu_max = _read_cgroup_value("cpu.max")
+    pids_max = _read_cgroup_value("pids.max")
+    try:
+        cpu_quota, cpu_period = (int(value) for value in cpu_max.split())
+    except (TypeError, ValueError) as exc:
+        raise ModelInputError("Phase 7A CPU quota is not numeric") from exc
+    kernel_interfaces = sorted(name for _index, name in socket.if_nameindex())
+    interface_states = {
+        name: (Path("/sys/class/net") / name / "operstate").read_text().strip()
+        for name in kernel_interfaces
+    }
+    interfaces = sorted(
+        name for name, state in interface_states.items() if name == "lo" or state != "down"
+    )
+    inactive_kernel_interfaces = sorted(set(kernel_interfaces) - set(interfaces))
+    default_route = _has_default_route()
+    relevant_environment = sorted(
+        name
+        for name in os.environ
+        if name.startswith("COMPOSE_") or name in {"DOCKER_HOST", "ENV_FILE"}
+    )
+    unexpected_writable_bind_mounts = sorted(
+        mount_point
+        for mount_point, details in mounts.items()
+        if mount_point not in {"/artifacts/processed", "/phase7a"}
+        and "rw" in details["mount_options"]
+        and details["filesystem"] == output_mount["filesystem"]
+        and mount_point not in {"/etc/hostname", "/etc/hosts", "/etc/resolv.conf"}
+    )
+    failures = []
+    if "ro" not in root_mount["mount_options"]:
+        failures.append("root filesystem is writable")
+    if (
+        temporary_mount["filesystem"] != "tmpfs"
+        or not required_temporary_options <= temporary_options
+    ):
+        failures.append("/tmp is not the required restricted tmpfs")
+    if not size_is_256m:
+        failures.append("/tmp is not limited to 256 MiB")
+    if "ro" not in processed_mount["mount_options"]:
+        failures.append("processed input bind is writable")
+    if "rw" not in output_mount["mount_options"]:
+        failures.append("Phase 7A output bind is not writable")
+    if unexpected_writable_bind_mounts:
+        failures.append("unexpected writable bind mounts are visible")
+    if memory_max != str(5 * 1024**3) or memory_swap_max != "0":
+        failures.append("memory or swap cgroup limit drifted")
+    if cpu_quota / cpu_period != 4.0:
+        failures.append("CPU cgroup limit drifted")
+    if pids_max != "512":
+        failures.append("PID cgroup limit drifted")
+    if interfaces != ["lo"] or default_route:
+        failures.append("network namespace is not loopback-only")
+    if relevant_environment:
+        failures.append("Compose or Docker host environment leaked into the container")
+    if Path("/workspace/.env").exists() or Path("/var/run/docker.sock").exists():
+        failures.append("forbidden environment or Docker socket is visible")
+    if any(Path("/phase7a").iterdir()):
+        failures.append("Phase 7A output bind is not empty before execution")
+    if failures:
+        raise ModelInputError("Phase 7A runtime envelope mismatch: " + "; ".join(failures))
+    return {
+        "root_filesystem_read_only": True,
+        "tmp": {
+            "filesystem": temporary_mount["filesystem"],
+            "required_options": sorted(required_temporary_options),
+            "size_bytes": 256 * 1024**2,
+        },
+        "cgroup": {
+            "memory_max_bytes": int(memory_max),
+            "memory_swap_max_bytes": int(memory_swap_max),
+            "cpu_quota": cpu_quota,
+            "cpu_period": cpu_period,
+            "cpu_limit": cpu_quota / cpu_period,
+            "pids_max": int(pids_max),
+        },
+        "network": {
+            "interfaces": interfaces,
+            "inactive_kernel_interfaces": inactive_kernel_interfaces,
+            "default_route": default_route,
+        },
+        "bind_mounts": {
+            "processed": {"path": "/artifacts/processed", "read_only": True},
+            "output": {"path": "/phase7a", "read_only": False},
+            "unexpected_writable": unexpected_writable_bind_mounts,
+        },
+        "forbidden_visibility": {
+            "compose_environment": relevant_environment,
+            "workspace_dotenv": False,
+            "docker_socket": False,
+            "review_service_route": False,
+        },
+    }
+
+
+def preflight_phase7a(
+    *,
+    matrix_path: str | Path,
+    repo_root: str | Path,
+    processed_root: str | Path,
+    data_version: str,
+    data_manifest_checksum: str,
+    output_root: str | Path,
+    run_id: str,
+    git_revision: str,
+    image_digest: str,
+    requested_source_checksum: str,
+    attestation_path: str | Path,
+) -> dict[str, Any]:
+    """Validate formal identity and runtime constraints without reading data or writing output."""
+
+    validate_relative_file_name(data_version)
+    validate_relative_file_name(run_id)
+    if data_version.lower() == "latest":
+        raise ModelInputError("data_version must never be latest")
+    if not SHA256_PATTERN.fullmatch(data_manifest_checksum):
+        raise ModelInputError("data_manifest_checksum must be lowercase SHA-256")
+    if Path(processed_root) != Path("/artifacts/processed") or Path(output_root) != Path(
+        "/phase7a"
+    ):
+        raise ModelInputError("Phase 7A preflight mount destinations drifted")
+    matrix = resolve_matrix(matrix_path, repo_root=repo_root)
+    identity = _verify_runtime_identity(
+        matrix=matrix,
+        repo_root=repo_root,
+        git_revision=git_revision,
+        image_digest=image_digest,
+        requested_source_checksum=requested_source_checksum,
+        attestation_path=attestation_path,
+    )
+    return {
+        "schema_version": "1.0",
+        "status": "PASS",
+        "mode": "preflight-no-data",
+        "identity": identity,
+        "runtime_envelope": _runtime_envelope(),
+        "data_read": False,
+        "output_written": False,
+    }
+
+
 def _run_phase7a(
     *,
     matrix_path: str | Path,
@@ -600,24 +918,47 @@ def _run_phase7a(
     output_root: str | Path,
     run_id: str,
     git_revision: str,
+    image_digest: str,
+    requested_source_checksum: str,
+    attestation_path: str | Path,
     command: Sequence[str],
+    codec: Any = None,
 ) -> Path:
+    from recsys.models.data import validate_data_manifest_identity
     from recsys.models.entrypoint import (
         evaluate_validation_selection,
         finalize_trained_model,
+        load_trained_model_test_split,
         train_model_stages,
     )
 
-    if not _GIT_SHA_PATTERN.fullmatch(git_revision):
-        raise ModelInputError("git_revision must be an explicit lowercase 40-character SHA")
     if not SHA256_PATTERN.fullmatch(data_manifest_checksum):
         raise ModelInputError("data_manifest_checksum must be lowercase SHA-256")
-    environment_revision = os.environ.get("GIT_REVISION")
-    if environment_revision is not None and environment_revision != git_revision:
-        raise ModelInputError("GIT_REVISION environment does not match the requested revision")
     validate_relative_file_name(run_id)
     matrix = resolve_matrix(matrix_path, repo_root=repo_root)
-    run_path = Path(output_root) / run_id
+    runtime_identity = _verify_runtime_identity(
+        matrix=matrix,
+        repo_root=repo_root,
+        git_revision=git_revision,
+        image_digest=image_digest,
+        requested_source_checksum=requested_source_checksum,
+        attestation_path=attestation_path,
+    )
+    validate_data_manifest_identity(
+        processed_root=processed_root,
+        data_version=data_version,
+        data_manifest_checksum=data_manifest_checksum,
+    )
+    runtime_envelope = _runtime_envelope()
+    namespace = _ensure_namespace(
+        output_root,
+        _namespace_identity(
+            runtime_identity=runtime_identity,
+            data_version=data_version,
+            data_manifest_checksum=data_manifest_checksum,
+        ),
+    )
+    run_path = namespace / run_id
     run_path.mkdir(parents=True, exist_ok=False)
     started = time.monotonic()
     record: dict[str, Any] = {
@@ -625,6 +966,11 @@ def _run_phase7a(
         "status": "RUNNING",
         "run_id": run_id,
         "git_revision": git_revision,
+        "image_reference": runtime_identity["image_reference"],
+        "image_digest": runtime_identity["image_digest"],
+        "source_checksum": runtime_identity["source_checksum"],
+        "runtime_identity": runtime_identity,
+        "runtime_envelope": runtime_envelope,
         "data_version": data_version,
         "data_manifest_checksum": data_manifest_checksum,
         "matrix_checksum": matrix.matrix_checksum,
@@ -660,6 +1006,7 @@ def _run_phase7a(
                 config=experiment.config,
                 output_root=run_path / "models",
                 checkpoint_root=run_path / "checkpoints" / experiment.experiment_id,
+                codec=codec,
             )
             metrics = evaluate_validation_selection(trained)
             stages = _stage_record(trained)
@@ -716,6 +1063,7 @@ def _run_phase7a(
         config=selected.config,
         output_root=run_path / "models",
         checkpoint_root=run_path / "final-checkpoints",
+        codec=codec,
     )
     if final_trained.config_checksum != selected.config_checksum:
         raise ModelInputError("final training config drifted after validation selection")
@@ -726,6 +1074,11 @@ def _run_phase7a(
     )
     if _stage_record(final_trained) != selected_stage_record:
         raise ModelInputError("deterministic final retraining diverged from selection history")
+    final_trained = load_trained_model_test_split(
+        final_trained,
+        processed_root=processed_root,
+        codec=codec,
+    )
     artifact = finalize_trained_model(
         final_trained, output_root=run_path / "models", git_revision=git_revision
     )
@@ -778,7 +1131,11 @@ def run_phase7a(
     output_root: str | Path,
     run_id: str,
     git_revision: str,
+    image_digest: str,
+    requested_source_checksum: str,
+    attestation_path: str | Path,
     command: Sequence[str],
+    codec: Any = None,
 ) -> Path:
     """Run Phase 7A and persist a terminal failure record after execution starts."""
 
@@ -798,7 +1155,11 @@ def run_phase7a(
             output_root=output_root,
             run_id=run_id,
             git_revision=git_revision,
+            image_digest=image_digest,
+            requested_source_checksum=requested_source_checksum,
+            attestation_path=attestation_path,
             command=command,
+            codec=codec,
         )
     except Exception as exc:
         result_path = Path(output_root) / run_id / "run.json"

@@ -52,22 +52,43 @@ class CandidateRankingArtifact:
     scores: Mapping[str, Mapping[str, float]]
 
 
+_RETAINED_CANDIDATE_SLOT_BYTES = 128
+_RETAINED_CANDIDATE_USER_BYTES = 4 * 1024
+_MODEL_DATA_RUNTIME_RESERVE_BYTES = 2 * 1024**3
+
+
+def candidate_memory_budget(
+    *, user_count: int, top_n: int, catalog_items: int, batch_size: int = 128
+) -> dict[str, int]:
+    """Return the reviewed 64-bit CPython 3.12 candidate peak budget."""
+
+    if min(user_count, top_n, catalog_items, batch_size) < 0:
+        raise ValueError("candidate memory dimensions must be non-negative")
+    retained_slots = user_count * top_n
+    components = {
+        "retained_candidate_slots": retained_slots * _RETAINED_CANDIDATE_SLOT_BYTES,
+        "per_user_containers": user_count * _RETAINED_CANDIDATE_USER_BYTES,
+        "float32_catalog_score_batch": min(user_count, batch_size) * catalog_items * 4,
+        "model_data_runtime_reserve": _MODEL_DATA_RUNTIME_RESERVE_BYTES,
+    }
+    return {**components, "upper_bound": sum(components.values())}
+
+
 def candidate_peak_memory_bounds(
     *, user_count: int, top_n: int, catalog_items: int, batch_size: int = 128
 ) -> tuple[int, int]:
-    """Return conservative retained-candidate lower/upper peak byte estimates."""
+    """Return retained-slot lower bound and reviewed total-process upper budget."""
 
     if min(user_count, top_n, catalog_items, batch_size) < 0:
         raise ValueError("candidate memory dimensions must be non-negative")
     slots = user_count * top_n
     lower_bound = slots * 24
-    upper_bound = (
-        slots * 512
-        + user_count * 8 * 1024
-        + min(user_count, batch_size) * catalog_items * 4
-        + 512 * 1024 * 1024
-    )
-    return lower_bound, upper_bound
+    return lower_bound, candidate_memory_budget(
+        user_count=user_count,
+        top_n=top_n,
+        catalog_items=catalog_items,
+        batch_size=batch_size,
+    )["upper_bound"]
 
 
 def _write_bytes(path: Path, payload: bytes) -> None:

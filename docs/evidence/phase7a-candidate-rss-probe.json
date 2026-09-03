@@ -1,0 +1,89 @@
+{
+  "algorithm": {
+    "candidate_rankings": "dict[user_id] -> list[shared item-id reference]",
+    "candidate_scores": "dict[user_id] -> dict[shared item-id -> unique float]",
+    "catalog": "one tuple of shared item-id strings",
+    "id": "shared-catalog-three-retained-structures-v1",
+    "reranked": "dict[user_id] -> list[shared item-id reference]",
+    "rss_measure": "resource.getrusage(RUSAGE_SELF).ru_maxrss process peak"
+  },
+  "capture": {
+    "captured_at_utc": "2026-09-03T17:18:21Z",
+    "container_envelope": {
+      "bind_mounts": [
+        "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/\u63a8\u8350\u7cfb\u7edfMVP/scripts/phase7a_candidate_rss_probe.py,dst=/probe.py,readonly",
+        "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/\u63a8\u8350\u7cfb\u7edfMVP/docs/evidence/phase7a-candidate-rss-capture.json,dst=/probe-capture.json,readonly"
+      ],
+      "cpu_limit": 4,
+      "memory_limit_bytes": 536870912,
+      "memory_swap_limit_bytes": 536870912,
+      "network": "none",
+      "pids_limit": 128,
+      "pull_policy": "never",
+      "root_filesystem_read_only": true,
+      "tmpfs": "/tmp:rw,noexec,nosuid,nodev,size=64m"
+    },
+    "docker_argv": [
+      "docker",
+      "run",
+      "--rm",
+      "--pull=never",
+      "--network=none",
+      "--read-only",
+      "--memory=512m",
+      "--memory-swap=512m",
+      "--cpus=4",
+      "--pids-limit=128",
+      "--tmpfs",
+      "/tmp:rw,noexec,nosuid,nodev,size=64m",
+      "--mount",
+      "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/\u63a8\u8350\u7cfb\u7edfMVP/scripts/phase7a_candidate_rss_probe.py,dst=/probe.py,readonly",
+      "--mount",
+      "type=bind,src=/Users/Zhuanz/Documents/ChatGPT/\u63a8\u8350\u7cfb\u7edfMVP/docs/evidence/phase7a-candidate-rss-capture.json,dst=/probe-capture.json,readonly",
+      "python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+      "python",
+      "/probe.py",
+      "--capture-metadata",
+      "/probe-capture.json"
+    ],
+    "image_id": "sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+    "image_reference": "python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
+    "probe_sha256": "364eefe111a0779a11111116551f638168652532a94c0461f81cfa170fe1d3b1"
+  },
+  "kind": "focused_candidate_structure_rss_probe",
+  "parameters": {
+    "maximum_probe_slots": 2000000,
+    "retained_slots": 2000000,
+    "slot_allowance_bytes": 128,
+    "top_n": 200,
+    "user_count": 10000
+  },
+  "raw_rss": {
+    "baseline": 23556,
+    "peak": 180356,
+    "unit": "kibibytes"
+  },
+  "result": {
+    "baseline_rss_bytes": 24121344,
+    "bytes_per_slot": 80.2816,
+    "delta_rss_bytes": 160563200,
+    "peak_rss_bytes": 184684544,
+    "within_slot_allowance": true
+  },
+  "retained_counts": {
+    "candidate_slots": 2000000,
+    "candidate_users": 10000,
+    "reranked_slots": 2000000,
+    "reranked_users": 10000,
+    "score_slots": 2000000,
+    "score_users": 10000
+  },
+  "runtime": {
+    "implementation": "CPython",
+    "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.41",
+    "pointer_bits": 64,
+    "python": "3.12.14"
+  },
+  "schema_version": "2.0",
+  "scope": "focused retained-structure evidence; not a full-data or model-process result"
+}

@@ -20,9 +20,24 @@ RUN pip install --no-cache-dir --require-hashes \
     --requirement requirements-search.lock \
     --requirement requirements-analytics.lock
 
+ARG GIT_REVISION=unattested
+ARG PHASE7A_SOURCE_CHECKSUM=unattested
+
 COPY apps ./apps
 COPY recsys ./recsys
 COPY configs ./configs
+COPY Makefile requirements-model.lock requirements-data.lock requirements-api.lock \
+    requirements-search.lock requirements-analytics.lock ./
+COPY scripts/phase7a_launcher.py ./scripts/phase7a_launcher.py
+RUN python -m recsys.experiments.source_identity attest \
+    --repo-root /workspace \
+    --git-revision "${GIT_REVISION}" \
+    --expected-source-checksum "${PHASE7A_SOURCE_CHECKSUM}" \
+    --output /usr/local/share/microlens/phase7a-source.json
+
+LABEL org.opencontainers.image.revision="${GIT_REVISION}" \
+    io.microlens.phase7a.source-checksum="${PHASE7A_SOURCE_CHECKSUM}" \
+    io.microlens.phase7a.attestation="/usr/local/share/microlens/phase7a-source.json"
 
 EXPOSE 8081
 CMD ["python", "-m", "apps.worker.app"]

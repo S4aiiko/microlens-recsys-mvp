@@ -4,7 +4,7 @@ import json
 import os
 import tempfile
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +15,7 @@ from .artifacts import CandidateRankingArtifact, PublishedModelArtifacts, write_
 from .badcases import build_badcases
 from .baselines import evaluate_baselines_with_segments, relevant_by_user
 from .config import load_model_config
-from .data import ModelData, load_model_data
+from .data import ModelData, load_model_data, load_model_test_split
 from .errors import ModelInputError, TrainingCancelled
 from .evaluation import deepfm_rankings, dssm_rankings
 from .features import FeatureIndex
@@ -171,6 +171,7 @@ def train_model_stages(
         data_manifest_checksum=data_manifest_checksum,
         title_config=resolved_config["title"],
         codec=codec,
+        include_test=False,
     )
     set_determinism(int(resolved_config["seed"]))
     features = FeatureIndex.build(data, title_enabled=bool(resolved_config["title"]["enabled"]))
@@ -260,6 +261,18 @@ def evaluate_validation_selection(
     return metrics
 
 
+def load_trained_model_test_split(
+    trained: TrainedModelStages,
+    *,
+    processed_root: str | Path,
+    codec: TableCodec | None = None,
+) -> TrainedModelStages:
+    """Return the trained stages with their one immutable final-test cohort attached."""
+
+    data = load_model_test_split(trained.data, processed_root=processed_root, codec=codec)
+    return replace(trained, data=data)
+
+
 def finalize_trained_model(
     trained: TrainedModelStages,
     *,
@@ -268,7 +281,10 @@ def finalize_trained_model(
     cancellation_requested: Callable[[], bool] = lambda: False,
     git_revision: str | None = None,
 ) -> PublishedModelArtifacts:
-    """Read the test split once, after a caller has frozen validation selection."""
+    """Evaluate a test split that the caller explicitly loaded after selection."""
+
+    if not trained.data.test_loaded:
+        raise ModelInputError("final evaluation requires the explicitly loaded test split")
 
     def final_evaluation_pulse() -> None:
         if cancellation_requested():
@@ -328,6 +344,11 @@ def train_model(
         resume_deepfm=resume_deepfm,
         heartbeat=heartbeat,
         cancellation_requested=cancellation_requested,
+        codec=codec,
+    )
+    trained = load_trained_model_test_split(
+        trained,
+        processed_root=processed_root,
         codec=codec,
     )
     return finalize_trained_model(

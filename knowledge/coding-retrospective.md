@@ -107,3 +107,62 @@
 - **Next check**: construct two different unpadded Base64URL strings that decode to identical bytes,
   assert the decoder rejects the alias, then run the exact CI test under multiple generated payloads.
 - **Triage**: `append-retrospective`; project security and test-determinism rule, no skill change needed.
+
+### Task: Phase 7A isolated runtime preflight
+
+- **Bug** (`file/path mistake`, `verification gap`): the first shared launcher probe passed an absolute
+  matrix path to a resolver whose established safety contract accepts only repository-relative paths;
+  the next probe treated Docker Desktop's inactive kernel tunnel devices and loopback-only IPv6 routes
+  as usable external networking even under `--network=none`.
+- **Root cause**: the new launcher/runtime assertions were written from assumed path and Linux network
+  shapes before exercising the existing resolver and the target Docker Desktop kernel view.
+- **Rule**: a security preflight must reuse each existing parser's accepted input shape and distinguish
+  operational interfaces/routes from inactive kernel devices. Prove isolation with active interfaces,
+  non-loopback default routes and fixed launcher argv, not raw interface-name or route-row counts.
+- **Next check**: before freezing an attested image, render the exact tokenized launcher command, run the
+  shared no-data preflight on the target runtime and require an empty output bind plus unchanged service
+  snapshots.
+- **Triage**: `append-retrospective`; durable project runtime-verification rule, no skill change needed.
+
+### Task: Phase 7A commit identity and namespace claim
+
+- **Bug** (`trust-boundary gap`, `concurrency bug`): the first provenance checksum excluded the host
+  launcher and Makefile, while namespace initialization used check-then-replace and allowed concurrent
+  callers to overwrite an accepted marker.
+- **Root cause**: content attestation was scoped to container application directories rather than every
+  executable/build input, and atomic replacement was mistaken for exclusive initialization.
+- **Rule**: formal provenance must byte-compare the complete current executable boundary with the
+  requested commit tree before any build/render/run. One-time namespaces require exclusive creation
+  (`O_EXCL`) plus file/directory fsync; atomic rename alone does not establish a single winner.
+- **Next check**: mutate a host launcher and copied image source independently, race compatible and
+  incompatible claimants behind a barrier, and inject write/file-fsync/directory-fsync failures while
+  requiring no Docker/output side effect or surviving partial marker.
+- **Triage**: `append-retrospective`; durable project provenance/concurrency rule, no skill change needed.
+
+### Task: Phase 7A RSS capture replay
+
+- **Bug** (`state bug`, `test gap`): `load_capture_metadata()` validated a raw four-field capture but
+  returned the enriched object containing `container_envelope`; `probe_candidate_rss()` then validated
+  it again as raw input, so the real CLI always failed while direct-dictionary unit tests passed.
+- **Root cause**: tests covered the parser and probe independently but skipped the production composition
+  from file load through probe execution.
+- **Rule**: when validation derives fields, keep the raw-input and normalized-output types explicit and
+  test the exact CLI composition path; do not pass normalized data back through a strict raw-schema gate.
+- **Next check**: load capture JSON from a real file, pass that return value into the probe, and run the
+  exact immutable-image Docker argv before accepting machine-readable evidence.
+- **Triage**: `append-retrospective`; durable project validation-boundary rule, no skill change needed.
+
+### Task: Phase 7A external execution evidence grammar
+
+- **Bug** (`trust-boundary gap`, `verification gap`): RSS capture validation counted required safe Docker
+  tokens but accepted extra conflicting flags and `readonly=false`, then derived an inaccurately safe
+  `container_envelope`; the documented checksum prerequisite also entered the ignored virtualenv before
+  the launcher's clean-tree gate.
+- **Root cause**: presence checks were treated as an execution grammar, and the formal workflow was reviewed
+  one command at a time instead of from its first executable prerequisite.
+- **Rule**: machine evidence for an external command must validate the complete ordered argv and exact option
+  grammar, rejecting every unrecognized, duplicate, alias or conflicting token. Every prerequisite that
+  imports project code must share the same isolated clean-tree bootstrap as the final action.
+- **Next check**: mutate the captured argv with conflicting split/equal options and writable/extra mounts,
+  then run the documented workflow from its first command with ignored startup-hook sentinels installed.
+- **Triage**: `append-retrospective`; durable project provenance rule, no skill change needed.
