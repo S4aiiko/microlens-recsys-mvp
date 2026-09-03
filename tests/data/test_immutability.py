@@ -6,9 +6,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from test_events import _event, _mapping, _write_export
-from test_pipeline import _config, _write_raw
-
 from recsys.data import (
     EventExportError,
     ImmutableArtifactError,
@@ -18,6 +15,9 @@ from recsys.data import (
     canonical_json_bytes,
 )
 from recsys.data.pipeline import _verify_existing
+
+from .test_events import _event, _mapping, _write_export
+from .test_pipeline import _config, _write_raw
 
 
 def _rewrite_manifest(path: Path, manifest: dict[str, object]) -> None:

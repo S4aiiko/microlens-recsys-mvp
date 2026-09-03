@@ -232,8 +232,8 @@ class FixtureInputTests(unittest.TestCase):
                 outside.mkdir()
                 current = root
                 components = ("artifacts", "experiments", "7b", spec.fixture_id)
-                target_index = 3 if symlink_component == "fixture" else components.index(
-                    symlink_component
+                target_index = (
+                    3 if symlink_component == "fixture" else components.index(symlink_component)
                 )
                 for index, component in enumerate(components):
                     next_path = current / component
@@ -244,9 +244,7 @@ class FixtureInputTests(unittest.TestCase):
                     current = next_path
                 with self.assertRaises(FixtureError) as raised:
                     load_or_create_credentials(root, spec, existing_docker_resources=False)
-                self.assertEqual(
-                    raised.exception.code, "symlink_artifact_namespace_forbidden"
-                )
+                self.assertEqual(raised.exception.code, "symlink_artifact_namespace_forbidden")
 
     def test_validated_bytes_are_staged_even_if_original_bundle_is_replaced(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

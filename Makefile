@@ -29,8 +29,9 @@ covers:
 	@$(PYTHON) scripts/foundation.py placeholder covers
 
 smoke-all:
-	@$(DOCKER_COMPOSE) version >/dev/null
-	$(DOCKER_COMPOSE) up -d --build --wait db redis search api scheduler worker web
+	@PYTHONPATH=. $(PYTHON) scripts/smoke_all.py \
+		--run-id "$${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}" \
+		--docker-compose "$(DOCKER_COMPOSE)"
 
 up:
 	@$(DOCKER_COMPOSE) version >/dev/null

@@ -266,6 +266,114 @@
       "version": "9114975b8e9ec85bce16c1ed8abbf0e194e4afb3"
     },
     {
+      "bom-ref": "pkg:github/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/actions/checkout"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "actions/checkout",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-action"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "ci:v4.2.2"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+      "type": "library",
+      "version": "11bd71901bbe5b1630ceea73d27597364c9af683"
+    },
+    {
+      "bom-ref": "pkg:github/actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/actions/setup-node"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "actions/setup-node",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-action"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "ci:v4.4.0"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+      "type": "library",
+      "version": "49933ea5288caeca8642d1e84afbd3f7d6820020"
+    },
+    {
+      "bom-ref": "pkg:github/actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://github.com/actions/setup-python"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "actions/setup-python",
+      "properties": [
+        {
+          "name": "microlens:ecosystem",
+          "value": "github-action"
+        },
+        {
+          "name": "microlens:relation",
+          "value": "direct"
+        },
+        {
+          "name": "microlens:scopes",
+          "value": "ci:v5.6.0"
+        },
+        {
+          "name": "microlens:source-copied",
+          "value": "false"
+        }
+      ],
+      "purl": "pkg:github/actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+      "type": "library",
+      "version": "a26af69be951a213d495a4c3e4e4022e16d87065"
+    },
+    {
       "bom-ref": "pkg:github/apache/arrow@a769c291e01093b73d03a075179cf7a09bf92ad8",
       "externalReferences": [
         {
@@ -11753,6 +11861,9 @@
         "pkg:docker/postgres@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685",
         "pkg:docker/python@sha256:e5c9fa26ffb76e11e0f054f30dc2523a2f9693f0c36c0cf1e39b27e152d899fc",
         "pkg:docker/redis@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf",
+        "pkg:github/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+        "pkg:github/actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "pkg:github/actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
         "pkg:npm/%40date-fns/tz@1.4.0",
         "pkg:npm/%40hey-api/openapi-ts@0.99.0",
         "pkg:npm/%40testing-library/dom@10.4.1",
@@ -11815,6 +11926,18 @@
     {
       "dependsOn": [],
       "ref": "pkg:github/USTCLLM/RecStudio@9114975b8e9ec85bce16c1ed8abbf0e194e4afb3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:github/actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065"
     },
     {
       "dependsOn": [],

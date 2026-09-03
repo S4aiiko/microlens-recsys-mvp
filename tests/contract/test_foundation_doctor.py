@@ -57,9 +57,7 @@ class DockerDoctorTest(unittest.TestCase):
         self.assertEqual(checks["docker_daemon"], "AVAILABLE")
         self.assertEqual(status, "FOUNDATION_PREFLIGHT_READY")
         for call in run.call_args_list:
-            self.assertEqual(
-                call.kwargs["timeout"], foundation.DOCKER_CHECK_TIMEOUT_SECONDS
-            )
+            self.assertEqual(call.kwargs["timeout"], foundation.DOCKER_CHECK_TIMEOUT_SECONDS)
             self.assertFalse(call.kwargs["check"])
 
 

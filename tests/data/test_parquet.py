@@ -9,9 +9,6 @@ from collections import Counter
 from importlib.metadata import version
 from pathlib import Path
 
-from test_events import _event, _mapping, _rejected_event
-from test_pipeline import _config, _write_raw
-
 from recsys.data import (
     EventExportError,
     ParquetCodec,
@@ -22,6 +19,9 @@ from recsys.data import (
     validate_event_export,
 )
 from recsys.data.common import fsync_file, parse_utc
+
+from .test_events import _event, _mapping, _rejected_event
+from .test_pipeline import _config, _write_raw
 
 
 def _write_rejected_parquet(codec: ParquetCodec, path: Path, rows: list[dict[str, object]]) -> None:

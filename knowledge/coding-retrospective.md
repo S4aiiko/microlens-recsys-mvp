@@ -75,3 +75,21 @@
   timezone strings succeed while string/boolean numerics and naive datetimes return 422 with no
   durable job created.
 - **Triage**: `append-retrospective`; project API-boundary rule, no skill change needed.
+
+### Task: Phase 6 event-training export contract
+
+- **Bug** (`logic bug`, `verification gap`): live official items with
+  `metadata_status=complete_snapshot_unusable_as_of_feature` were exported as
+  `missing_item_metadata`, then rejected by `validate_event_export` because their IDs were
+  known to the immutable base dataset.
+- **Root cause**: the exporter treated a feature-leakage restriction on likes/views as if the
+  item itself were unknown/incomplete; the live official metadata status was not included in
+  the end-to-end event export contract test.
+- **Rule**: distinguish item identity/metadata completeness from feature eligibility. Every
+  exporter rejection reason must be replayed through the downstream validator using the exact
+  base `known_item_ids` set before accepting the contract.
+- **Next check**: after generating an official Feed event, run export and
+  `build-training-data` in the production container; require accepted rows for the documented
+  complete snapshot status and validator acceptance, plus a regression for genuinely missing
+  items.
+- **Triage**: `append-retrospective`; durable project data-contract rule, no skill change needed.

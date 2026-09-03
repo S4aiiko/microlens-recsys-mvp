@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import Engine, func, select
+from sqlalchemy import Engine, func, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from apps.api.app.alerts.service import (
@@ -178,6 +178,10 @@ class SchedulerProcess:
     def run_once(self) -> dict[str, Any]:
         return self.runtime.run_once()
 
+    def healthcheck(self) -> bool:
+        with self.engine.connect() as connection:
+            return connection.scalar(text("SELECT 1")) == 1
+
     def serve(self, *, stop: threading.Event, poll_seconds: float) -> None:
         self.runtime.scheduler.serve(
             stop=stop,
@@ -235,10 +239,20 @@ def main(
 ) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
     mode = arguments[0] if arguments else "serve"
-    if mode not in {"serve", "run-once"} or len(arguments) > 1:
-        raise SystemExit("usage: python -m apps.worker.scheduler [serve|run-once]")
-    process = process_factory()
+    if mode not in {"serve", "run-once", "--healthcheck"} or len(arguments) > 1:
+        raise SystemExit("usage: python -m apps.worker.scheduler [serve|run-once|--healthcheck]")
     try:
+        process = process_factory()
+    except Exception:
+        if mode == "--healthcheck":
+            return 1
+        raise
+    try:
+        if mode == "--healthcheck":
+            try:
+                return 0 if process.healthcheck() else 1
+            except Exception:
+                return 1
         if mode == "run-once":
             print(json.dumps(process.run_once(), sort_keys=True, separators=(",", ":")))
             return 0

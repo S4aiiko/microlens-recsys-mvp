@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator
 
 
 class JobCreateRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+    model_config = ConfigDict(extra="forbid")
 
     idempotency_key: str = Field(min_length=1, max_length=255)
     task_name: str = Field(min_length=1, max_length=128, pattern=r"^[a-z][a-z0-9_.-]*$")
@@ -25,7 +25,7 @@ class JobCreateRequest(BaseModel):
 
 
 class JobRetryRequest(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+    model_config = ConfigDict(extra="forbid")
 
     due_at: datetime
 

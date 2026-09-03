@@ -108,6 +108,7 @@ def _seed_event_graph(
     factory: sessionmaker[Session],
     *,
     complete_events: int = 2,
+    official_snapshot_events: int = 0,
     incomplete_events: int = 0,
     gap_after_event: int | None = None,
 ) -> list[int]:
@@ -138,7 +139,15 @@ def _seed_event_graph(
             metadata_status="missing",
             updated_at=NOW,
         )
-        session.add_all([user, complete, incomplete])
+        official_snapshot = Item(
+            id="official-snapshot-item",
+            title="Official metadata with point-in-time feature restriction",
+            likes_snapshot=3,
+            views_snapshot=4,
+            metadata_status="complete_snapshot_unusable_as_of_feature",
+            updated_at=NOW,
+        )
+        session.add_all([user, complete, official_snapshot, incomplete])
         session.flush()
         snapshot = RecommendationSnapshot(
             snapshot_id=uuid.uuid4(),
@@ -163,7 +172,11 @@ def _seed_event_graph(
         session.add(request)
         session.flush()
         event_number = 0
-        for item, count in ((complete, complete_events), (incomplete, incomplete_events)):
+        for item, count in (
+            (complete, complete_events),
+            (official_snapshot, official_snapshot_events),
+            (incomplete, incomplete_events),
+        ):
             for _ in range(count):
                 exposure = Exposure(
                     id=uuid.uuid4(),
@@ -228,6 +241,26 @@ def test_empty_export_is_real_parquet_canonical_and_validator_accepted(
     watermark = _watermark(factory)
     assert watermark.last_event_id == 0
     assert watermark.expected_checksum == result.manifest_checksum
+
+
+def test_official_snapshot_status_is_complete_for_event_training(
+    factory: sessionmaker[Session], tmp_path: Path
+) -> None:
+    sequence_ids = _seed_event_graph(
+        factory,
+        complete_events=0,
+        official_snapshot_events=1,
+    )
+    with factory.begin() as session:
+        result = TrainingEventExporter().export(session, output_root=tmp_path)
+    accepted = ParquetCodec().read_rows(result.path / "events.parquet")
+    assert [row["event_sequence_id"] for row in accepted] == sequence_ids
+    assert (result.accepted, result.rejected) == (1, 0)
+    validate_event_export(
+        result.path,
+        known_item_ids={"official-snapshot-item"},
+        codec=ParquetCodec(),
+    )
 
 
 def test_late_client_time_and_missing_metadata_partition_without_loss(

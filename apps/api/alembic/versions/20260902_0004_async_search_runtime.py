@@ -111,9 +111,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("attempt_id", name="pk_async_job_attempts"),
         sa.UniqueConstraint("fence_token", name="uq_async_job_attempts_fence_token"),
-        sa.UniqueConstraint(
-            "job_id", "attempt", name="uq_async_job_attempts_job_id_attempt"
-        ),
+        sa.UniqueConstraint("job_id", "attempt", name="uq_async_job_attempts_job_id_attempt"),
     )
     op.create_index(
         "ix_async_job_attempts_running_lease",
@@ -175,9 +173,7 @@ def upgrade() -> None:
         "async_outbox",
         ["lease_expires_at", "outbox_id"],
         unique=False,
-        postgresql_where=sa.text(
-            "status = 'delivering' AND lease_expires_at IS NOT NULL"
-        ),
+        postgresql_where=sa.text("status = 'delivering' AND lease_expires_at IS NOT NULL"),
     )
 
     op.create_table(
@@ -203,9 +199,7 @@ def upgrade() -> None:
         sa.CheckConstraint(
             _finite_float_check("threshold"), name="ck_alert_rules_threshold_finite"
         ),
-        sa.CheckConstraint(
-            "window_seconds > 0", name="ck_alert_rules_window_seconds_positive"
-        ),
+        sa.CheckConstraint("window_seconds > 0", name="ck_alert_rules_window_seconds_positive"),
         sa.CheckConstraint("min_samples > 0", name="ck_alert_rules_min_samples_positive"),
         sa.PrimaryKeyConstraint("rule_id", name="pk_alert_rules"),
         sa.UniqueConstraint("name", name="uq_alert_rules_name"),
@@ -393,9 +387,7 @@ def upgrade() -> None:
         sa.Column("last_source_watermark", sa.String(255), nullable=True),
         sa.Column("generation", sa.BigInteger(), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
-        sa.CheckConstraint(
-            "registry_name = 'items'", name="ck_search_index_registry_name_value"
-        ),
+        sa.CheckConstraint("registry_name = 'items'", name="ck_search_index_registry_name_value"),
         sa.CheckConstraint(
             "read_alias = 'microlens-items-read'",
             name="ck_search_index_registry_alias_value",
@@ -580,8 +572,7 @@ def downgrade() -> None:
     op.drop_index("ix_analytics_exports_status_created", table_name="analytics_exports")
     op.drop_table("analytics_exports")
     op.execute(
-        "DROP TRIGGER trg_analytics_export_watermarks_monotonic "
-        "ON analytics_export_watermarks"
+        "DROP TRIGGER trg_analytics_export_watermarks_monotonic ON analytics_export_watermarks"
     )
     op.execute("DROP FUNCTION microlens_reject_analytics_watermark_regression()")
     op.drop_table("analytics_export_watermarks")
@@ -600,14 +591,10 @@ def downgrade() -> None:
     op.drop_index("uq_search_index_builds_single_active", table_name="search_index_builds")
     op.drop_table("search_index_builds")
 
-    op.drop_index(
-        "ix_operation_job_receipts_completed_at", table_name="operation_job_receipts"
-    )
+    op.drop_index("ix_operation_job_receipts_completed_at", table_name="operation_job_receipts")
     op.drop_table("operation_job_receipts")
 
-    op.drop_index(
-        "uq_alert_occurrences_single_open_per_rule", table_name="alert_occurrences"
-    )
+    op.drop_index("uq_alert_occurrences_single_open_per_rule", table_name="alert_occurrences")
     op.drop_index("ix_alert_occurrences_rule_fired", table_name="alert_occurrences")
     op.drop_table("alert_occurrences")
     op.drop_index("ix_alert_rules_enabled_metric", table_name="alert_rules")

@@ -1,0 +1,89 @@
+# Phase 6 only. This overlay keeps the approved microlens-review project while
+# assigning every state-bearing resource to one fresh, fail-closed smoke run.
+services:
+  api:
+    environment:
+      API_BOOTSTRAP_MODE: external
+      API_RESTORE_ACTIVE_MODEL: ${SMOKE_API_RESTORE_ACTIVE_MODEL:-false}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)"
+
+  scheduler:
+    healthcheck:
+      test: ["CMD", "python", "-m", "apps.worker.scheduler", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  smoke-bootstrap:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    command: ["python", "-c", "raise SystemExit('explicit smoke command required')"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      SEARCH_URL: ${SEARCH_URL:-http://search:9200}
+      SEARCH_READ_ALIAS: ${SEARCH_READ_ALIAS:-microlens-items-read}
+      MODEL_ARTIFACTS_DIR: /artifacts/models
+      MODEL_ARTIFACT_ROOT: /artifacts/models
+      PROCESSED_DATA_ROOT: /artifacts/processed
+      ALEMBIC_INI: /workspace/apps/api/alembic/alembic.ini
+    volumes:
+      - ${MICROLENS_DATA_DIR:-./dataset}:/input/microlens:ro
+      - ${PROCESSED_DATA_DIR:?PROCESSED_DATA_DIR is required}:/artifacts/processed
+      - model_artifacts:/artifacts/models
+      - training_exports:/artifacts/training_exports
+      - analytics_exports:/artifacts/analytics_exports
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-postgres
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  redis_data:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-redis
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  search_data:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-search
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  model_artifacts:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-models
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  training_exports:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-training-exports
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  analytics_exports:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-analytics-exports
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+
+networks:
+  edge:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-edge
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}
+  backend:
+    name: microlens-review-smoke-${SMOKE_RUN_ID:?SMOKE_RUN_ID is required}-backend
+    internal: true
+    labels:
+      io.microlens.environment_kind: phase6_smoke
+      io.microlens.smoke_run_id: ${SMOKE_RUN_ID}

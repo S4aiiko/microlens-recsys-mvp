@@ -16,6 +16,9 @@ Entries marked `reference-only` have zero copied or vendored source.
 | `redis` | `7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf` | `UNKNOWN` | `direct` |
 | `CycloneDX/cyclonedx-python` | `reference-only-2026-09-01` | `Apache-2.0` | `reference-only` |
 | `USTCLLM/RecStudio` | `9114975b8e9ec85bce16c1ed8abbf0e194e4afb3` | `MIT` | `reference-only` |
+| `actions/checkout` | `11bd71901bbe5b1630ceea73d27597364c9af683` | `MIT` | `direct` |
+| `actions/setup-node` | `49933ea5288caeca8642d1e84afbd3f7d6820020` | `MIT` | `direct` |
+| `actions/setup-python` | `a26af69be951a213d495a4c3e4e4022e16d87065` | `MIT` | `direct` |
 | `apache/arrow` | `a769c291e01093b73d03a075179cf7a09bf92ad8` | `Apache-2.0` | `reference-only` |
 | `apache/iceberg` | `86da2dc8414756e05106b3272fd6e6d0dde306e3` | `Apache-2.0` | `reference-only` |
 | `apple/ml-negative-sampling` | `8dc093469cf0ac693dd894fc904e1f2e88cc34e7` | `UNKNOWN` | `reference-only` |

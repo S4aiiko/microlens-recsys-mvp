@@ -19,6 +19,9 @@ packages inside base-image layers are not enumerated by the application lock fil
 | `redis` | `7-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf` | `container` | `direct` | `UNKNOWN` | [official/package source](https://github.com/redis/docker-library-redis) | `redis` | no |
 | `CycloneDX/cyclonedx-python` | `reference-only-2026-09-01` | `github-reference` | `reference-only` | `Apache-2.0` | [official/package source](https://github.com/CycloneDX/cyclonedx-python) | `none` | no |
 | `USTCLLM/RecStudio` | `9114975b8e9ec85bce16c1ed8abbf0e194e4afb3` | `github-reference` | `reference-only` | `MIT` | [official/package source](https://github.com/USTCLLM/RecStudio) | `none` | no |
+| `actions/checkout` | `11bd71901bbe5b1630ceea73d27597364c9af683` | `github-action` | `direct` | `MIT` | [official/package source](https://github.com/actions/checkout) | `ci:v4.2.2` | no |
+| `actions/setup-node` | `49933ea5288caeca8642d1e84afbd3f7d6820020` | `github-action` | `direct` | `MIT` | [official/package source](https://github.com/actions/setup-node) | `ci:v4.4.0` | no |
+| `actions/setup-python` | `a26af69be951a213d495a4c3e4e4022e16d87065` | `github-action` | `direct` | `MIT` | [official/package source](https://github.com/actions/setup-python) | `ci:v5.6.0` | no |
 | `apache/arrow` | `a769c291e01093b73d03a075179cf7a09bf92ad8` | `github-reference` | `reference-only` | `Apache-2.0` | [official/package source](https://github.com/apache/arrow) | `none` | no |
 | `apache/iceberg` | `86da2dc8414756e05106b3272fd6e6d0dde306e3` | `github-reference` | `reference-only` | `Apache-2.0` | [official/package source](https://github.com/apache/iceberg) | `none` | no |
 | `apple/ml-negative-sampling` | `8dc093469cf0ac693dd894fc904e1f2e88cc34e7` | `github-reference` | `reference-only` | `UNKNOWN` | [official/package source](https://github.com/apple/ml-negative-sampling) | `none` | no |

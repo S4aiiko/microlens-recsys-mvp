@@ -82,9 +82,7 @@ def docker_preflight() -> tuple[dict[str, str], str]:
             f"NOT_READY_DOCKER_COMPOSE_{suffix}",
         )
 
-    daemon_state = _read_only_command_state(
-        [docker_cli, "info", "--format", "{{.ServerVersion}}"]
-    )
+    daemon_state = _read_only_command_state([docker_cli, "info", "--format", "{{.ServerVersion}}"])
     if daemon_state != "AVAILABLE":
         suffix = "TIMEOUT" if daemon_state == "TIMEOUT" else "UNAVAILABLE"
         return (

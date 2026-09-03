@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: 3.12.14
+          cache: pip
+          cache-dependency-path: requirements-*.lock
+      - name: Install locked Python dependencies
+        run: |
+          python -m pip install --require-hashes \
+            --index-url https://download.pytorch.org/whl/cpu \
+            --extra-index-url https://pypi.org/simple \
+            --requirement requirements-model.lock \
+            --requirement requirements-data.lock
+          python -m pip install --require-hashes \
+            --requirement requirements-api.lock \
+            --requirement requirements-search.lock \
+            --requirement requirements-analytics.lock \
+            --requirement requirements-dev.lock
+          python -m pip check
+          python - <<'PY'
+          import pyarrow
+          import torch
+
+          assert pyarrow.__version__ == "25.0.1"
+          assert torch.__version__ == "2.13.0+cpu"
+          assert not torch.cuda.is_available()
+          PY
+      - name: Run Python quality gates
+        env:
+          PYTHONPATH: .
+        run: |
+          ruff format --check apps recsys scripts tests
+          ruff check apps recsys scripts tests
+          python -m compileall -q apps recsys scripts
+          python -m unittest discover -s tests/contract -v
+          python scripts/generate_contracts.py --check
+          python scripts/generate_compliance.py --check
+          python -m pytest -q -ra
+
+  web-quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22.23.2
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install locked Web dependencies
+        run: npm ci --prefix apps/web
+      - name: Run Web quality gates
+        run: |
+          npm audit --prefix apps/web --audit-level=low
+          npm --prefix apps/web test
+          npm --prefix apps/web run typecheck
+          npm --prefix apps/web run build
+          npm --prefix apps/web run check-client-drift
+
+  compose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      API_PORT: "18080"
+      APP_ENV: ci
+      COMPOSE_PROJECT_NAME: microlens-ci
+      DATABASE_URL: postgresql+psycopg://microlens_ci:ci-password@db:5432/microlens_ci
+      JWT_SECRET: ci-only-jwt-secret-with-at-least-32-bytes
+      MICROLENS_SEED_PASSWORD: CI-only-seed-password-2026
+      POSTGRES_DB: microlens_ci
+      POSTGRES_PASSWORD: ci-password
+      POSTGRES_USER: microlens_ci
+      PROCESSED_DATA_DIR: ./artifacts/data
+      PUBLISH_TOKEN: ci-only-publish-token-with-at-least-32-bytes
+      WEB_ORIGIN: http://localhost:25173
+      WEB_PORT: "25173"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Prepare ephemeral Compose environment
+        run: |
+          umask 077
+          touch .env
+          test "$(stat -c '%a' .env)" = "600"
+      - name: Validate Compose contract
+        run: |
+          docker compose version
+          docker compose \
+            --project-name "microlens-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --env-file .env \
+            -f compose.yaml \
+            -f scripts/compose.integration.yaml \
+            config --quiet
+      - name: Build application images
+        if: github.event_name != 'pull_request'
+        run: |
+          docker compose \
+            --project-name "microlens-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --env-file .env \
+            -f compose.yaml \
+            -f scripts/compose.integration.yaml \
+            build --pull web api worker scheduler

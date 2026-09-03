@@ -83,6 +83,26 @@ class ComplianceContractTest(unittest.TestCase):
             with self.subTest(path=path, component=component):
                 self.assertIn(component, inventory)
 
+    def test_every_workflow_action_is_sha_pinned_and_in_sbom(self) -> None:
+        sbom = json.loads((ROOT / "docs/sbom.cdx.json").read_text(encoding="utf-8"))
+        components = {component["bom-ref"]: component for component in sbom["components"]}
+        references = set()
+        for workflow in sorted((ROOT / ".github/workflows").glob("*.y*ml")):
+            text = workflow.read_text(encoding="utf-8")
+            for reference in re.findall(r"^\s*uses:\s*([^\s#]+)", text, re.M):
+                self.assertRegex(reference, r"^[^@\s]+@[0-9a-f]{40}$")
+                repository, revision = reference.rsplit("@", 1)
+                owner, name = repository.split("/", 1)
+                bom_ref = f"pkg:github/{owner}/{name}@{revision}"
+                self.assertIn(bom_ref, components)
+                properties = {
+                    prop["name"]: prop["value"] for prop in components[bom_ref]["properties"]
+                }
+                self.assertEqual(properties["microlens:ecosystem"], "github-action")
+                self.assertEqual(properties["microlens:relation"], "direct")
+                references.add(reference)
+        self.assertEqual(len(references), 3)
+
     def test_make_cache_stats_is_docker_first(self) -> None:
         makefile = (ROOT / "Makefile").read_text(encoding="utf-8")
         target = makefile.split("cache-stats:\n", 1)[1].split("\n\npublish:", 1)[0]

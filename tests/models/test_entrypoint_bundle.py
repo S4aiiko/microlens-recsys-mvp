@@ -7,7 +7,6 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from _support import model_config, write_data_version
 from jsonschema import Draft202012Validator
 
 from recsys.data.artifacts import JsonLinesCodec
@@ -18,6 +17,8 @@ from recsys.models.entrypoint import train_model
 from recsys.models.errors import ModelArtifactError, ModelInputError
 from recsys.models.features import FeatureIndex
 from recsys.models.training import _deepfm_examples, build_dssm
+
+from ._support import model_config, write_data_version
 
 
 class EntrypointBundleTests(unittest.TestCase):

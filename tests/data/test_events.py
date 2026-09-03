@@ -8,8 +8,6 @@ import uuid
 from collections import Counter
 from pathlib import Path
 
-from test_pipeline import _config, _write_raw
-
 from recsys.data import (
     EventExportError,
     HoldoutInsufficientError,
@@ -21,6 +19,8 @@ from recsys.data import (
     validate_event_export,
 )
 from recsys.data.events import _validate_mapping
+
+from .test_pipeline import _config, _write_raw
 
 
 def _event(

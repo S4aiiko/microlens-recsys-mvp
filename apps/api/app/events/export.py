@@ -43,6 +43,7 @@ MANIFEST_KEYS = {
     "event_counts",
     "rejected_reason_counts",
 }
+COMPLETE_METADATA_STATUSES = frozenset({"complete", "complete_snapshot_unusable_as_of_feature"})
 
 
 class EventExportError(RuntimeError):
@@ -219,7 +220,7 @@ class TrainingEventExporter:
     def _metadata_is_complete(item: Item | None) -> bool:
         return bool(
             item is not None
-            and item.metadata_status == "complete"
+            and item.metadata_status in COMPLETE_METADATA_STATUSES
             and item.title.strip()
             and item.likes_snapshot is not None
             and item.views_snapshot is not None
@@ -551,7 +552,7 @@ class TrainingEventExporter:
             str(value)
             for value in session.scalars(
                 select(Item.id).where(
-                    Item.metadata_status == "complete",
+                    Item.metadata_status.in_(COMPLETE_METADATA_STATUSES),
                     func.length(func.trim(Item.title)) > 0,
                     Item.likes_snapshot.is_not(None),
                     Item.views_snapshot.is_not(None),

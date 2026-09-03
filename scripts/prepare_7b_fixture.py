@@ -625,10 +625,7 @@ def _load_or_create_credentials(
         try:
             descriptor = os.open(
                 ".fixture-env",
-                os.O_WRONLY
-                | os.O_CREAT
-                | os.O_EXCL
-                | getattr(os, "O_NOFOLLOW", 0),
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0),
                 0o600,
                 dir_fd=parent_descriptor,
             )

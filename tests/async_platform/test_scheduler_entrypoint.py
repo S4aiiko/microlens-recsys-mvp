@@ -12,6 +12,7 @@ from apps.worker.scheduler import main
 class FakeSchedulerProcess:
     def __init__(self) -> None:
         self.closed = False
+        self.healthchecked = False
         self.served = False
 
     def run_once(self) -> dict[str, object]:
@@ -21,6 +22,10 @@ class FakeSchedulerProcess:
         self.served = True
         self.poll_seconds = poll_seconds
         stop.set()
+
+    def healthcheck(self) -> bool:
+        self.healthchecked = True
+        return True
 
     def close(self) -> None:
         self.closed = True
@@ -45,6 +50,20 @@ class SchedulerEntrypointTests(unittest.TestCase):
         self.assertTrue(process.served)
         self.assertTrue(process.closed)
         self.assertGreater(process.poll_seconds, 0)
+
+    def test_healthcheck_is_read_only_and_closes_runtime(self) -> None:
+        process = FakeSchedulerProcess()
+        code = main(["--healthcheck"], process_factory=lambda: process)
+        self.assertEqual(code, 0)
+        self.assertTrue(process.healthchecked)
+        self.assertFalse(process.served)
+        self.assertTrue(process.closed)
+
+    def test_healthcheck_fails_closed_without_exposing_factory_error(self) -> None:
+        def unavailable() -> FakeSchedulerProcess:
+            raise RuntimeError("postgresql://user:secret@db/example")
+
+        self.assertEqual(main(["--healthcheck"], process_factory=unavailable), 1)
 
 
 if __name__ == "__main__":

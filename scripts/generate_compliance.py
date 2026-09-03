@@ -95,6 +95,24 @@ BASE_IMAGE_SOURCES = {
     "elasticsearch": "https://github.com/elastic/elasticsearch",
 }
 
+GITHUB_ACTIONS = {
+    "actions/checkout": (
+        "11bd71901bbe5b1630ceea73d27597364c9af683",
+        "v4.2.2",
+        "MIT",
+    ),
+    "actions/setup-node": (
+        "49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "v4.4.0",
+        "MIT",
+    ),
+    "actions/setup-python": (
+        "a26af69be951a213d495a4c3e4e4022e16d87065",
+        "v5.6.0",
+        "MIT",
+    ),
+}
+
 PYTHON_PACKAGE_SOURCES = {
     # The model lock is intentionally resolved from PyTorch's official CPU-only
     # wheel index; the ``+cpu`` build is not distributed by PyPI.
@@ -248,6 +266,42 @@ def _base_images() -> list[tuple[str, str, str, str, str]]:
     ]
 
 
+def _github_action_components() -> list[dict[str, Any]]:
+    observed: set[tuple[str, str]] = set()
+    workflows = ROOT / ".github" / "workflows"
+    for workflow in sorted((*workflows.glob("*.yml"), *workflows.glob("*.yaml"))):
+        text = workflow.read_text(encoding="utf-8")
+        for reference in re.findall(r"^\s*uses:\s*([^\s#]+)", text, re.M):
+            if "@" not in reference:
+                raise ValueError(f"GitHub Action must be pinned to a full SHA: {reference}")
+            repository, revision = reference.rsplit("@", 1)
+            if not re.fullmatch(r"[0-9a-f]{40}", revision):
+                raise ValueError(f"GitHub Action must be pinned to a full SHA: {reference}")
+            observed.add((repository, revision))
+
+    expected = {(repository, metadata[0]) for repository, metadata in GITHUB_ACTIONS.items()}
+    if observed != expected:
+        missing = sorted(expected - observed)
+        unknown = sorted(observed - expected)
+        raise ValueError(f"GitHub Action inventory mismatch: missing={missing}, unknown={unknown}")
+
+    result = []
+    for repository, (revision, release, license_id) in sorted(GITHUB_ACTIONS.items()):
+        owner, name = repository.split("/", 1)
+        component = _component(
+            name=repository,
+            version=revision,
+            purl=f"pkg:github/{owner}/{name}@{revision}",
+            license_id=license_id,
+            source=f"https://github.com/{repository}",
+            ecosystem="github-action",
+            relation="direct",
+            scopes=f"ci:{release}",
+        )
+        result.append(component)
+    return result
+
+
 def _component(
     *,
     name: str,
@@ -281,7 +335,7 @@ def _component(
 
 
 def components() -> list[dict[str, Any]]:
-    values = _python_components() + _npm_components()
+    values = _python_components() + _npm_components() + _github_action_components()
     for name, tag, digest, source, services in _base_images():
         values.append(
             _component(

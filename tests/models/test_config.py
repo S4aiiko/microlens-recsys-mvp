@@ -3,10 +3,10 @@ from __future__ import annotations
 import copy
 import unittest
 
-from _support import model_config
-
 from recsys.models.config import load_model_config
 from recsys.models.errors import ModelInputError
+
+from ._support import model_config
 
 
 class ModelConfigTests(unittest.TestCase):

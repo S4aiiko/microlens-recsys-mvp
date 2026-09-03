@@ -8,6 +8,7 @@ from alembic import command
 from alembic.config import Config
 
 from apps.api.app.auth.security import PasswordService, normalize_username
+from apps.api.app.bootstrap import bootstrap_plan
 from apps.api.app.db.seed import seed_demo_users, seed_password_from_environment
 from apps.api.app.internal_main import create_internal_app
 from apps.api.app.main import create_public_app
@@ -33,10 +34,13 @@ def migrate_and_seed(runtime: RuntimeContext) -> None:
 async def serve() -> None:
     settings = AppSettings.from_environment()
     runtime = create_runtime(settings)
-    migrate_and_seed(runtime)
+    plan = bootstrap_plan()
+    if plan.migrate_and_seed:
+        migrate_and_seed(runtime)
     if not await runtime.ping_redis():
         raise RuntimeError("Redis PING failed before API startup")
-    runtime.restore_active_model()
+    if plan.restore_active_model:
+        runtime.restore_active_model()
     public = uvicorn.Server(
         uvicorn.Config(
             create_public_app(settings, runtime),
