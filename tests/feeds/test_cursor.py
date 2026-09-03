@@ -13,6 +13,7 @@ from apps.api.app.feeds.cursor import MAX_CURSOR_OFFSET, CursorCodec, CursorErro
 
 NOW = datetime(2026, 9, 2, 10, 0, tzinfo=UTC)
 SECRET = b"phase-4-cursor-test-secret-is-long-enough"
+BASE64URL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
 
 def _signed(value: dict[str, object]) -> str:
@@ -83,6 +84,25 @@ def test_cursor_rejects_tamper_expiry_non_integer_coercion_and_bounds() -> None:
                 feed_type="personalized",
                 now=NOW,
             )
+
+
+def test_cursor_rejects_noncanonical_signature_alias_with_identical_decoded_bytes() -> None:
+    user_id = uuid.uuid4()
+    codec = CursorCodec(SECRET)
+    token = _signed(_payload(user_id))
+    payload_token, signature_token = token.split(".")
+    final_index = BASE64URL_ALPHABET.index(signature_token[-1])
+    assert final_index % 4 == 0
+    alias = signature_token[:-1] + BASE64URL_ALPHABET[final_index + 1]
+    assert base64.urlsafe_b64decode(alias + "=") == base64.urlsafe_b64decode(signature_token + "=")
+
+    with pytest.raises(CursorError, match="signature"):
+        codec.decode(
+            f"{payload_token}.{alias}",
+            user_id=user_id,
+            feed_type="personalized",
+            now=NOW,
+        )
 
 
 def test_cursor_rejects_non_string_identity_and_malformed_tokens() -> None:

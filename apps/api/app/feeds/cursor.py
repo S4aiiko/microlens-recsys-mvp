@@ -80,9 +80,12 @@ class CursorCodec:
         try:
             payload_token, signature_token = token.split(".", 1)
             payload = self._unb64(payload_token)
-            signature = self._unb64(signature_token)
         except (ValueError, TypeError) as exc:
             raise CursorError("cursor is malformed") from exc
+        try:
+            signature = self._unb64(signature_token)
+        except (ValueError, TypeError) as exc:
+            raise CursorError("cursor signature is invalid") from exc
         expected = hmac.new(self._secret, payload, hashlib.sha256).digest()
         if not hmac.compare_digest(signature, expected):
             raise CursorError("cursor signature is invalid")
@@ -135,4 +138,7 @@ class CursorCodec:
         if not value:
             raise ValueError("empty base64 value")
         padding = "=" * (-len(value) % 4)
-        return base64.b64decode(value + padding, altchars=b"-_", validate=True)
+        decoded = base64.b64decode(value + padding, altchars=b"-_", validate=True)
+        if CursorCodec._b64(decoded) != value:
+            raise ValueError("base64 value is not canonical")
+        return decoded

@@ -93,3 +93,17 @@
   complete snapshot status and validator acceptance, plus a regression for genuinely missing
   items.
 - **Triage**: `append-retrospective`; durable project data-contract rule, no skill change needed.
+
+### Task: Phase 7A Fix exact-SHA cursor CI
+
+- **Bug** (`edge case`, `test gap`): the cursor tamper regression changed only the final unpadded
+  Base64URL character. When that change affected unused low bits, strict decoding still produced the
+  original HMAC bytes and the exact-SHA CI nondeterministically failed to raise `CursorError`.
+- **Root cause**: the test assumed every textual Base64URL mutation changes decoded bytes, while the
+  production decoder accepted multiple noncanonical spellings of the same byte sequence.
+- **Rule**: opaque signed-token decoders must either require canonical re-encoding or explicitly define
+  representation aliases as valid. Tamper tests must include the unused-bit alias case and must not
+  rely on randomly replacing the final Base64URL character.
+- **Next check**: construct two different unpadded Base64URL strings that decode to identical bytes,
+  assert the decoder rejects the alias, then run the exact CI test under multiple generated payloads.
+- **Triage**: `append-retrospective`; project security and test-determinism rule, no skill change needed.
