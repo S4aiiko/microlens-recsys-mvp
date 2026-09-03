@@ -7,6 +7,7 @@ import os
 import platform
 import shutil
 import tempfile
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ from .bundle import MAX_BUNDLE_BYTES, load_bundle
 from .data import ModelData, data_lineage
 from .deepfm import DeepFMRanker
 from .errors import ModelArtifactError
+from .metrics import ACTIVITY_SEGMENTS
 from .state import encode_state_dict, encode_tensor
 from .training import StageResult
 from .two_tower import TwoTowerModel
@@ -42,6 +44,32 @@ class PublishedModelArtifacts:
     status: str
 
 
+@dataclass(frozen=True, slots=True)
+class CandidateRankingArtifact:
+    """Compact in-memory top-N rankings written one user at a time."""
+
+    rankings: Mapping[str, Sequence[str]]
+    scores: Mapping[str, Mapping[str, float]]
+
+
+def candidate_peak_memory_bounds(
+    *, user_count: int, top_n: int, catalog_items: int, batch_size: int = 128
+) -> tuple[int, int]:
+    """Return conservative retained-candidate lower/upper peak byte estimates."""
+
+    if min(user_count, top_n, catalog_items, batch_size) < 0:
+        raise ValueError("candidate memory dimensions must be non-negative")
+    slots = user_count * top_n
+    lower_bound = slots * 24
+    upper_bound = (
+        slots * 512
+        + user_count * 8 * 1024
+        + min(user_count, batch_size) * catalog_items * 4
+        + 512 * 1024 * 1024
+    )
+    return lower_bound, upper_bound
+
+
 def _write_bytes(path: Path, payload: bytes) -> None:
     with path.open("wb") as handle:
         handle.write(payload)
@@ -51,6 +79,28 @@ def _write_bytes(path: Path, payload: bytes) -> None:
 
 def _write_json(path: Path, value: Any) -> None:
     _write_bytes(path, canonical_json_bytes(value) + b"\n")
+
+
+def _write_candidate_rankings(path: Path, candidates: CandidateRankingArtifact) -> None:
+    with path.open("wb") as handle:
+        handle.write(b"{")
+        for user_offset, user_id in enumerate(sorted(candidates.rankings)):
+            if user_offset:
+                handle.write(b",")
+            handle.write(canonical_json_bytes(user_id))
+            handle.write(b":")
+            rows = [
+                {
+                    "item_id": item_id,
+                    "rank": rank,
+                    "score": float(candidates.scores[user_id][item_id]),
+                }
+                for rank, item_id in enumerate(candidates.rankings[user_id], start=1)
+            ]
+            handle.write(canonical_json_bytes(rows))
+        handle.write(b"}\n")
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _descriptor(path: Path, *, shape: list[int] | None, dtype: str | None) -> dict[str, Any]:
@@ -144,7 +194,8 @@ def write_model_artifacts(
     deepfm_stage: StageResult,
     metrics: dict[str, Any],
     badcases: list[dict[str, Any]],
-    candidates: dict[str, list[dict[str, Any]]],
+    candidates: CandidateRankingArtifact,
+    git_revision: str | None = None,
 ) -> PublishedModelArtifacts:
     dssm_state = encode_state_dict(dssm.state_dict())
     deepfm_state = encode_state_dict(deepfm.state_dict())
@@ -235,7 +286,6 @@ def write_model_artifacts(
                 },
                 "event_training_signals_consumed": len(data.event_training_signals),
             },
-            "dssm_candidates.json": candidates,
         }
         for filename, document in documents.items():
             path = temporary / filename
@@ -252,6 +302,9 @@ def write_model_artifacts(
                 shape = [data.title_encoder.bucket_count]
                 dtype = "int64_document_frequency"
             files.append(_descriptor(path, shape=shape, dtype=dtype))
+        candidate_path = temporary / "dssm_candidates.json"
+        _write_candidate_rankings(candidate_path, candidates)
+        files.append(_descriptor(candidate_path, shape=None, dtype="json"))
         metric_rows = [
             {"metric": name, "value": value} for name, value in _flatten_metrics(metrics).items()
         ]
@@ -288,7 +341,7 @@ def write_model_artifacts(
             "purpose": purpose,
             "evaluation_comparability": data.evaluation_comparability,
             "activation_eligible": data.activation_eligible,
-            "git_revision": os.environ.get("GIT_REVISION") or None,
+            "git_revision": git_revision or os.environ.get("GIT_REVISION") or None,
             "algorithms": ["random", "popularity", "dssm", "deepfm"],
             "features": list(
                 dict.fromkeys(
@@ -323,6 +376,7 @@ def write_model_artifacts(
                     else "not_evaluated_systems_only"
                 ),
                 "k": [int(value) for value in config["evaluation"]["k"]],
+                "activity_segments": ACTIVITY_SEGMENTS,
                 "metrics": evaluation_metrics,
             },
             "artifacts": files,

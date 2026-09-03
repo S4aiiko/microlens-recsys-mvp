@@ -8,6 +8,7 @@ from typing import Any
 from recsys.data.common import canonical_json_bytes, load_json_object, sha256_bytes
 
 from .errors import ModelInputError
+from .metrics import ACTIVITY_SEGMENTS
 
 _DENSE_FEATURES = {
     "dssm_recall_score",
@@ -71,6 +72,11 @@ def load_model_config(value: Mapping[str, Any] | str | Path) -> tuple[dict[str, 
         or maximum_badcases < 1
     ):
         raise ModelInputError("evaluation.maximum_badcases must be a positive integer")
+    activity_segments = evaluation.get("activity_segments")
+    if activity_segments is not None and activity_segments != ACTIVITY_SEGMENTS:
+        raise ModelInputError(
+            "evaluation.activity_segments must match the frozen segment boundaries"
+        )
     for stage_name, stage in (("dssm", dssm), ("deepfm", deepfm)):
         for field in ("epochs", "patience", "batch_size"):
             raw = stage.get(field)

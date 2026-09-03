@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import torch
@@ -11,6 +11,13 @@ from recsys.models.bundle import ModelBundle, load_bundle
 @dataclass(frozen=True, slots=True)
 class LoadedRecommendationModel:
     bundle: ModelBundle
+    _item_embeddings: torch.Tensor = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.bundle.dssm.eval()
+        with torch.no_grad():
+            embeddings = self.bundle.dssm.all_item_embeddings()
+        object.__setattr__(self, "_item_embeddings", embeddings)
 
     @torch.no_grad()
     def recall(self, user_id: str, *, top_n: int) -> list[tuple[str, float]]:
@@ -19,10 +26,8 @@ class LoadedRecommendationModel:
         user_index = self.bundle.user_to_index.get(user_id)
         if user_index is None:
             return []
-        self.bundle.dssm.eval()
-        items = self.bundle.dssm.all_item_embeddings()
         scores = self.bundle.dssm.score_catalog(
-            torch.tensor([user_index], dtype=torch.long), items
+            torch.tensor([user_index], dtype=torch.long), self._item_embeddings
         )[0].tolist()
         return sorted(
             zip(self.bundle.item_ids, (float(value) for value in scores), strict=True),

@@ -4,21 +4,42 @@ import json
 import os
 import tempfile
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from recsys.data.artifacts import TableCodec
 from recsys.data.common import canonical_json_bytes, sha256_file
 
-from .artifacts import PublishedModelArtifacts, write_model_artifacts
+from .artifacts import CandidateRankingArtifact, PublishedModelArtifacts, write_model_artifacts
 from .badcases import build_badcases
-from .baselines import evaluate_baselines
+from .baselines import evaluate_baselines_with_segments, relevant_by_user
 from .config import load_model_config
 from .data import ModelData, load_model_data
 from .errors import ModelInputError, TrainingCancelled
-from .evaluation import dssm_rankings, evaluate_dssm, evaluate_two_stage
+from .evaluation import deepfm_rankings, dssm_rankings
 from .features import FeatureIndex
-from .training import build_deepfm, build_dssm, set_determinism, train_deepfm, train_dssm
+from .metrics import aggregate_ranking_metrics, aggregate_segmented_ranking_metrics
+from .training import (
+    StageResult,
+    build_deepfm,
+    build_dssm,
+    set_determinism,
+    train_deepfm,
+    train_dssm,
+)
+
+
+@dataclass(frozen=True, slots=True)
+class TrainedModelStages:
+    data: ModelData
+    features: FeatureIndex
+    config: dict[str, Any]
+    config_checksum: str
+    dssm: Any
+    deepfm: Any
+    dssm_stage: StageResult
+    deepfm_stage: StageResult
 
 
 def _write_checkpoint(path: Path, document: Mapping[str, Any]) -> None:
@@ -53,26 +74,16 @@ def _read_checkpoint(path: str | Path | None, *, stage: str) -> dict[str, Any] |
     return document
 
 
-def _candidate_document(
-    rankings: Mapping[str, list[str]], scores: Mapping[str, Mapping[str, float]]
-) -> dict[str, list[dict[str, object]]]:
-    return {
-        user_id: [
-            {"item_id": item_id, "rank": rank, "score": float(scores[user_id][item_id])}
-            for rank, item_id in enumerate(items, start=1)
-        ]
-        for user_id, items in sorted(rankings.items())
-    }
-
-
 def _evaluate(
     data: ModelData,
     features: FeatureIndex,
     config: Mapping[str, Any],
     dssm: Any,
     deepfm: Any,
+    split: str = "test",
+    include_baselines: bool = True,
     heartbeat: Callable[[], None] = lambda: None,
-) -> tuple[dict[str, Any], dict[str, list[dict[str, object]]], list[dict[str, object]]]:
+) -> tuple[dict[str, Any], CandidateRankingArtifact, list[dict[str, object]]]:
     top_n = int(config["dssm"]["candidate_top_n"])
     if data.purpose == "systems_only":
         users = set(data.user_ids)
@@ -87,55 +98,57 @@ def _evaluate(
                     "event_training_signals_consumed": len(data.event_training_signals),
                 }
             },
-            _candidate_document(candidates, scores),
+            CandidateRankingArtifact(candidates, scores),
             [],
         )
     k_values = [int(value) for value in config["evaluation"]["k"]]
-    baselines = evaluate_baselines(data, split="test", k_values=k_values, seed=int(config["seed"]))
-    dssm_metrics, candidates, scores = evaluate_dssm(
-        dssm,
-        data,
-        features,
-        split="test",
-        k_values=k_values,
-        top_n=top_n,
-        progress=heartbeat,
+    baselines: dict[str, Mapping[str, float]] = {}
+    baseline_segments: dict[str, dict[str, dict[str, float | int]]] = {}
+    if include_baselines:
+        baselines, baseline_segments = evaluate_baselines_with_segments(
+            data, split=split, k_values=k_values, seed=int(config["seed"])
+        )
+    relevant = relevant_by_user(getattr(data, split))
+    candidates, scores = dssm_rankings(
+        dssm, data, features, users=set(relevant), top_n=top_n, progress=heartbeat
     )
-    two_stage_metrics, rankings, _recall_scores = evaluate_two_stage(
-        dssm,
-        deepfm,
-        data,
-        features,
-        split="test",
-        k_values=k_values,
-        candidate_top_n=top_n,
-        progress=heartbeat,
-    )
-    limited_candidates = {user_id: items[:top_n] for user_id, items in candidates.items()}
-    candidate_scores = {
-        user_id: {item_id: scores[user_id][item_id] for item_id in items}
-        for user_id, items in limited_candidates.items()
+    dssm_metrics = aggregate_ranking_metrics(candidates, relevant, k_values)
+    rankings = deepfm_rankings(deepfm, candidates, scores, features, progress=heartbeat)
+    two_stage_metrics = aggregate_ranking_metrics(rankings, relevant, k_values)
+    history_lengths = {user_id: len(data.user_train_items[user_id]) for user_id in relevant}
+    segments = {
+        **baseline_segments,
+        "dssm": aggregate_segmented_ranking_metrics(
+            candidates, relevant, history_lengths, k_values
+        ),
+        "two_stage": aggregate_segmented_ranking_metrics(
+            rankings, relevant, history_lengths, k_values
+        ),
     }
-    badcases = build_badcases(
-        data,
-        split="test",
-        dssm_candidates=limited_candidates,
-        two_stage_rankings=rankings,
-        maximum_rows=int(config["evaluation"].get("maximum_badcases", 200)),
+    badcases = (
+        build_badcases(
+            data,
+            split=split,
+            dssm_candidates=candidates,
+            two_stage_rankings=rankings,
+            maximum_rows=int(config["evaluation"].get("maximum_badcases", 200)),
+        )
+        if split == "test"
+        else []
     )
     return (
         {
-            "random": dict(baselines["random"]),
-            "popularity": dict(baselines["popularity"]),
+            **{name: dict(values) for name, values in baselines.items()},
             "dssm": dssm_metrics,
             "two_stage": two_stage_metrics,
+            "segments": segments,
         },
-        _candidate_document(limited_candidates, candidate_scores),
+        CandidateRankingArtifact(candidates, scores),
         badcases,
     )
 
 
-def train_model(
+def train_model_stages(
     *,
     processed_root: str | Path,
     data_version: str,
@@ -148,8 +161,8 @@ def train_model(
     heartbeat: Callable[[], None] = lambda: None,
     cancellation_requested: Callable[[], bool] = lambda: False,
     codec: TableCodec | None = None,
-) -> PublishedModelArtifacts:
-    """Train both stages from one explicit immutable data version and write a bundle."""
+) -> TrainedModelStages:
+    """Train both stages with validation-only early stopping and no final-test read."""
 
     resolved_config, config_checksum = load_model_config(config)
     data = load_model_data(
@@ -208,7 +221,54 @@ def train_model(
         resume=deepfm_resume,
     )
     if cancellation_requested():
-        raise TrainingCancelled("training cancelled before final evaluation")
+        raise TrainingCancelled("training cancelled after DeepFM")
+    return TrainedModelStages(
+        data=data,
+        features=features,
+        config=resolved_config,
+        config_checksum=config_checksum,
+        dssm=dssm,
+        deepfm=deepfm,
+        dssm_stage=dssm_stage,
+        deepfm_stage=deepfm_stage,
+    )
+
+
+def evaluate_validation_selection(
+    trained: TrainedModelStages,
+    *,
+    heartbeat: Callable[[], None] = lambda: None,
+    cancellation_requested: Callable[[], bool] = lambda: False,
+) -> dict[str, Any]:
+    """Evaluate a trained matrix candidate on validation without reading test metrics."""
+
+    def validation_pulse() -> None:
+        if cancellation_requested():
+            raise TrainingCancelled("training cancelled during validation selection")
+        heartbeat()
+
+    metrics, _candidates, _badcases = _evaluate(
+        trained.data,
+        trained.features,
+        trained.config,
+        trained.dssm,
+        trained.deepfm,
+        split="validation",
+        include_baselines=False,
+        heartbeat=validation_pulse,
+    )
+    return metrics
+
+
+def finalize_trained_model(
+    trained: TrainedModelStages,
+    *,
+    output_root: str | Path,
+    heartbeat: Callable[[], None] = lambda: None,
+    cancellation_requested: Callable[[], bool] = lambda: False,
+    git_revision: str | None = None,
+) -> PublishedModelArtifacts:
+    """Read the test split once, after a caller has frozen validation selection."""
 
     def final_evaluation_pulse() -> None:
         if cancellation_requested():
@@ -216,25 +276,65 @@ def train_model(
         heartbeat()
 
     metrics, candidates, badcases = _evaluate(
-        data,
-        features,
-        resolved_config,
-        dssm,
-        deepfm,
+        trained.data,
+        trained.features,
+        trained.config,
+        trained.dssm,
+        trained.deepfm,
+        split="test",
+        include_baselines=True,
         heartbeat=final_evaluation_pulse,
     )
     return write_model_artifacts(
         output_root=output_root,
-        data=data,
-        config=resolved_config,
-        config_checksum=config_checksum,
-        dssm=dssm,
-        deepfm=deepfm,
-        dssm_stage=dssm_stage,
-        deepfm_stage=deepfm_stage,
+        data=trained.data,
+        config=trained.config,
+        config_checksum=trained.config_checksum,
+        dssm=trained.dssm,
+        deepfm=trained.deepfm,
+        dssm_stage=trained.dssm_stage,
+        deepfm_stage=trained.deepfm_stage,
         metrics=metrics,
         badcases=badcases,
         candidates=candidates,
+        git_revision=git_revision,
+    )
+
+
+def train_model(
+    *,
+    processed_root: str | Path,
+    data_version: str,
+    data_manifest_checksum: str,
+    config: Mapping[str, Any] | str | Path,
+    output_root: str | Path,
+    checkpoint_root: str | Path | None = None,
+    resume_dssm: str | Path | None = None,
+    resume_deepfm: str | Path | None = None,
+    heartbeat: Callable[[], None] = lambda: None,
+    cancellation_requested: Callable[[], bool] = lambda: False,
+    codec: TableCodec | None = None,
+) -> PublishedModelArtifacts:
+    """Train both stages and finalize one model on the test split."""
+
+    trained = train_model_stages(
+        processed_root=processed_root,
+        data_version=data_version,
+        data_manifest_checksum=data_manifest_checksum,
+        config=config,
+        output_root=output_root,
+        checkpoint_root=checkpoint_root,
+        resume_dssm=resume_dssm,
+        resume_deepfm=resume_deepfm,
+        heartbeat=heartbeat,
+        cancellation_requested=cancellation_requested,
+        codec=codec,
+    )
+    return finalize_trained_model(
+        trained,
+        output_root=output_root,
+        heartbeat=heartbeat,
+        cancellation_requested=cancellation_requested,
     )
 
 

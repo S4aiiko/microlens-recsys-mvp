@@ -11,6 +11,7 @@ from jsonschema import Draft202012Validator
 
 from recsys.data.artifacts import JsonLinesCodec
 from recsys.data.common import canonical_json_bytes, sha256_file
+from recsys.models.artifacts import candidate_peak_memory_bounds
 from recsys.models.bundle import load_bundle
 from recsys.models.data import load_model_data
 from recsys.models.entrypoint import train_model
@@ -22,6 +23,16 @@ from ._support import model_config, write_data_version
 
 
 class EntrypointBundleTests(unittest.TestCase):
+    def test_full_candidate_artifact_has_a_conservative_sub_8_gib_peak_budget(self) -> None:
+        lower, upper = candidate_peak_memory_bounds(
+            user_count=50_000,
+            top_n=200,
+            catalog_items=19_220,
+        )
+        self.assertEqual(lower, 240_000_000)
+        self.assertLess(lower, upper)
+        self.assertLess(upper, 8 * 1024**3)
+
     def test_real_two_stage_bundle_roundtrip_and_schema(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -49,9 +60,26 @@ class EntrypointBundleTests(unittest.TestCase):
                 ).read_text()
             )
             Draft202012Validator(schema).validate(bundle.manifest)
-            self.assertEqual(bundle.metrics.keys(), {"random", "popularity", "dssm", "two_stage"})
+            self.assertEqual(
+                bundle.metrics.keys(),
+                {"random", "popularity", "dssm", "two_stage", "segments"},
+            )
+            self.assertEqual(bundle.metrics["segments"]["dssm"]["cold_start"]["user_count"], 2)
             self.assertEqual(bundle.manifest["status"], "READY")
             self.assertEqual(bundle.config["mode"], "smoke")
+            candidate_document = json.loads((artifact.path / "dssm_candidates.json").read_text())
+            self.assertEqual(
+                (artifact.path / "dssm_candidates.json").read_bytes(),
+                canonical_json_bytes(candidate_document) + b"\n",
+            )
+            self.assertEqual(set(candidate_document), {"u1", "u2"})
+            self.assertTrue(
+                all(
+                    row.keys() == {"item_id", "rank", "score"}
+                    for rows in candidate_document.values()
+                    for row in rows
+                )
+            )
             checkpoint = next((root / "models" / ".checkpoints").rglob("deepfm.json"))
             checkpoint_document = json.loads(checkpoint.read_text())
             self.assertIn("best_model_state", checkpoint_document)

@@ -5,7 +5,7 @@ import math
 import re
 import unicodedata
 from collections import Counter, defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from types import MappingProxyType
 
@@ -16,6 +16,10 @@ from recsys.serving.runtime import LoadedRecommendationModel
 
 from .domain import RankedCandidate, RecallCandidate
 from .ranking import MergedScore, derived_title_topic, min_max
+
+PERSONALIZED_RECALL_SOURCES = frozenset(
+    {"dssm", "item_item_cf", "profile_title", "popular", "explore"}
+)
 
 
 def _id_key(value: str) -> tuple[int, int | str]:
@@ -109,6 +113,15 @@ def _title_tokens(title: str) -> list[str]:
     return list(dict.fromkeys(re.findall(r"[^\W_]+", normalized, flags=re.UNICODE)))[:32]
 
 
+def build_profile_title_preferences(titles: Sequence[str]) -> dict[str, dict[str, int]]:
+    """Build the same token/score shape consumed by serving profile-title recall."""
+
+    scores: Counter[str] = Counter()
+    for title in titles:
+        scores.update(_title_tokens(title))
+    return {token: {"score": score} for token, score in sorted(scores.items())}
+
+
 def _popular_score(item: CatalogItem, train_popularity: Mapping[str, float]) -> float:
     training = math.log1p(max(0.0, float(train_popularity.get(item.item_id, 0.0))))
     engagement = math.log1p(max(0, item.likes)) + 0.25 * math.log1p(max(0, item.views))
@@ -126,14 +139,25 @@ def retrieve_candidates(
     item_item_index: ItemItemIndex | None,
     seed: int,
     top_n: int,
+    enabled_sources: Collection[str] | None = None,
+    dssm_recaller: Callable[[str, int], Sequence[tuple[str, float]]] | None = None,
 ) -> RetrievalResult:
+    sources = PERSONALIZED_RECALL_SOURCES if enabled_sources is None else frozenset(enabled_sources)
+    unknown_sources = sources - PERSONALIZED_RECALL_SOURCES
+    if unknown_sources:
+        raise ValueError(f"unknown recall sources: {sorted(unknown_sources)}")
     candidates: list[RecallCandidate] = []
     fallbacks: list[str] = []
     popularity = getattr(bundle, "popularity", {}) if bundle is not None else {}
 
     if feed_type == "personalized":
-        if bundle is not None and source_user_id:
+        if "dssm" in sources and bundle is not None and source_user_id:
             try:
+                recalled = (
+                    dssm_recaller(source_user_id, top_n)
+                    if dssm_recaller is not None
+                    else LoadedRecommendationModel(bundle).recall(source_user_id, top_n=top_n)
+                )
                 candidates.extend(
                     RecallCandidate(
                         item_id=item_id,
@@ -141,18 +165,16 @@ def retrieve_candidates(
                         raw_score=score,
                         reason="active ModelBundle DSSM recall",
                     )
-                    for item_id, score in LoadedRecommendationModel(bundle).recall(
-                        source_user_id, top_n=top_n
-                    )
+                    for item_id, score in recalled
                 )
             except Exception as exc:
                 fallbacks.append(f"dssm_recall_failed:{type(exc).__name__}")
-        else:
+        elif "dssm" in sources:
             fallbacks.append("cold_user_or_model_unavailable")
 
-        if item_item_index is not None and recent_item_ids:
+        if "item_item_cf" in sources and item_item_index is not None and recent_item_ids:
             candidates.extend(item_item_index.recall(recent_item_ids, top_n=top_n))
-        elif recent_item_ids:
+        elif "item_item_cf" in sources and recent_item_ids:
             fallbacks.append("item_item_index_unavailable")
 
         preference_scores = {
@@ -160,13 +182,14 @@ def retrieve_candidates(
             for token, value in profile_title_preferences.items()
             if isinstance(token, str) and isinstance(value, dict)
         }
-        if any(score > 0 for score in preference_scores.values()):
+        if "profile_title" in sources and any(score > 0 for score in preference_scores.values()):
+            profile_rows: list[RecallCandidate] = []
             for item in catalog:
                 overlap = sum(
                     max(0, preference_scores.get(token, 0)) for token in _title_tokens(item.title)
                 )
                 if overlap > 0:
-                    candidates.append(
+                    profile_rows.append(
                         RecallCandidate(
                             item_id=item.item_id,
                             source="profile_title",
@@ -174,23 +197,29 @@ def retrieve_candidates(
                             reason="positive profile/title token overlap",
                         )
                     )
+            profile_rows.sort(key=lambda row: (-row.raw_score, row.item_id))
+            candidates.extend(profile_rows[:top_n])
 
-    popular = sorted(
-        (
-            RecallCandidate(
-                item_id=item.item_id,
-                source="popular",
-                raw_score=_popular_score(item, popularity),
-                reason="train and online engagement popularity",
-            )
-            for item in catalog
-        ),
-        key=lambda row: (-row.raw_score, row.item_id),
-    )[:top_n]
-    if feed_type in {"personalized", "popular"}:
+    include_popular = "popular" in sources and feed_type in {"personalized", "popular"}
+    include_explore = "explore" in sources and feed_type in {"personalized", "explore"}
+    popular: list[RecallCandidate] = []
+    if include_popular or include_explore:
+        popular = sorted(
+            (
+                RecallCandidate(
+                    item_id=item.item_id,
+                    source="popular",
+                    raw_score=_popular_score(item, popularity),
+                    reason="train and online engagement popularity",
+                )
+                for item in catalog
+            ),
+            key=lambda row: (-row.raw_score, row.item_id),
+        )[:top_n]
+    if include_popular:
         candidates.extend(popular)
 
-    if feed_type in {"personalized", "explore"}:
+    if include_explore:
         maximum_popularity = max((row.raw_score for row in popular), default=0.0)
         explore = [
             RecallCandidate(

@@ -7,7 +7,7 @@ DOCKER_COMPOSE ?= docker compose
 	full-data train-full train-sync export-events build-training-data train-async worker-run-once \
 	job-status cache-stats publish prepare-7b-fixture covers generate-client check-client-drift \
 	migrate seed generate-contracts check-contract-drift test-api test-integration \
-	scheduler-run-once search-reindex register-model
+	scheduler-run-once search-reindex register-model phase7a-resolve phase7a-run
 
 help:
 	@$(PYTHON) scripts/foundation.py help
@@ -91,6 +91,31 @@ full-data:
 		--output-root "$${PROCESSED_DATA_DIR:-data/processed}"
 
 train-full: train-sync
+
+phase7a-resolve:
+	@PYTHONPATH=. $(PYTHON) -m recsys.experiments.phase7a_cli resolve \
+		--matrix configs/models/experiment-matrix.json \
+		--repo-root .
+
+phase7a-run:
+	@test -n "$(DATA_VERSION)" || (echo "DATA_VERSION is required" >&2; exit 2)
+	@test "$(DATA_VERSION)" != "latest" || (echo "DATA_VERSION must not be latest" >&2; exit 2)
+	@test -n "$(DATA_MANIFEST_CHECKSUM)" || (echo "DATA_MANIFEST_CHECKSUM is required" >&2; exit 2)
+	@test -n "$(GIT_REVISION)" || (echo "GIT_REVISION is required" >&2; exit 2)
+	@test -n "$(RUN_ID)" || (echo "RUN_ID is required" >&2; exit 2)
+	@mkdir -p "$${PHASE7A_OUTPUT_ROOT:-output/phase7a}"
+	@$(DOCKER_COMPOSE) version >/dev/null
+	$(DOCKER_COMPOSE) run --rm --no-deps \
+		-v "$(CURDIR)/$${PHASE7A_OUTPUT_ROOT:-output/phase7a}:/phase7a" \
+		worker python -m recsys.experiments.phase7a_cli run \
+		--matrix configs/models/experiment-matrix.json \
+		--repo-root /workspace \
+		--processed-root /artifacts/processed \
+		--data-version "$(DATA_VERSION)" \
+		--data-manifest-checksum "$(DATA_MANIFEST_CHECKSUM)" \
+		--output-root /phase7a/runs \
+		--run-id "$(RUN_ID)" \
+		--git-revision "$(GIT_REVISION)"
 
 train-sync:
 	@test -n "$(DATA_VERSION)" || (echo "DATA_VERSION is required" >&2; exit 2)

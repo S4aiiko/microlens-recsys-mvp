@@ -44,6 +44,15 @@ class ModelConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ModelInputError, "duplicates"):
             load_model_config(config)
 
+    def test_activity_segments_are_optional_but_frozen_when_declared(self) -> None:
+        config = model_config()
+        load_model_config(config)
+        config["evaluation"]["activity_segments"] = {
+            "cold_start": {"minimum_history": 0, "maximum_history": 2}
+        }
+        with self.assertRaisesRegex(ModelInputError, "frozen segment boundaries"):
+            load_model_config(config)
+
 
 if __name__ == "__main__":
     unittest.main()
